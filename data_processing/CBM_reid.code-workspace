@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../../../../../archive/vision/beery/animal_reid/datasets/elephants_zooniverse"
+		}
+	],
+	"settings": {}
+}
