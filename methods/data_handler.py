@@ -20,7 +20,7 @@ class EleHandler(data.Dataset):
         self.image_dir = Path(dataset_dir) / 'images'
         self.transform = transform
 
-        # Create the transform
+        # the transform is now useless as we preprocessed the images
         if transform == 'MegaDescriptor-elephant':
             self.transform = transforms.Compose([
             transforms.Resize([224, 224]),
@@ -36,10 +36,12 @@ class EleHandler(data.Dataset):
 
     def __getitem__(self, idx):
 
-        image_path = self.image_dir / self.dictonary.iloc[idx]['image']
+        image_path = self.image_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
         image = Image.open(image_path).convert('RGB')
-        if self.transform is not None:
-            image = self.transform(image)
+        
+        # Not needed as we have preprocessed the images
+        #if self.transform is not None:
+        #    image = self.transform(image)
 
         subject_id = self.dictonary.iloc[idx]['subject_id']
         ele_id = self.dictonary.iloc[idx]['ele_id']
@@ -49,7 +51,6 @@ class EleHandler(data.Dataset):
         subject_SEEK = self.dictonary.iloc[idx]['subject-SEEK']
         ele_SEEK = self.dictonary.iloc[idx]['ele-SEEK']
 
-        # [image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK]
         return image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK
     
     def print_image(self, idx, print_with_transform = True):
