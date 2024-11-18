@@ -1,14 +1,11 @@
+from pathlib import Path
 from PIL import Image
-import matplotlib.pyplot as plt
+import pandas as pd
+import random
+
 from IPython.display import display
 import matplotlib.pyplot as plt
 import torch.utils.data as data
-from pathlib import Path
-import random
-import pandas as pd
-import torchvision.transforms as transforms
-
-
 
 
 class EleHandler(data.Dataset):
@@ -21,6 +18,8 @@ class EleHandler(data.Dataset):
         self.transform = transform
 
         # the transform is now useless as we preprocessed the images
+        import torchvision.transforms as transforms
+
         if transform == 'MegaDescriptor-elephant':
             self.transform = transforms.Compose([
             transforms.Resize([224, 224]),
@@ -39,6 +38,9 @@ class EleHandler(data.Dataset):
         image_path = self.image_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
         image = Image.open(image_path).convert('RGB')
         
+        import torchvision.transforms as transforms
+        image = transforms.ToTensor()(image)
+
         # Not needed as we have preprocessed the images
         #if self.transform is not None:
         #    image = self.transform(image)
