@@ -84,10 +84,35 @@ class EleHandler(data.Dataset):
         print(label)
         return image, label
     
+    def split_along_encounters(self, split_sizes = [0.7,0.15,0.15],hour_delta = 1):
+        from sklearn.model_selection import train_test_split
+
+        if sum(split_sizes) != 1: raise ValueError("Split sizes should sum to 1")
+
+        # Ensure 'picture_time' is sorted
+        self.dictonary.sort_values(by='picture_time', inplace=True)
+
+        # Create a new column 'group' to group images taken within an hour
+        self.dictonary['group'] = (pd.to_datetime(self.dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
+
+        # Split the groups into train, validation, and test sets
+        unique_groups = self.dictonary['group'].unique()
+        
+        train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42)
+        val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42)
+
+        # Get the indices for each group
+        train_indices = self.dictonary[self.dictonary['group'].isin(train_groups)].index.tolist()
+        val_indices = self.dictonary[self.dictonary['group'].isin(val_groups)].index.tolist()
+        test_indices = self.dictonary[self.dictonary['group'].isin(test_groups)].index.tolist()
+
+        print(f"Train indices: {len(train_indices)}, Validation indices: {len(val_indices)}, Test indices: {len(test_indices)}")
+
+        return train_indices, val_indices, test_indices
+    
 
 if __name__ == "__main__":
-    dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse')
-    EleHandle = EleHandler(dataset_dir)
+    EleHandle = EleHandler()
     # Select a random index
     random_idx = random.randint(0, len(EleHandle) - 1)
     EleHandle.print_image(random_idx)
