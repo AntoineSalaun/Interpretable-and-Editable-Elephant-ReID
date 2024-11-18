@@ -55,6 +55,11 @@ class EleHandler(data.Dataset):
 
         return image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK
     
+    def get_original_image(self, idx):
+        image_path = self.image_dir / self.dictonary.iloc[idx]['image']
+        image = Image.open(image_path).convert('RGB')
+        return image
+    
     def print_image(self, idx, print_with_transform = True):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
         print(image_path)
