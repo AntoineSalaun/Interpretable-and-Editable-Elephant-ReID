@@ -2,10 +2,13 @@ from pathlib import Path
 from PIL import Image
 import pandas as pd
 import random
+import torch
 
 from IPython.display import display
 import matplotlib.pyplot as plt
 import torch.utils.data as data
+import torchvision.transforms as transforms
+
 
 
 class EleHandler(data.Dataset):
@@ -34,16 +37,28 @@ class EleHandler(data.Dataset):
     
 
     def __getitem__(self, idx):
-        import torchvision.transforms as transforms
-        original_image_path = self.image_dir / self.dictonary.iloc[idx]['image']
-        original_image = Image.open(original_image_path).convert('RGB')
-        original_image = transforms.ToTensor()(original_image)
 
         preprocessed_image_path = self.image_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
         preprocessed_image = Image.open(preprocessed_image_path).convert('RGB')
-        
-        
         preprocessed_image = transforms.ToTensor()(preprocessed_image)
+
+
+        if pd.notna(self.dictonary.iloc[idx]['left_ear_path']):
+            #print(self.dictonary.iloc[idx]['left_ear_path'])
+            left_ear_path = self.image_dir / self.dictonary.iloc[idx]['left_ear_path']
+            left_ear = Image.open(left_ear_path).convert('RGB')
+            left_ear = transforms.ToTensor()(left_ear)
+        else:
+            left_ear = torch.zeros(3, 224, 224)
+
+        if pd.notna(self.dictonary.iloc[idx]['right_ear_path']):
+            #print(self.dictonary.iloc[idx]['right_ear_path'])
+            right_ear_path = self.image_dir / self.dictonary.iloc[idx]['right_ear_path']
+            right_ear = Image.open(right_ear_path).convert('RGB')
+            right_ear = transforms.ToTensor()(right_ear)
+        else:
+            right_ear = torch.zeros(3, 224, 224)
+
 
         subject_id = self.dictonary.iloc[idx]['subject_id']
         ele_id = self.dictonary.iloc[idx]['ele_id']
@@ -53,7 +68,7 @@ class EleHandler(data.Dataset):
         subject_SEEK = self.dictonary.iloc[idx]['subject-SEEK']
         ele_SEEK = self.dictonary.iloc[idx]['ele-SEEK']
 
-        return preprocessed_image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK, idx
+        return preprocessed_image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK, left_ear, right_ear
     
     def get_original_image(self, idx):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
