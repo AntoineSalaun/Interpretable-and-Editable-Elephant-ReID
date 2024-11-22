@@ -167,7 +167,7 @@ class ConceptHead:
             history["val_acc"].append(val_acc)
 
             if epoch % self.print_every == 0:
-                print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} - Train Acc: {train_acc['average'] * 100:.2f}%, Val Acc: {val_acc['average'] * 100:.2f}%")
+                print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} - Train Acc: {train_acc['average'] * 100:.2f}%, Val Acc: {val_acc['average'] * 100:.2f}% - Train whole code: {train_acc['whole_code'] * 100:.2f}%, Val whole code: {val_acc['whole_code'] * 100:.2f}%")
 
         if self.save_weights:
             torch.save(best_weights, self.c_weight_path)
