@@ -99,6 +99,26 @@ class SEEK:
             f"{self.L_tear_1}{self.L_hole_1}{self.L_tear_2}{self.L_hole_2}X{self.right_extreme}{self.left_extreme}"
             f"S{self.ear_special}{self.body_special}"
         )
+    
+    def closest_valid_one_hot(prob_vector):
+        """
+        Converts a probability tensor into the closest valid one-hot encoded representation for each attribute.
+        """
+        closest_one_hot = []
+        index = 0
+
+        for group in SEEK.attribute_names:
+            slice_length = SEEK.lengths[group]
+            prob_slice = prob_vector[:, index:index + slice_length]
+            one_hot_slice = torch.zeros_like(prob_slice)
+            
+            max_indices = torch.argmax(prob_slice, dim=1)
+            one_hot_slice[torch.arange(prob_slice.size(0)), max_indices] = 1.0
+            closest_one_hot.append(one_hot_slice)
+            
+            index += slice_length
+
+        return torch.cat(closest_one_hot, dim=1)
 
 
 # Updated test function

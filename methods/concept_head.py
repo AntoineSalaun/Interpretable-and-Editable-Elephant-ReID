@@ -3,14 +3,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
+import timm
+from seek_code import SEEK
 
-"""
-I asked ChatGPT to make a class for my concept head from the code that I wrote in the probing notebook. This class has not been debugged yet.
-"""
+
 
 class ConceptHead:
     def __init__(
-        self, input_dim, output_dim, use_sigmoid=False, lr=1e-3, device="cuda", weights_path="best_weights.pth"
+        self, crop_ears = True,  optimizer = Adam(self.layer.parameters(), lr=0.001), loss = F.mse_loss, backbone_pretraining = "savannah_elephants"
     ):
         """
         Initializes the ConceptHead class.
@@ -23,40 +23,58 @@ class ConceptHead:
         - device (str): Device to run the model ("cuda" or "cpu").
         - weights_path (str): Path to load/save the best model weights.
         """
-        self.device = torch.device(device if torch.cuda.is_available() else "cpu")
-        self.weights_path = weights_path
+        self.device = 'cuda' if torch.cuda.is_available() else "cpu"
+        
+        self.backcone = timm.create_model("hf-hub:BVRA/MegaDescriptor-T-224", pretrained=True, num_classes=0) # Mega-Descriptor pretrained
+        if backbone_pretraining == "savannah_elephants":
+            state_dict = torch.load("../weights/savanna_elephants_md_v2_epoch_60.pt", map_location='cuda') # Pretrained on savannah elephants
+        elif backbone_pretraining == "forest_elephants":
+            state_dict = torch.load("../weights/forest_elephants-reid_weights.pt", map_location='cuda') # Pretrained on forest elephants
+        self.backcone.load_state_dict(state_dict["model"]) if "optimizer" in state_dict else self.backbone.load_state_dict(state_dict) 
+        
+        
+        self.input_dim = 768 if not crop_ears else 768 * 3  # 768 for each ear
 
-        # Define the layer
-        if use_sigmoid:
-            self.layer = nn.Sequential(
-                nn.Linear(input_dim, output_dim),
+        self.layer = nn.Sequential( 
+                nn.Linear(self.input_dim, 63),
                 nn.Sigmoid()
             ).to(self.device)
-        else:
-            self.layer = nn.Linear(input_dim, output_dim).to(self.device)
+        
+        # If some weights of the concept head exist in their location, load them
+        self.c_weight_path = "../weights/chead_last_weights.pt"
+        if os.path.exists(self.c_weight_path): self.layer.load_state_dict(torch.load(self.c_weight_path, map_location=self.device))
 
-        self.optimizer = Adam(self.layer.parameters(), lr=lr)
-        self.loss_fn = F.mse_loss
-        self.accuracy_fn = calculate_attribute_accuracy  # Function from the notebook
+        self.optimizer = optimizer
+        self.loss_fn = loss
+   
 
-        # Load pre-trained weights if they exist
-        if os.path.exists(weights_path):
-            self.load_weights(weights_path)
+    def accuracy_fn(predicted, labels):
+        # Convert predicted logits to closest valid one-hot representation
+        predicted_one_hot = SEEK.closest_valid_one_hot(predicted)
+        
+        # Initialize accuracy tracking for all attributes, including individual and averaged
+        accuracies = {name: 0 for name in SEEK.attribute_names}
 
-    def save_weights(self, filepath):
-        """Saves the model weights to a file."""
-        torch.save(self.layer.state_dict(), filepath)
+        index = 0
+        for name in SEEK.attribute_names:
+            length = SEEK.lengths[name]
+            pred_slice = predicted_one_hot[:, index:index + length]
+            label_slice = labels[:, index:index + length]
 
-    def load_weights(self, filepath):
-        """Loads model weights from a file."""
-        self.layer.load_state_dict(torch.load(filepath, map_location=self.device))
-        self.layer.to(self.device)
+            # Calculate per-sample accuracy
+            pred_indices = torch.argmax(pred_slice, dim=1)
+            label_indices = torch.argmax(label_slice, dim=1)
+            accuracies[name] = (pred_indices == label_indices).float().mean().item()
 
-    def reinitialize_weights(self):
-        """Reinitializes the weights of the model."""
-        for layer in self.layer.children() if isinstance(self.layer, nn.Sequential) else [self.layer]:
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
+            index += length
+
+        # Include accuracy for whole SEEK code prediction
+        correct_whole_code = torch.all(predicted_one_hot == labels, dim=1).float().mean().item()
+        accuracies['average'] = sum(accuracies.values()) / len(accuracies)
+        accuracies['whole_code'] = correct_whole_code
+
+        return accuracies
+
 
     def epoch_pass(self, loader, training=True, with_ears=False):
         """
@@ -79,29 +97,32 @@ class ConceptHead:
         epoch_accuracies["average"] = 0
         epoch_accuracies["whole_code"] = 0
 
+        
         for batch in loader:
+            # Access the batch, load it on the GPU
             images, _, _, _, subject_SEEK, _, left_ears, right_ears = batch[:8]
-            images = images.to(self.device)
-            labels = torch.stack(
-                [SEEK(s).one_hot_encode() for s in subject_SEEK]
-            ).to(self.device)
+            
+            labels = torch.stack([SEEK(s).one_hot_encode() for s in subject_SEEK]).to(self.device)
 
             with torch.no_grad() if not training else torch.enable_grad():
                 # Embed the images and ears
-                embeddings = model(images)
-                left_embeddings = model(left_ears.to(self.device))
-                right_embeddings = model(right_ears.to(self.device))
+                embeddings = self.backbone(images.to(self.device))
 
-                # Concatenate the embeddings
-                total_embeddings = torch.cat((embeddings, left_embeddings, right_embeddings), dim=1)
+                if self.crop_ears:
+                    # Embed the ears
+                    left_embeddings = self.backbone(left_ears.to(self.device))
+                    right_embeddings = self.backbone(right_ears.to(self.device))
+
+                    # Concatenate the embeddings
+                    embeddings = torch.cat((embeddings, left_embeddings, right_embeddings), dim=1)
 
                 # Forward pass
-                outputs = self.layer(total_embeddings)
+                outputs = self.layer(embeddings)
+
                 loss = self.loss_fn(outputs, labels)
                 total_loss += loss.item()
 
-                predicted_SEEK = closest_valid_one_hot(outputs)
-                batch_accuracies = self.accuracy_fn(predicted_SEEK, labels)
+                batch_accuracies = self.accuracy_fn(outputs, labels)
                 for name, value in batch_accuracies.items():
                     epoch_accuracies[name] += value
 
@@ -128,8 +149,12 @@ class ConceptHead:
         Returns:
         - history (dict): Training and validation losses and accuracies over epochs.
         """
-        # Reinitialize weights
-        self.reinitialize_weights()
+        # Reinitialize the wieghts and biases of self.layer
+        for m in self.layer.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
 
         history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
         best_val_accuracy = 0
@@ -141,7 +166,7 @@ class ConceptHead:
             # Save best weights based on validation accuracy
             if val_acc["average"] > best_val_accuracy:
                 best_val_accuracy = val_acc["average"]
-                self.save_weights(self.weights_path)
+                best_weights = self.layer.state_dict()
 
             history["train_loss"].append(train_loss)
             history["val_loss"].append(val_loss)
@@ -149,12 +174,10 @@ class ConceptHead:
             history["val_acc"].append(val_acc)
 
             if epoch % 5 == 0:
-                print(
-                    f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, "
-                    f"Val Loss: {val_loss:.4f}, Train Acc: {train_acc['average']:.4f}, "
-                    f"Val Acc: {val_acc['average']:.4f}"
-                )
+                print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Train Acc: {train_acc['average']:.4f}, Val Acc: {val_acc['average']:.4f}")
 
+            # Save weights at the end of each epoch
+            torch.save(best_weights, filepath)
         return history
 
     def test(self, test_loader):
@@ -207,4 +230,4 @@ class ConceptHead:
 
         return (torch.cat(accumulate_images, dim=0), torch.cat(accumulate_embeddings, dim=0), 
                 torch.cat(accumulate_predictions, dim=0), torch.cat(accumulate_labels, dim=0), 
-                torch.cat(accumulate_outputs, dim=0))
+                torch.cat(accumulate_outputs, dim=0))_
