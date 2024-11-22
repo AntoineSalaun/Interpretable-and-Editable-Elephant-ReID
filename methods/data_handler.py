@@ -67,10 +67,13 @@ class EleHandler(data.Dataset):
         identified = [True if self.dictonary.iloc[idx]['#season'] == 'EFA_IDI' else False]
         #anonymized_capture_id = self.dictonary[idx]['anonymized_capture_id']
         
-        subject_SEEK_1h = SEEK(self.dictonary.iloc[idx]['subject-SEEK'])
-        ele_SEEK = SEEK(self.dictonary.iloc[idx]['ele-SEEK'])
+        subject_SEEK = self.dictonary.iloc[idx]['subject-SEEK']
+        ele_SEEK = self.dictonary.iloc[idx]['ele-SEEK']
 
-        return preprocessed_image, subject_id, ele_id, identified, subject_SEEK, ele_SEEK, left_ear, right_ear
+        subject_SEEK_1hot = SEEK(subject_SEEK).one_hot_encode()
+        ele_SEEK_1hot = SEEK(ele_SEEK).one_hot_encode()   
+
+        return preprocessed_image, subject_id, ele_id, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
     
     def get_original_image(self, idx):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
