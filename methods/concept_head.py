@@ -46,7 +46,7 @@ class ConceptHead:
         self.input_dim = 768 if not crop_ears else 768 * 3  # Handle concatenated embeddings
         self.layer = nn.Sequential(nn.Linear(self.input_dim, 63), nn.Sigmoid()).to(self.device)
 
-        self.layer.load_state_dict(torch.load(Path(__file__).parent.parent / "weights/chead_weights.pt", map_location=self.device)) if (Path(__file__).parent.parent / "weights/c_w.pt").exists() else None
+        self.layer.load_state_dict(torch.load(Path(__file__).parent.parent / "weights/c_w.pt", map_location=self.device)) if (Path(__file__).parent.parent / "weights/c_w.pt").exists() else None
 
         self.optimizer = Adam(self.layer.parameters(), lr)
         self.loss_fn = loss
@@ -226,7 +226,7 @@ class ConceptHead:
         Returns:
         - Tuple containing images, embeddings, predictions, true labels, and raw outputs.
         """
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=False, num_workers=4)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=False, num_workers=0)
         accumulate_images, accumulate_embeddings, accumulate_predictions, accumulate_labels, accumulate_outputs = [], [], [], [], []
 
         for batch in dataloader:

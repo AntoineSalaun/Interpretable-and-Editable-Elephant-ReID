@@ -12,102 +12,98 @@ import torchvision.transforms as transforms
 from seek_code import SEEK
 
 
-
 class EleHandler(data.Dataset):
-    def __init__(self, dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse'), dictonary_path = Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary.csv') , 
-                  num_elephants = None, transform = None):
+    def __init__(self, dataset_dir=Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse'), 
+                 dictonary_path=Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary.csv'), 
+                 num_elephants=None, transform=None):
         
         self.dataset_dir = dataset_dir
         self.num_elephants = num_elephants
         self.image_dir = Path(dataset_dir) / 'images'
         self.transform = transform
 
-        # the transform is now useless as we preprocessed the images
-        import torchvision.transforms as transforms
-
+        # Preprocessing transformation
         if transform == 'MegaDescriptor-elephant':
+            import torchvision.transforms as transforms
             self.transform = transforms.Compose([
-            transforms.Resize([224, 224]),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+                transforms.Resize([224, 224]),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
             ])
-
-        self.dictonary = pd.read_csv(dictonary_path)        
+        
+        # Load the dictionary and create ele_id mapping
+        self.dictonary = pd.read_csv(dictonary_path)
+        self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
+        self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
     def __len__(self):
         return len(self.dictonary)
     
-
     def __getitem__(self, idx):
-
         preprocessed_image_path = self.image_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
         preprocessed_image = Image.open(preprocessed_image_path).convert('RGB')
-        preprocessed_image = transforms.ToTensor()(preprocessed_image)
-
-
-        if pd.notna(self.dictonary.iloc[idx]['left_ear_path']):
-            #print(self.dictonary.iloc[idx]['left_ear_path'])
-            left_ear_path = self.image_dir / self.dictonary.iloc[idx]['left_ear_path']
-            left_ear = Image.open(left_ear_path).convert('RGB')
-            left_ear = transforms.ToTensor()(left_ear)
+        if self.transform:
+            preprocessed_image = self.transform(preprocessed_image)
         else:
-            left_ear = torch.zeros(3, 224, 224)
+            preprocessed_image = transforms.ToTensor()(preprocessed_image)
 
-        if pd.notna(self.dictonary.iloc[idx]['right_ear_path']):
-            #print(self.dictonary.iloc[idx]['right_ear_path'])
-            right_ear_path = self.image_dir / self.dictonary.iloc[idx]['right_ear_path']
-            right_ear = Image.open(right_ear_path).convert('RGB')
-            right_ear = transforms.ToTensor()(right_ear)
-        else:
-            right_ear = torch.zeros(3, 224, 224)
+        # Load left and right ear images
+        left_ear = self._load_ear(self.dictonary.iloc[idx]['left_ear_path'])
+        right_ear = self._load_ear(self.dictonary.iloc[idx]['right_ear_path'])
 
-
-        subject_id = self.dictonary.iloc[idx]['subject_id']
+        # Convert ele_id to numeric label
         ele_id = self.dictonary.iloc[idx]['ele_id']
-        identified = [True if self.dictonary.iloc[idx]['#season'] == 'EFA_IDI' else False]
-        #anonymized_capture_id = self.dictonary[idx]['anonymized_capture_id']
-        
+        ele_id_label = self.ele_id_to_label[ele_id]
+
+        # Other metadata
+        subject_id = self.dictonary.iloc[idx]['subject_id']
+        identified = self.dictonary.iloc[idx]['#season'] == 'EFA_IDI'
         subject_SEEK = self.dictonary.iloc[idx]['subject-SEEK']
         ele_SEEK = self.dictonary.iloc[idx]['ele-SEEK']
 
+        # Encode SEEK
         subject_SEEK_1hot = SEEK(subject_SEEK).one_hot_encode()
-        ele_SEEK_1hot = SEEK(ele_SEEK).one_hot_encode()   
+        ele_SEEK_1hot = SEEK(ele_SEEK).one_hot_encode()
 
-        return preprocessed_image, subject_id, ele_id, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
+        return preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
     
+    def _load_ear(self, ear_path):
+        """Helper function to load ear images, returning zeros if path is NaN."""
+        if pd.notna(ear_path):
+            ear_image_path = self.image_dir / ear_path
+            ear_image = Image.open(ear_image_path).convert('RGB')
+            return transforms.ToTensor()(ear_image)
+        return torch.zeros(3, 224, 224)
+
     def get_original_image(self, idx):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
         image = Image.open(image_path).convert('RGB')
         return image
     
-    def print_image(self, idx, print_with_transform = True):
+    def print_image(self, idx, print_with_transform=True):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
         print(image_path)
         image = Image.open(image_path).convert('RGB')
         
-        if self.transform is not None and print_with_transform is True:
+        if self.transform is not None and print_with_transform:
             image = self.transform(image)
         
         # Display the image using matplotlib
-        plt.imshow(image)
+        plt.imshow(image.permute(1, 2, 0))  # Unpermute for display (C, H, W -> H, W, C)
         plt.axis('off')
         plt.show()
         
-        subject_id = self.dictonary.iloc[idx]['subject_id']
-        ele_id = self.dictonary.iloc[idx]['ele_id']
-        identified = self.dictonary.iloc[idx]['#season'] == 'EFA_IDI'
-        subject_SEEK = self.dictonary.iloc[idx]['subject-SEEK']
-        ele_SEEK = self.dictonary.iloc[idx]['ele-SEEK']
-
+        # Print metadata
         label = {
-            'subject_id': subject_id,
-            'ele_id': ele_id,
-            'identified': identified,
-            'subject_SEEK': subject_SEEK,
-            'ele_SEEK': ele_SEEK
+            'subject_id': self.dictonary.iloc[idx]['subject_id'],
+            'ele_id': self.dictonary.iloc[idx]['ele_id'],
+            'identified': self.dictonary.iloc[idx]['#season'] == 'EFA_IDI',
+            'subject_SEEK': self.dictonary.iloc[idx]['subject-SEEK'],
+            'ele_SEEK': self.dictonary.iloc[idx]['ele-SEEK']
         }
         print(label)
         return image, label
+
     
     def split_along_encounters(self, split_sizes = [0.7,0.15,0.15],hour_delta = 1):
         from sklearn.model_selection import train_test_split
