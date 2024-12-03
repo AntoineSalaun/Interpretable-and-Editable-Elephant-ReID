@@ -104,37 +104,65 @@ class EleHandler(data.Dataset):
         print(label)
         return image, label
 
+    def get_IDI_indices(self):
+        return self.dictonary[self.dictonary['#season'] == 'EFA_IDI'].index.tolist()
     
-    def split_along_encounters(self, split_sizes = [0.7,0.15,0.15],hour_delta = 1):
+    def get_IDU_indices(self):
+        return self.dictonary[self.dictonary['#season'] == 'EFA_IDU'].index.tolist()
+    
+    def split_along_encounters(self, split_sizes=[0.7, 0.15, 0.15], hour_delta=1, identification=None):
         from sklearn.model_selection import train_test_split
 
-        if sum(split_sizes) != 1: raise ValueError("Split sizes should sum to 1")
+        # Ensure split sizes sum to 1
+        if sum(split_sizes) != 1:
+            raise ValueError("Split sizes should sum to 1")
+
+        # Standardize the #season column
+        self.dictonary['#season'] = self.dictonary['#season'].str.strip().str.upper()
+
+        # Filter dictionary based on identification
+        if identification == 'EFA_IDI':
+            filtere_dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+        elif identification == 'EFA_IDU':
+            filtere_dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDU']
+        else:
+            filtere_dictonary = self.dictonary
+
+        # Verify filtering worked correctly
+        print("Filtered dictionary #season unique values:", filtere_dictonary['#season'].unique())
+        if identification == 'EFA_IDI' and 'EFA_IDU' in filtere_dictonary['#season'].unique():
+            raise ValueError("Filtered dictionary for EFA_IDI still contains EFA_IDU.")
+        elif identification == 'EFA_IDU' and 'EFA_IDI' in filtere_dictonary['#season'].unique():
+            raise ValueError("Filtered dictionary for EFA_IDU still contains EFA_IDI.")
 
         # Ensure 'picture_time' is sorted
-        self.dictonary.sort_values(by='picture_time', inplace=True)
+        filtere_dictonary.sort_values(by='picture_time', inplace=True)
 
         # Create a new column 'group' to group images taken within an hour
-        self.dictonary['group'] = (pd.to_datetime(self.dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
+        filtere_dictonary['group'] = (pd.to_datetime(filtere_dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
 
         # Split the groups into train, validation, and test sets
-        unique_groups = self.dictonary['group'].unique()
+        unique_groups = filtere_dictonary['group'].unique()
         
         train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42)
         val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42)
 
         # Get the indices for each group
-        train_indices = self.dictonary[self.dictonary['group'].isin(train_groups)].index.tolist()
-        val_indices = self.dictonary[self.dictonary['group'].isin(val_groups)].index.tolist()
-        test_indices = self.dictonary[self.dictonary['group'].isin(test_groups)].index.tolist()
+        train_indices = filtere_dictonary[filtere_dictonary['group'].isin(train_groups)].index.tolist()
+        val_indices = filtere_dictonary[filtere_dictonary['group'].isin(val_groups)].index.tolist()
+        test_indices = filtere_dictonary[filtere_dictonary['group'].isin(test_groups)].index.tolist()
 
         print(f"Train indices: {len(train_indices)}, Validation indices: {len(val_indices)}, Test indices: {len(test_indices)}")
 
         return train_indices, val_indices, test_indices
     
 
+
 if __name__ == "__main__":
     EleHandle = EleHandler()
     # Select a random index
-    random_idx = random.randint(0, len(EleHandle) - 1)
-    EleHandle.print_image(random_idx)
-    EleHandle.print_image(0)
+    #random_idx = random.randint(0, len(EleHandle) - 1)
+    #EleHandle.print_image(random_idx)
+    #EleHandle.print_image(0)
+
+    EleHandle.split_along_encounters(identification='EFE_IDI')
