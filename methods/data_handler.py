@@ -15,7 +15,9 @@ from seek_code import SEEK
 class EleHandler(data.Dataset):
     def __init__(self, dataset_dir=Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse'), 
                  dictonary_path=Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary.csv'), 
-                 num_elephants=None, transform=None):
+                 num_elephants=None,
+                 transform=None,
+                 EFA_IDI_only=False):
         
         self.dataset_dir = dataset_dir
         self.num_elephants = num_elephants
@@ -35,6 +37,9 @@ class EleHandler(data.Dataset):
         self.dictonary = pd.read_csv(dictonary_path)
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
+
+        if EFA_IDI_only:
+            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
 
     def __len__(self):
         return len(self.dictonary)
@@ -116,41 +121,44 @@ class EleHandler(data.Dataset):
         # Ensure split sizes sum to 1
         if sum(split_sizes) != 1:
             raise ValueError("Split sizes should sum to 1")
-
+        '''
         # Standardize the #season column
         self.dictonary['#season'] = self.dictonary['#season'].str.strip().str.upper()
 
         # Filter dictionary based on identification
         if identification == 'EFA_IDI':
-            filtere_dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+            print('filtering onlz the EFA_IDI')
+            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
         elif identification == 'EFA_IDU':
-            filtere_dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDU']
+            print('filtering onlz the EFA_IDU')
+            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDU']
         else:
-            filtere_dictonary = self.dictonary
+            print('Sampling from both EFA_IDI and EFA_IDU')
+            self.dictonary = self.dictonary
 
         # Verify filtering worked correctly
-        print("Filtered dictionary #season unique values:", filtere_dictonary['#season'].unique())
-        if identification == 'EFA_IDI' and 'EFA_IDU' in filtere_dictonary['#season'].unique():
+        print("Filtered dictionary #season unique values:", self.dictonary['#season'].unique())
+        if identification == 'EFA_IDI' and 'EFA_IDU' in self.dictonary['#season'].unique():
             raise ValueError("Filtered dictionary for EFA_IDI still contains EFA_IDU.")
-        elif identification == 'EFA_IDU' and 'EFA_IDI' in filtere_dictonary['#season'].unique():
+        elif identification == 'EFA_IDU' and 'EFA_IDI' in self.dictonary['#season'].unique():
             raise ValueError("Filtered dictionary for EFA_IDU still contains EFA_IDI.")
-
+        '''
         # Ensure 'picture_time' is sorted
-        filtere_dictonary.sort_values(by='picture_time', inplace=True)
+        self.dictonary.sort_values(by='picture_time', inplace=True)
 
         # Create a new column 'group' to group images taken within an hour
-        filtere_dictonary['group'] = (pd.to_datetime(filtere_dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
+        self.dictonary['group'] = (pd.to_datetime(self.dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
 
         # Split the groups into train, validation, and test sets
-        unique_groups = filtere_dictonary['group'].unique()
+        unique_groups = self.dictonary['group'].unique()
         
         train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42)
         val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42)
 
         # Get the indices for each group
-        train_indices = filtere_dictonary[filtere_dictonary['group'].isin(train_groups)].index.tolist()
-        val_indices = filtere_dictonary[filtere_dictonary['group'].isin(val_groups)].index.tolist()
-        test_indices = filtere_dictonary[filtere_dictonary['group'].isin(test_groups)].index.tolist()
+        train_indices = self.dictonary[self.dictonary['group'].isin(train_groups)].index.tolist()
+        val_indices = self.dictonary[self.dictonary['group'].isin(val_groups)].index.tolist()
+        test_indices = self.dictonary[self.dictonary['group'].isin(test_groups)].index.tolist()
 
         print(f"Train indices: {len(train_indices)}, Validation indices: {len(val_indices)}, Test indices: {len(test_indices)}")
 
