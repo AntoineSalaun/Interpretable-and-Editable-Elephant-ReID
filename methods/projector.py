@@ -94,16 +94,18 @@ class Projector(nn.Module):
         return epoch_loss, epoch_accuracy
 
 
-    def train(self, train_loader, val_loader,  backbone , concept_head, classifier, num_epochs=10, intervention_fn = None):
-
-        # Initialize projector weights
-        for layer in self.layer:
-            if isinstance(layer, nn.Linear):
-                nn.init.kaiming_normal_(layer.weight, nonlinearity='leaky_relu')
-                if layer.bias is not None:
-                    nn.init.constant_(layer.bias, 0)
+    def train(self, train_loader, val_loader,  backbone , concept_head, classifier, num_epochs=10, intervention_fn = None, reset_wegihts = True):
         
-        print('Training projector, reinitialized weights\nConcept head parameters require gradients:', any(param.requires_grad for param in concept_head.layer.parameters()), '\nClassifier parameters require gradients:', any(param.requires_grad for param in classifier.layer.parameters()), '\nBackbone parameters require gradients:', any(param.requires_grad for param in backbone.layer.parameters()), '\nProjector parameters require gradients:', any(param.requires_grad for param in self.layer.parameters()))
+        print('training projector- ', 'weights are reset' if reset_wegihts else 'weights are not reset')
+        # Initialize projector weights
+        if reset_wegihts:
+            for layer in self.layer:
+                if isinstance(layer, nn.Linear):
+                    nn.init.kaiming_normal_(layer.weight, nonlinearity='leaky_relu')
+                    if layer.bias is not None:
+                        nn.init.constant_(layer.bias, 0)
+            
+        print('Concept head parameters require gradients:', any(param.requires_grad for param in concept_head.layer.parameters()), '\nClassifier parameters require gradients:', any(param.requires_grad for param in classifier.layer.parameters()), '\nBackbone parameters require gradients:', any(param.requires_grad for param in backbone.layer.parameters()), '\nProjector parameters require gradients:', any(param.requires_grad for param in self.layer.parameters()))
 
         history = []
         best_val_accuracy = 0

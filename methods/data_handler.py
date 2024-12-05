@@ -151,6 +151,7 @@ class EleHandler(data.Dataset):
 
         # Split the groups into train, validation, and test sets
         unique_groups = self.dictonary['group'].unique()
+        print(f"Unique groups: {len(unique_groups)}")
         
         train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42)
         val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42)
@@ -164,7 +165,6 @@ class EleHandler(data.Dataset):
 
         return train_indices, val_indices, test_indices
     
-
 
 if __name__ == "__main__":
     EleHandle = EleHandler()
