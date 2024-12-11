@@ -13,11 +13,11 @@ class Projector(nn.Module):
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.layer = nn.Sequential(
-            nn.Linear(63, 512),
-            nn.LeakyReLU(),
-            nn.Linear(512, 2304),
-            nn.LeakyReLU()
+        self.layer =    nn.Sequential(
+                        nn.Linear(63, 512),
+                        nn.LeakyReLU(),
+                        nn.Linear(512, 2304),
+                        nn.LeakyReLU()
         ).to(self.device)
 
         self.loss_fn = criterion
@@ -63,18 +63,16 @@ class Projector(nn.Module):
                     #print('No intervention function applied, edited_concepts = hard_predicted_concepts')
                     edited_concepts = hard_predicted_concepts
 
-            
             # Projecting the concepts back to the embeddings space
             projected_concepts = self.layer(edited_concepts)
             # I want to do this > loss = criterion(projected_concepts, embeddings)
-            
+
             # We add the concepts projected back to the intiial embeddings space
             edited_embeddings = projected_concepts + embeddings
 
             # Now we can pass the edited embeddings to the classifier
             logits = cl.layer(edited_embeddings)
 
-            # Compute the CE loss
             loss = self.loss_fn(logits, ele_id_label)
 
             # Backward pass and optimization
@@ -120,7 +118,7 @@ class Projector(nn.Module):
                 best_val_accuracy = val_acc
                 best_weights = self.layer.state_dict()
 
-            history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc, "val_acc_avg": val_acc})
+            history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc*100, "val_acc_avg": val_acc*100})
             print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Train Accuracy: {train_acc*100:.2f}% - Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc*100:.2f}%")
 
         # Save best weights
@@ -134,6 +132,8 @@ class Projector(nn.Module):
 
         test_loss, test_accuracy = self.epoch_pass(test_loader, backbone, ch=concept_head, cl=classifier, training=False, intervention_fn = intervention_fn)
         print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy*100:.2f}%")
+
+        with open(self.experiment_dir / 'projector_test_accuracy.txt', 'w') as f: f.write(f"{test_accuracy*100:.2f}")
 
     def freeze(self):
         self.layer.eval()

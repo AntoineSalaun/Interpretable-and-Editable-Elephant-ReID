@@ -17,7 +17,7 @@ class EleHandler(data.Dataset):
                  dictonary_path=Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary.csv'), 
                  num_elephants=None,
                  transform=None,
-                 EFA_IDI_only=False):
+                 subset=None):
         
         self.dataset_dir = dataset_dir
         self.num_elephants = num_elephants
@@ -38,8 +38,33 @@ class EleHandler(data.Dataset):
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if EFA_IDI_only:
+        if subset in ['IDI_training', 'IDI_retrieval']:
+            # Filter the dictionary to include only EFA_IDI season
             self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+            
+            # Get the unique elephant IDs
+            unique_ele_ids = self.dictonary['ele_id'].unique()
+            
+            # Shuffle the elephant IDs randomly
+            random.seed(42)  # Set a seed for reproducibility
+            #shuffled_ele_ids = random.sample(list(unique_ele_ids), len(unique_ele_ids))
+            
+            # Split the elephant IDs into training (70%) and retrieval (30%)
+            split_idx = int(len(unique_ele_ids) * 0.70)
+            training_ele_ids = set(unique_ele_ids[:split_idx])
+            retrieval_ele_ids = set(unique_ele_ids[split_idx:])
+            
+            # Ensure no overlap by assigning all images of each `ele_id` to one subset
+            if subset == 'IDI_training':
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(training_ele_ids)]
+            elif subset == 'IDI_retrieval':
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(retrieval_ele_ids)]
+            
+            # Remap `ele_id` for the current subset
+            unique_subset_ele_ids = sorted(self.dictonary['ele_id'].unique())
+            self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(unique_subset_ele_ids)}
+            self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
+                    
 
     def __len__(self):
         return len(self.dictonary)
@@ -121,28 +146,7 @@ class EleHandler(data.Dataset):
         # Ensure split sizes sum to 1
         if sum(split_sizes) != 1:
             raise ValueError("Split sizes should sum to 1")
-        '''
-        # Standardize the #season column
-        self.dictonary['#season'] = self.dictonary['#season'].str.strip().str.upper()
 
-        # Filter dictionary based on identification
-        if identification == 'EFA_IDI':
-            print('filtering onlz the EFA_IDI')
-            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
-        elif identification == 'EFA_IDU':
-            print('filtering onlz the EFA_IDU')
-            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDU']
-        else:
-            print('Sampling from both EFA_IDI and EFA_IDU')
-            self.dictonary = self.dictonary
-
-        # Verify filtering worked correctly
-        print("Filtered dictionary #season unique values:", self.dictonary['#season'].unique())
-        if identification == 'EFA_IDI' and 'EFA_IDU' in self.dictonary['#season'].unique():
-            raise ValueError("Filtered dictionary for EFA_IDI still contains EFA_IDU.")
-        elif identification == 'EFA_IDU' and 'EFA_IDI' in self.dictonary['#season'].unique():
-            raise ValueError("Filtered dictionary for EFA_IDU still contains EFA_IDI.")
-        '''
         # Ensure 'picture_time' is sorted
         self.dictonary.sort_values(by='picture_time', inplace=True)
 
@@ -153,8 +157,8 @@ class EleHandler(data.Dataset):
         unique_groups = self.dictonary['group'].unique()
         print(f"Unique groups: {len(unique_groups)}")
         
-        train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42)
-        val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42)
+        train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42, shuffle=True)
+        val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42, shuffle=True)
 
         # Get the indices for each group
         train_indices = self.dictonary[self.dictonary['group'].isin(train_groups)].index.tolist()

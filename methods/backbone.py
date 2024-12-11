@@ -8,10 +8,10 @@ import torch.nn as nn
 
 
 class Backbone(nn.Module):
-    def __init__(self, with_ears = True, pretraining = "savannah_elephants", experiment_code = None):
+    def __init__(self, with_ears = True, pretraining = None, experiment_code = None):
         self.device = 'cuda' if torch.cuda.is_available() else "cpu"
 
-        super(Backbone, self).__init__()
+        super().__init__()
 
         # Load the backbone model
         self.layer = timm.create_model("hf-hub:BVRA/MegaDescriptor-T-224", pretrained=True, num_classes=0)
@@ -19,8 +19,13 @@ class Backbone(nn.Module):
             state_dict = torch.load(Path(__file__).parent.parent / "weights/savanna_elephants_md_v2_epoch_60.pt", map_location=self.device, weights_only=False)
         elif pretraining == "forest_elephants":
             state_dict = torch.load(Path(__file__).parent.parent / "weights/forest_elephants-reid_weights.pt", map_location=self.device, weights_only=False)
+        elif pretraining == None:
+            print("No pretraining, using MegaDescriptor")
+            state_dict = torch.load(Path(__file__).parent.parent / "weights/forest_elephants-reid_weights.pt", map_location=self.device, weights_only=False)
 
-        self.layer.load_state_dict(state_dict["model"] if "optimizer" in state_dict else state_dict)
+        if pretraining in ["savannah_elephants", "forest_elephants"]:   
+            self.layer.load_state_dict(state_dict["model"] if "optimizer" in state_dict else state_dict)
+
         self.layer.to(self.device)
         self.freeze()
 

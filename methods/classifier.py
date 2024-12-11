@@ -6,17 +6,20 @@ import torch.nn as nn
 import torch.optim as optim
 
 class Classifier(nn.Module):
-    def __init__(self, num_classes, criterion = nn.CrossEntropyLoss(), lr=0.001, experiment_code = None):
+    def __init__(self, num_classes, criterion = nn.CrossEntropyLoss(), lr=0.001, experiment_code = None, softmax = True):
         
         super().__init__()
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # layer 
-        self.layer = nn.Sequential(
+        if softmax:
+            self.layer = nn.Sequential(
             nn.Linear(2304, num_classes),
             nn.Softmax()
-        ).to(self.device)
+            ).to(self.device)
+        else:
+            self.layer = nn.Linear(2304, num_classes).to(self.device)
 
         # Load default weights
         if (Path.Path.cwd().parent / 'weights' / 'classifier_w.pt').exists():
@@ -43,40 +46,41 @@ class Classifier(nn.Module):
 
 
 
-    def epoch_pass(self, loader, backbone, training = True):
-    
+    def epoch_pass(self, loader, backbone, training=True):
         self.layer.train() if training else self.layer.eval()
 
-        total_loss, total_accuracy, total_batches = 0,0,0
+        total_loss = 0
+        total_correct = 0
+        total_samples = 0
 
         for batch in loader:
-            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device),  batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device)
-            #print(ele_id_label)
-            
-            embeddings = backbone.forward(images, left_ears, right_ears)
-            
-            # Forward pass
-            logits = self.layer(embeddings)
-            
-            # Loss with integer labels
-            loss = self.loss_fn(logits, ele_id_label)  
-            total_loss += loss.item()
+            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device),
 
-            # Compute metrics
-            total_accuracy += self.compute_accuracy(logits, ele_id_label)
-            total_batches += 1
+            # Forward pass
+            embeddings = backbone.forward(images, left_ears, right_ears)
+            logits = self.layer(embeddings)
+
+            # Loss computation
+            loss = self.loss_fn(logits, ele_id_label)
+            total_loss += loss.item() * len(ele_id_label)  # Weighted by batch size
+
+            # Accuracy computation
+            _, predicted = torch.max(logits, dim=1)
+            total_correct += (predicted == ele_id_label).sum().item()
+            total_samples += len(ele_id_label)
 
             # Backward pass and optimization
             if training:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-        
-        # accumulate loss and accuracy
-        epoch_loss = total_loss / len(loader)
-        epoch_accuracy = total_accuracy / total_batches
+
+        # Compute weighted loss and accuracy
+        epoch_loss = total_loss / total_samples
+        epoch_accuracy = total_correct / total_samples
 
         return epoch_loss, epoch_accuracy
+
 
 
 
@@ -100,7 +104,7 @@ class Classifier(nn.Module):
             train_loss, train_acc = self.epoch_pass(train_loader, backbone, training=True)
             val_loss, val_acc = self.epoch_pass(val_loader, backbone, training=False)
 
-            history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc*100, "val_acc_avg": val_acc, "train_acc_whole_code": train_acc*100, "val_acc_whole_code": val_acc})
+            history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc*100, "val_acc_avg": val_acc*100, "train_acc_whole_code": train_acc*100, "val_acc_whole_code": val_acc*100})
 
             # Save best model weights
             if val_acc > best_val_accuracy:
