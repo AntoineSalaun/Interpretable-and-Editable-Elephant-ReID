@@ -128,10 +128,10 @@ class Projector(nn.Module):
         history_df = pd.DataFrame(history)
         history_df.to_csv(self.experiment_dir / 'projector_training_history.csv', index=False)
 
-    def test(self, test_loader, backbone, classifier, concept_head, intervention_fn = None):
+    def test(self, test_loader, backbone, concept_head, classifier,  intervention_fn = None):
 
         test_loss, test_accuracy = self.epoch_pass(test_loader, backbone, ch=concept_head, cl=classifier, training=False, intervention_fn = intervention_fn)
-        print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy*100:.2f}%")
+        print(f"PROJECTOR - Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy*100:.2f}%")
 
         with open(self.experiment_dir / 'projector_test_accuracy.txt', 'w') as f: f.write(f"{test_accuracy*100:.2f}")
 

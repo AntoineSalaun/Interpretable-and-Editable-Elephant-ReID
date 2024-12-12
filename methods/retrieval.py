@@ -2,12 +2,13 @@ import torch
 from tqdm import tqdm
 from seek_code import SEEK
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 
 class Retrieval:
     def __init__(self):
         pass
 
-    def collect_edited_embeddings(loader, backbone, concept_head, projector, intervention_fn =None):
+    def collect_edited_embeddings(self, loader, backbone, concept_head, projector, intervention_fn =None):
         print('collecting the embeddings')
         backbone.freeze()
         concept_head.freeze()
@@ -45,7 +46,7 @@ class Retrieval:
         
         return collected_embeddings, collected_labels
 
-    def collect_MD_embeddings(loader, backbone, intervention_fn =None):
+    def collect_MD_embeddings(self, loader, backbone, intervention_fn =None):
 
         backbone.freeze()
         
@@ -68,7 +69,7 @@ class Retrieval:
 
     from torch.nn import functional as F
 
-    def cosine_similarity_matrix(query_embeddings, gallery_embeddings):
+    def cosine_similarity_matrix(self, query_embeddings, gallery_embeddings):
         """
         Compute the cosine similarity matrix between query and gallery embeddings.
 
@@ -86,63 +87,95 @@ class Retrieval:
         # Compute cosine similarity
         similarity_matrix = torch.matmul(query_embeddings, gallery_embeddings.T)
 
+        print('gallery embeddings shape:', gallery_embeddings.shape)
+        print('query embeddings shape:', query_embeddings.shape)
+        print('similarity matrix shape:', similarity_matrix.shape)
+
+        plt.hist(similarity_matrix.flatten().cpu().numpy(), bins=100)   
+        plt.show()
+
         return similarity_matrix
 
 
-    def compute_retrieval_accuracy(similarity_matrix, query_labels, gallery_labels, k_values=(1, 5)):
+    def compute_retrieval_accuracy(self, similarity_matrix, query_labels, gallery_labels, top_k=1):
         """
-        Compute top-k retrieval accuracy using a precomputed similarity matrix.
+        Compute retrieval accuracy from a cosine similarity matrix.
 
         Args:
-            similarity_matrix (torch.Tensor): Precomputed similarity matrix (num_queries, num_gallery).
-            query_labels (torch.Tensor): Tensor of query labels (num_queries,).
-            gallery_labels (torch.Tensor): Tensor of gallery labels (num_gallery,).
-            k_values (tuple): Top-k values to compute accuracy for (default: top-1 and top-5).
+            similarity_matrix (torch.Tensor): Similarity matrix (num_queries, num_gallery).
+            query_labels (torch.Tensor): Labels for query embeddings (num_queries,).
+            gallery_labels (torch.Tensor): Labels for gallery embeddings (num_gallery,).
+            top_k (int): Number of top matches to consider for accuracy.
 
         Returns:
-            dict: Dictionary with top-k accuracy values.
+            float: Retrieval accuracy as a percentage.
         """
-        # Sort gallery indices by similarity (descending order)
-        sorted_indices = torch.argsort(similarity_matrix, dim=1, descending=True)  # Shape: (num_queries, num_gallery)
-
-        # Initialize accuracy dictionary
-        topk_accuracies = {f"top-{k}": 0 for k in k_values}
-
-        # Compute top-k accuracies
-        for k in k_values:
-            # Get top-k indices for each query
-            topk_indices = sorted_indices[:, :k]  # Shape: (num_queries, k)
-            
-            # Check if ground truth label is in the top-k predictions
-            correct_matches = 0
-            for i, query_label in enumerate(query_labels):
-                if query_label in gallery_labels[topk_indices[i]]:
-                    correct_matches += 1
-            
-            # Compute accuracy
-            topk_accuracies[f"top-{k}"] = correct_matches / len(query_labels)
-
-        return topk_accuracies        
-
-
-
-    def perform_retrieval(gallery_loader, query_loader, ba, ch = None, pr = None, k_values=(1, 5, 20, 100)):
+        # Get the indices of the top-k gallery items for each query
+        top_k_indices = torch.topk(similarity_matrix, k=top_k, dim=1, largest=True).indices
         
-        if ch is None and pr is None:
-            gallery_embeddings, gallery_labels = Retrieval.collect_MD_embeddings(gallery_loader, ba)
-            query_embeddings, query_labels = Retrieval.collect_MD_embeddings(query_loader, ba)
+        # Match query labels with gallery labels for the top-k indices
+        correct_matches = 0
+        for i, query_label in enumerate(query_labels):
+            top_k_labels = gallery_labels[top_k_indices[i]]
+            if query_label in top_k_labels:
+                correct_matches += 1
+        
+        # Calculate accuracy
+        accuracy = correct_matches / len(query_labels) * 100
+        return accuracy
+        
+    def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k=1):
+        """
+        Compute Recall@k for a retrieval task.
+
+        Args:
+            similarity_matrix (torch.Tensor): Similarity matrix (num_queries, num_gallery).
+            query_labels (torch.Tensor): Labels for query embeddings (num_queries,).
+            gallery_labels (torch.Tensor): Labels for gallery embeddings (num_gallery,).
+            k (int): Number of top results to consider.
+
+        Returns:
+            float: Recall@k as a percentage.
+        """
+        # Get the indices of the top-k gallery items for each query
+        top_k_indices = torch.topk(similarity_matrix, k=k, dim=1, largest=True).indices
+        print('top_k_indices:', top_k_indices[:10])
+        print('gallery labels:', gallery_labels[top_k_indices[:10]])
+        print('10 first query labels:', query_labels[:10])
+
+        # Count the number of relevant items in the top-k results for each query
+        total_relevant = 0
+        for i, query_label in enumerate(query_labels):
+            top_k_labels = gallery_labels[top_k_indices[i]]
+            # Count if the query_label appears in the top-k labels
+            if query_label in top_k_labels:
+                total_relevant += 1
+        
+        # Calculate Recall@k
+        recall_at_k = total_relevant / len(query_labels) * 100
+        return recall_at_k
+
+
+    def perform_retrieval(self, query_loader, gallery_loader, backbone, concept_head= None, projector= None, k_list = [1, 5, 10]):
+        
+        if concept_head is not None and projector is not None:
+            query_embeddings, query_labels = self.collect_edited_embeddings(query_loader, backbone, concept_head, projector)
+            gallery_embeddings, gallery_labels = self.collect_edited_embeddings(gallery_loader, backbone, concept_head, projector)
         else:
-            gallery_embeddings, gallery_labels = Retrieval.collect_edited_embeddings(gallery_loader, ba, ch, pr)
-            query_embeddings, query_labels =  Retrieval.collect_edited_embeddings(query_loader, ba, ch, pr)
+            query_embeddings, query_labels = self.collect_MD_embeddings(query_loader, backbone)
+            gallery_embeddings, gallery_labels = self.collect_MD_embeddings(gallery_loader, backbone)
+        
+        similarity_matrix = self.cosine_similarity_matrix(query_embeddings, gallery_embeddings)
+        
+        results = {}
 
-        #gallery_embeddings, gallery_labels = collect_MD_embeddings(gallery_loader, ba)
-        #query_embeddings, query_labels = collect_MD_embeddings(query_loader, ba)
+        for k in k_list:
+            # Use the recall and accuracy functions defined earlier
+            recall = self.compute_recall_at_k(similarity_matrix, query_labels, gallery_labels, k=k)
+            accuracy = self.compute_retrieval_accuracy(similarity_matrix, query_labels, gallery_labels, top_k=k)
 
-        # Step 1: Compute the similarity matrix
-        similarity_matrix =  Retrieval.cosine_similarity_matrix(query_embeddings, gallery_embeddings)
+            # Store the results
+            results[k] = {"recall": recall, "accuracy": accuracy}
 
-        #print(similarity_matrix)
-
-        # Step 2: Compute top-k retrieval accuracy
-        accuracies =  Retrieval.compute_retrieval_accuracy(similarity_matrix, query_labels, gallery_labels, k_values=k_values)
-        print(accuracies)
+        print(results)
+        return results

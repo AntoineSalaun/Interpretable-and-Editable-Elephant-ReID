@@ -54,7 +54,9 @@ class Classifier(nn.Module):
         total_samples = 0
 
         for batch in loader:
-            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device),
+            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device)
+
+            #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
 
             # Forward pass
             embeddings = backbone.forward(images, left_ears, right_ears)
