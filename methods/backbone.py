@@ -55,3 +55,25 @@ class Backbone(nn.Module):
                 embeddings = torch.cat((embeddings, left_embeddings, right_embeddings), dim=1)
 
         return embeddings
+    
+
+class ResNetBackbone(nn.Module):
+   def __init__(self, with_ears = True, pretraining = None, experiment_code = None):
+        self.device = 'cuda' if torch.cuda.is_available() else "cpu"
+
+        super().__init__()
+
+        # Load the backbone model
+        self.layer = timm.create_model("resnet50", pretrained=True)
+
+    def forward(self, images, left_ears = None, right_ears = None):
+        
+        with torch.no_grad():
+            embeddings = self.layer(images)
+                
+            if self.with_ears:
+                left_embeddings = self.layer(left_ears.to(self.device))
+                right_embeddings = self.layer(right_ears.to(self.device))
+                embeddings = torch.cat((embeddings, left_embeddings, right_embeddings), dim=1)
+
+        return embeddings

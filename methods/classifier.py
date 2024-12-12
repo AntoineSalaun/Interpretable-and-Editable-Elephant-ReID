@@ -47,7 +47,11 @@ class Classifier(nn.Module):
 
 
     def epoch_pass(self, loader, backbone, training=True):
-        self.layer.train() if training else self.layer.eval()
+        backbone.eval()
+        if training == True:
+            self.layer.train()
+        else:
+            self.layer.eval()
 
         total_loss = 0
         total_correct = 0
@@ -72,7 +76,7 @@ class Classifier(nn.Module):
             total_samples += len(ele_id_label)
 
             # Backward pass and optimization
-            if training:
+            if training == True:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
