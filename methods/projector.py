@@ -113,7 +113,7 @@ class Projector(nn.Module):
             train_loss, train_acc = self.epoch_pass(train_loader, backbone, ch=concept_head, cl=classifier, training=True, intervention_fn = intervention_fn)
             val_loss, val_acc = self.epoch_pass(val_loader, backbone, ch=concept_head, cl=classifier, training=False, intervention_fn = intervention_fn)
 
-                        # Save best model weights
+            # Save best model weights
             if val_acc > best_val_accuracy:
                 best_val_accuracy = val_acc
                 best_weights = self.layer.state_dict()

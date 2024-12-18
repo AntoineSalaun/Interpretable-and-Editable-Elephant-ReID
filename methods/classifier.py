@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 class Classifier(nn.Module):
-    def __init__(self, num_classes, criterion = nn.CrossEntropyLoss(), lr=0.001, experiment_code = None, softmax = True):
+    def __init__(self, num_classes, criterion = nn.CrossEntropyLoss(), lr=0.001, experiment_code = None, softmax = False, dropout = False, wd = 0.0):
         
         super().__init__()
         
@@ -18,6 +18,13 @@ class Classifier(nn.Module):
             nn.Linear(2304, num_classes),
             nn.Softmax()
             ).to(self.device)
+        elif dropout:
+            self.layer = nn.Sequential(
+                nn.Linear(2304, 512),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),
+                nn.Linear(512, num_classes)
+            ).to(self.device)
         else:
             self.layer = nn.Linear(2304, num_classes).to(self.device)
 
@@ -28,7 +35,7 @@ class Classifier(nn.Module):
 
 
         self.loss_fn = criterion
-        self.optimizer = optim.Adam(self.layer.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.layer.parameters(), lr=lr, weight_decay=wd)
         
         exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.experiment_dir = Path.Path.cwd().parent / 'experiments' / f'exp_{exp_code}'
@@ -59,7 +66,7 @@ class Classifier(nn.Module):
 
         for batch in loader:
             images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device)
-
+            
             #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
 
             # Forward pass

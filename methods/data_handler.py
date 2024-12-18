@@ -38,9 +38,14 @@ class EleHandler(data.Dataset):
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if subset in ['IDI_classification', 'IDI_retrieval']:
+        if subset in ['EFA_IDI', 'IDI_with_6_images', 'IDI_classification', 'IDI_retrieval']:
             # Filter the dictionary to include only EFA_IDI season
             self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+            if subset == 'IDI_with_6_images':
+                # Filter to include only ele_id that are present at least 9 times
+                ele_id_counts = self.dictonary['ele_id'].value_counts()
+                valid_ele_ids = ele_id_counts[ele_id_counts >= 6].index
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)]
             
             # Get the unique elephant IDs
             unique_ele_ids = self.dictonary['ele_id'].unique()
@@ -183,7 +188,39 @@ class EleHandler(data.Dataset):
 
         return train_indices, val_indices, test_indices
 
-        
+    def split_perpendicular_to_elephants(self, split_sizes=[0.6, 0.2, 0.2], hour_delta=1):
+        # Ensure split sizes sum to 1
+        if sum(split_sizes) != 1:
+            raise ValueError("Split sizes should sum to 1")
+
+        # Work on a copy of the dictionary to avoid modifying the original
+        dictonary_copy = self.dictonary.copy()
+
+        # Ensure 'picture_time' is sorted
+        dictonary_copy.sort_values(by='picture_time', inplace=True)
+
+        # Create a new column 'group' to group images taken within an hour
+        dictonary_copy['group'] = (pd.to_datetime(dictonary_copy['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
+
+        # Get unique elephant IDs
+        unique_ele_ids = dictonary_copy['ele_id'].unique()
+
+        # Ensure each set contains all elephants
+        train_indices = []
+        val_indices = []
+        test_indices = []
+
+        for ele_id in unique_ele_ids:
+            ele_id_indices = dictonary_copy[dictonary_copy['ele_id'] == ele_id].index.tolist()
+            train_count = int(len(ele_id_indices) * split_sizes[0])
+            val_count = int(len(ele_id_indices) * split_sizes[1])
+            test_count = len(ele_id_indices) - train_count - val_count
+
+            train_indices.extend(ele_id_indices[:train_count])
+            val_indices.extend(ele_id_indices[train_count:train_count + val_count])
+            test_indices.extend(ele_id_indices[train_count + val_count:])
+
+        return train_indices, val_indices, test_indices
 
 if __name__ == "__main__":
     EleHandle = EleHandler()

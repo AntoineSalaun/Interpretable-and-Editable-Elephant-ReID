@@ -117,8 +117,7 @@ class Retrieval:
         correct_matches = 0
         for i, query_label in enumerate(query_labels):
             top_k_labels = gallery_labels[top_k_indices[i]]
-            if query_label in top_k_labels:
-                correct_matches += 1
+            correct_matches += torch.mean(top_k_labels==query_label) # MODIFY THIS TO COUNT THE NUMBER OF CORRECT MATCHES INSTEAD OF JUST 1
         
         # Calculate accuracy
         accuracy = correct_matches / len(query_labels)

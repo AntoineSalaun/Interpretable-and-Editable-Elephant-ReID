@@ -14,11 +14,17 @@ import torch.optim as optim
 import pandas as pd
 
 
-dataset = EleHandler(subset='EFA_IDI')
+classification_dataset = EleHandler(subset='IDI_classification') # 70% cut along elephants
+train_indices, val_indices, test_indices = classification_dataset.split_along_encounters([0.7,0.15,0.15], hour_delta=4)
 
-train_indices, val_indices, test_indices = dataset.split_along_encounters([0.7,0.15,0.15])
+train_subset = Subset(classification_dataset, train_indices)
+val_subset = Subset(classification_dataset, val_indices)
+test_subset = Subset(classification_dataset, test_indices)
 
-train_loader, val_loader, test_loader = (DataLoader(dataset, batch_size=128, sampler=RandomSampler(indices), num_workers=4) for indices in [train_indices, val_indices, test_indices])
+train_loader = DataLoader(train_subset, batch_size=128, shuffle=False, num_workers=4)
+val_loader = DataLoader(val_subset, batch_size=128, shuffle=False, num_workers=4)
+test_loader = DataLoader(test_subset, batch_size=128, shuffle=False, num_workers=4)
+
 
 # Check the values of the labels
 max_ele_label = 0
