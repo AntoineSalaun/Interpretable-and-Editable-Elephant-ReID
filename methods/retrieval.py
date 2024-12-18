@@ -91,8 +91,8 @@ class Retrieval:
         print('query embeddings shape:', query_embeddings.shape)
         print('similarity matrix shape:', similarity_matrix.shape)
 
-        plt.hist(similarity_matrix.flatten().cpu().numpy(), bins=100)   
-        plt.show()
+        #plt.hist(similarity_matrix.flatten().cpu().numpy(), bins=100)   
+        #plt.show()
 
         return similarity_matrix
 
@@ -121,7 +121,7 @@ class Retrieval:
                 correct_matches += 1
         
         # Calculate accuracy
-        accuracy = correct_matches / len(query_labels) * 100
+        accuracy = correct_matches / len(query_labels)
         return accuracy
         
     def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k=1):
@@ -139,9 +139,6 @@ class Retrieval:
         """
         # Get the indices of the top-k gallery items for each query
         top_k_indices = torch.topk(similarity_matrix, k=k, dim=1, largest=True).indices
-        print('top_k_indices:', top_k_indices[:10])
-        print('gallery labels:', gallery_labels[top_k_indices[:10]])
-        print('10 first query labels:', query_labels[:10])
 
         # Count the number of relevant items in the top-k results for each query
         total_relevant = 0
@@ -152,7 +149,7 @@ class Retrieval:
                 total_relevant += 1
         
         # Calculate Recall@k
-        recall_at_k = total_relevant / len(query_labels) * 100
+        recall_at_k = total_relevant / len(query_labels)
         return recall_at_k
 
 

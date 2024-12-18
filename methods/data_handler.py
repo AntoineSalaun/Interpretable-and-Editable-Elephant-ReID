@@ -38,7 +38,7 @@ class EleHandler(data.Dataset):
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if subset in ['IDI_training', 'IDI_retrieval']:
+        if subset in ['IDI_classification', 'IDI_retrieval']:
             # Filter the dictionary to include only EFA_IDI season
             self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
             
@@ -55,10 +55,12 @@ class EleHandler(data.Dataset):
             retrieval_ele_ids = set(unique_ele_ids[split_idx:])
             
             # Ensure no overlap by assigning all images of each `ele_id` to one subset
-            if subset == 'IDI_training':
+            if subset == 'IDI_classification':
                 self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(training_ele_ids)]
             elif subset == 'IDI_retrieval':
                 self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(retrieval_ele_ids)]
+            # Reindex the dictionary
+            self.dictonary.reset_index(drop=True, inplace=True)
             
             # Remap `ele_id` for the current subset
             unique_subset_ele_ids = sorted(self.dictonary['ele_id'].unique())
@@ -105,10 +107,19 @@ class EleHandler(data.Dataset):
             return transforms.ToTensor()(ear_image)
         return torch.zeros(3, 224, 224)
 
-    def get_original_image(self, idx):
-        image_path = self.image_dir / self.dictonary.iloc[idx]['image']
-        image = Image.open(image_path).convert('RGB')
+    def get_original_image(self, idx=None, subject_id=None):
+        if idx is not None:
+            image_path = self.image_dir / self.dictonary.iloc[idx]['image']
+        elif subject_id is not None:
+            image_path = self.image_dir / self.dictonary[self.dictonary['subject_id'] == subject_id].iloc[0]['image']
+        else:
+            raise ValueError("Either idx or subject_id must be provided")
+        
+        #print(f"Loading image: {image_path}")
+        image = Image.open(image_path).convert('RGB').copy()
         return image
+
+
     
     def print_image(self, idx, print_with_transform=True):
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
@@ -133,7 +144,7 @@ class EleHandler(data.Dataset):
         }
         print(label)
         return image, label
-
+    
     def get_IDI_indices(self):
         return self.dictonary[self.dictonary['#season'] == 'EFA_IDI'].index.tolist()
     
@@ -147,28 +158,32 @@ class EleHandler(data.Dataset):
         if sum(split_sizes) != 1:
             raise ValueError("Split sizes should sum to 1")
 
+        # Work on a copy of the dictionary to avoid modifying the original
+        dictonary_copy = self.dictonary.copy()
+
         # Ensure 'picture_time' is sorted
-        self.dictonary.sort_values(by='picture_time', inplace=True)
+        dictonary_copy.sort_values(by='picture_time', inplace=True)
 
         # Create a new column 'group' to group images taken within an hour
-        self.dictonary['group'] = (pd.to_datetime(self.dictonary['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
+        dictonary_copy['group'] = (pd.to_datetime(dictonary_copy['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
 
         # Split the groups into train, validation, and test sets
-        unique_groups = self.dictonary['group'].unique()
+        unique_groups = dictonary_copy['group'].unique()
         print(f"Unique groups: {len(unique_groups)}")
-        
+
         train_groups, temp_groups = train_test_split(unique_groups, test_size=1-split_sizes[0], random_state=42, shuffle=True)
         val_groups, test_groups = train_test_split(temp_groups, test_size=split_sizes[2]/(1-split_sizes[0]), random_state=42, shuffle=True)
 
         # Get the indices for each group
-        train_indices = self.dictonary[self.dictonary['group'].isin(train_groups)].index.tolist()
-        val_indices = self.dictonary[self.dictonary['group'].isin(val_groups)].index.tolist()
-        test_indices = self.dictonary[self.dictonary['group'].isin(test_groups)].index.tolist()
+        train_indices = dictonary_copy[dictonary_copy['group'].isin(train_groups)].index.tolist()
+        val_indices = dictonary_copy[dictonary_copy['group'].isin(val_groups)].index.tolist()
+        test_indices = dictonary_copy[dictonary_copy['group'].isin(test_groups)].index.tolist()
 
         print(f"Train indices: {len(train_indices)}, Validation indices: {len(val_indices)}, Test indices: {len(test_indices)}")
 
         return train_indices, val_indices, test_indices
-    
+
+        
 
 if __name__ == "__main__":
     EleHandle = EleHandler()
