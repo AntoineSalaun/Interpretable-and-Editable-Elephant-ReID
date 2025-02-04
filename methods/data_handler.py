@@ -38,40 +38,17 @@ class EleHandler(data.Dataset):
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if subset in ['EFA_IDI', 'IDI_with_6_images', 'IDI_classification', 'IDI_retrieval']:
-            # Filter the dictionary to include only EFA_IDI season
+
+        if subset == 'IDI_6':
+            # Filter the dictionary to include only EFA_IDI season and elephants that appear at least 6 times
             self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
-            if subset == 'IDI_with_6_images':
-                # Filter to include only ele_id that are present at least 9 times
-                ele_id_counts = self.dictonary['ele_id'].value_counts()
-                valid_ele_ids = ele_id_counts[ele_id_counts >= 6].index
-                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)]
-            
-            # Get the unique elephant IDs
-            unique_ele_ids = self.dictonary['ele_id'].unique()
-            
-            # Shuffle the elephant IDs randomly
-            random.seed(42)  # Set a seed for reproducibility
-            #shuffled_ele_ids = random.sample(list(unique_ele_ids), len(unique_ele_ids))
-            
-            # Split the elephant IDs into training (70%) and retrieval (30%)
-            split_idx = int(len(unique_ele_ids) * 0.70)
-            training_ele_ids = set(unique_ele_ids[:split_idx])
-            retrieval_ele_ids = set(unique_ele_ids[split_idx:])
-            
-            # Ensure no overlap by assigning all images of each `ele_id` to one subset
-            if subset == 'IDI_classification':
-                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(training_ele_ids)]
-            elif subset == 'IDI_retrieval':
-                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(retrieval_ele_ids)]
-            # Reindex the dictionary
-            self.dictonary.reset_index(drop=True, inplace=True)
-            
+            valid_ele_ids = self.dictonary['ele_id'].value_counts()[lambda x: x >= 6].index
+            self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
+
             # Remap `ele_id` for the current subset
-            unique_subset_ele_ids = sorted(self.dictonary['ele_id'].unique())
-            self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(unique_subset_ele_ids)}
+            self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
             self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
-                    
+                
 
     def __len__(self):
         return len(self.dictonary)
@@ -188,10 +165,9 @@ class EleHandler(data.Dataset):
 
         return train_indices, val_indices, test_indices
 
-    def split_perpendicular_to_elephants(self, split_sizes=[0.6, 0.2, 0.2], hour_delta=1):
+    def split_perpendicular_to_elephants_and_encounters(self, split_sizes=[0.5, 0.5], hour_delta=0.2):
         # Ensure split sizes sum to 1
-        if sum(split_sizes) != 1:
-            raise ValueError("Split sizes should sum to 1")
+        if sum(split_sizes) != 1: raise ValueError("Split sizes should sum to 1")
 
         # Work on a copy of the dictionary to avoid modifying the original
         dictonary_copy = self.dictonary.copy()
@@ -202,25 +178,55 @@ class EleHandler(data.Dataset):
         # Create a new column 'group' to group images taken within an hour
         dictonary_copy['group'] = (pd.to_datetime(dictonary_copy['picture_time']).diff() > pd.Timedelta(hours=hour_delta)).cumsum()
 
-        # Get unique elephant IDs
-        unique_ele_ids = dictonary_copy['ele_id'].unique()
-
         # Ensure each set contains all elephants
-        train_indices = []
-        val_indices = []
-        test_indices = []
+        train_indices, test_indices = [], []
 
-        for ele_id in unique_ele_ids:
+        for ele_id in dictonary_copy['ele_id'].unique(): # Loop over unique elephant IDs
+            
+            # Extracting the indices of the current elephant
             ele_id_indices = dictonary_copy[dictonary_copy['ele_id'] == ele_id].index.tolist()
+
+            # Create a small specific to this elephant with the required columns
+            ele_id_df = dictonary_copy.loc[ele_id_indices, ['ele_id', 'group']].reset_index()
+
+            # Count the occurrences of each group
+            group_counts = ele_id_df['group'].value_counts()
+
+            # Sort the DataFrame by group count in descending order
+            ele_id_df_sorted = ele_id_df.set_index('group').loc[group_counts.index].reset_index()
+            
             train_count = int(len(ele_id_indices) * split_sizes[0])
-            val_count = int(len(ele_id_indices) * split_sizes[1])
-            test_count = len(ele_id_indices) - train_count - val_count
+            test_count = len(ele_id_indices) - train_count 
 
-            train_indices.extend(ele_id_indices[:train_count])
-            val_indices.extend(ele_id_indices[train_count:train_count + val_count])
-            test_indices.extend(ele_id_indices[train_count + val_count:])
+            train_contribution_df = pd.DataFrame(columns=['index', 'ele_id', 'group'])
+            test_contribution_df = pd.DataFrame(columns=['index', 'ele_id', 'group'])
 
-        return train_indices, val_indices, test_indices
+            # for each image of this elephant
+            for idx in ele_id_df_sorted.index:
+
+                # extract its group
+                group = ele_id_df_sorted.loc[idx, 'group']
+                
+                
+                # if the number of images in the training set is less than the required number of images, we start by filling the train (otherwis we start with the test) 
+                if len(train_contribution_df) / train_count <= len(test_contribution_df) / test_count:
+                    # if this group shows up less in train than test AND we did not fill the train set yet, we add it to the train set, otherwise we add it to the test set
+                    if len(train_contribution_df[train_contribution_df['group']==group]) <= len(test_contribution_df[test_contribution_df['group']==group]) and len(train_contribution_df) < train_count: 
+                        train_contribution_df = pd.concat([train_contribution_df, ele_id_df_sorted.loc[[idx]]])
+                    else:
+                        test_contribution_df = pd.concat([test_contribution_df, ele_id_df_sorted.loc[[idx]]])
+                else:
+                    # if this group shows up less in test than train AND we did not fill the test set yet, we add it to the test set, otherwise we add it to the train set
+                    if len(test_contribution_df[test_contribution_df['group']==group]) < len(train_contribution_df[train_contribution_df['group']==group]) and len(test_contribution_df) < test_count:
+                        test_contribution_df = pd.concat([test_contribution_df, ele_id_df_sorted.loc[[idx]]])
+                    else:
+                        train_contribution_df = pd.concat([train_contribution_df, ele_id_df_sorted.loc[[idx]]])
+
+            train_indices += train_contribution_df['index'].tolist()
+            test_indices += test_contribution_df['index'].tolist()
+
+
+        return train_indices, test_indices
 
 if __name__ == "__main__":
     EleHandle = EleHandler()

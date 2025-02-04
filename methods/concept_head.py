@@ -12,7 +12,7 @@ import pandas as pd
 
 
 class ConceptHead:
-    def __init__(self, crop_ears=True, lr=0.001, loss=F.mse_loss, print_every=5, experiment_code = None):
+    def __init__(self, crop_ears=True, lr=0.001, loss=F.mse_loss, print_every=1, experiment_code = None):
         """
         Initializes the ConceptHead model.
 
@@ -249,6 +249,28 @@ class ConceptHead:
         self.layer.train()
         for param in self.layer.parameters():
             param.requires_grad = True
+
+    def collect_embeddings(self, loader, backbone):
+        collected_embeddings = torch.tensor([]).to('cuda')
+        collected_labels = torch.tensor([]).to('cuda')
+
+        self.layer.eval()
+
+        for batch in loader:
+            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device)
+
+            with torch.no_grad():
+                embeddings = backbone.forward(images, left_ears, right_ears)
+
+                outputs = self.layer(embeddings)
+
+                predicted_SEEK = SEEK.closest_valid_one_hot(outputs)
+                subject_SEEK = torch.stack([SEEK(s).one_hot_encode() for s in subject_SEEK]).to(self.device)
+
+                collected_embeddings = torch.cat((collected_embeddings, predicted_SEEK))
+                collected_labels = torch.cat((collected_labels, ele_id_label))
+
+        return collected_embeddings, collected_labels
 
 if __name__ == "__main__":
     ch = ConceptHead()
