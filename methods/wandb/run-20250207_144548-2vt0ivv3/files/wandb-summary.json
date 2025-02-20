@@ -1,0 +1,1 @@
+{"epoch_recall@100":45.98687531549722,"epoch_recall@1":6.814740030287733,"epoch":5,"epoch_recall@5":12.619888944977284,"_runtime":132.764727248,"_step":4,"_timestamp":1.7389576812841656e+09,"epoch_recall@20":22.110045431600202,"batch_recall@1":1.2625594923320995,"_wandb":{"runtime":132},"train_loss":5.980844451535132}

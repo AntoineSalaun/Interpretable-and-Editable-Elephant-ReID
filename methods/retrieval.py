@@ -177,7 +177,7 @@ class Retrieval:
         plt.savefig(self.experiment_dir / 'accuracy_vs_samples.png')
         plt.show() 
 
-    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, show_tsne = True, show_plot = True, show_matches = True):
+    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, show_tsne = True, show_plot = True, show_matches = True, intervention_fn = None):
 
         ks = [1, 5, 10, 20, 100]
 
@@ -190,13 +190,13 @@ class Retrieval:
                 gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader)
                 query_embeddings, query_labels = model.collect_embeddings(test_loader)
             elif ba is not None and ch is None: # evaluating concept head
-                print('evaluating concept head')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba)
+                print('evaluating concept head ', ' with intervention' if intervention_fn is not None else '')
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, intervention_fn = intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, intervention_fn = intervention_fn)
             else: # evaluating projector
-                print('evaluating projector')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, ch)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, ch)
+                print('evaluating projector ', ' with intervention' if intervention_fn is not None else '')
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, ch, intervention_fn = intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, ch, intervention_fn = intervention_fn)
             
             gallery_sim_matrix = self.cosine_similarity_matrix(gallery_embeddings)
             train_recalls = {k: self.compute_recall_at_k(gallery_sim_matrix, gallery_labels, gallery_labels, k=k) for k in ks}
@@ -373,8 +373,8 @@ class Retrieval:
         plt.show()
         plt.savefig(self.experiment_dir / 'tsne.png')
 
-    def one_out_retrieval(self, model, loader, print = False, ba = None, ch = None):
-        embeddings, labels = model.collect_embeddings(loader, ba, ch)
+    def one_out_retrieval(self, model, loader, print = False, ba = None, ch = None, intervention_fn = None):
+        embeddings, labels = model.collect_embeddings(loader, ba, ch, intervention_fn = intervention_fn)
         similarity_matrix = self.cosine_similarity_matrix(embeddings)
         recalls = {k: self.compute_recall_at_k(similarity_matrix, labels, labels, k=k) for k in [1, 5, 20, 100]}
         if print: print(f"One-out Recall@1: {recalls[1]*100:.2f}% - Recall@5: {recalls[5]*100:.2f}% - Recall@20: {recalls[20]*100:.2f}% - Recall@100: {recalls[100]*100:.2f}%")

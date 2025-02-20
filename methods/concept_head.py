@@ -8,11 +8,12 @@ from seek_code import SEEK
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-
+from tqdm import tqdm
+import wandb
 
 
 class ConceptHead:
-    def __init__(self, crop_ears=True, lr=0.001, loss=F.mse_loss, print_every=1, experiment_code = None):
+    def __init__(self, crop_ears=True, lr=0.001, loss=F.mse_loss, print_every=1, experiment_code = None, architecture = None, reset_weights = True):
         """
         Initializes the ConceptHead model.
 
@@ -33,22 +34,41 @@ class ConceptHead:
         self.print_every = print_every
 
         self.input_dim = 768 if not crop_ears else 768 * 3  # Handle concatenated embeddings
-        self.layer = nn.Sequential(
-            nn.Linear(self.input_dim, 63), 
-            nn.Sigmoid()
-            ).to(self.device)
+        if architecture is None:
+            self.layer = nn.Sequential(
+                nn.Linear(self.input_dim, 63), 
+                nn.Sigmoid()
+                ).to(self.device)
+        else: self.layer = architecture.to(self.device)
 
-        self.layer.load_state_dict(torch.load(Path(__file__).parent.parent / "weights/concept_w.pt", map_location=self.device, weights_only=False)) if (Path(__file__).parent.parent / "weights/concept_w.pt").exists() else None
+        self.layer.load_state_dict(torch.load(Path(__file__).parent.parent / "weights/concept_w.pt", map_location=self.device, weights_only=False)) if (Path(__file__).parent.parent / "weights/concept_w.pt").exists() and reset_weights == False else None
 
         self.optimizer = Adam(self.layer.parameters(), lr)
         self.loss_fn = loss
+        self.lr = lr
 
         # Create experiment directory
         exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.experiment_dir = Path(__file__).parent.parent / 'experiments' / f'exp_{exp_code}'
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.experiment_dir / 'note.txt', 'w') as f: f.write('---ConceptHead---/n')
 
+
+        # start a new wandb run to track this script
+        wandb.init(
+            mode="online",
+            # set the wandb project where this run will be logged
+            project="improve-concept-head",
+
+            # track hyperparameters and run metadata
+            config={
+                        "learning_rate": lr,
+                        "network":self.layer,
+                        "code": experiment_code,
+                        "loss" : loss,
+                        "optimizer": self.optimizer
+                    },
+            dir = self.experiment_dir
+        )
 
 
     def accuracy_fn(self, predicted, labels):
@@ -78,9 +98,12 @@ class ConceptHead:
         correct_whole_code = torch.all(predicted_one_hot == labels, dim=1).float().mean().item()
         accuracies['average'] = sum(accuracies.values()) / len(accuracies)
         accuracies['whole_code'] = correct_whole_code
+        accuracies['left_ear'] = (accuracies['L_tear_1'] + accuracies['L_hole_1'] + accuracies['L_tear_2'] + accuracies['L_hole_2'] + accuracies['left_extreme'])/5
+        accuracies['right_ear'] = (accuracies['R_tear_1'] + accuracies['R_hole_1'] + accuracies['R_tear_2'] + accuracies['R_hole_2'] + accuracies['right_extreme'])/5
+
         return accuracies
 
-    def epoch_pass(self, loader, backbone, training=True):
+    def epoch_pass(self, loader, backbone, training=True, predict_ele_SEEK = False):
         """
         Processes one epoch of training or validation.
 
@@ -97,18 +120,22 @@ class ConceptHead:
         total_loss = 0
         num_batches = len(loader)
         epoch_accuracies = {name: 0 for name in SEEK.attribute_names}
-        epoch_accuracies["average"] = 0
-        epoch_accuracies["whole_code"] = 0
+        epoch_accuracies.update({"average": 0, "whole_code": 0, "left_ear": 0, "right_ear": 0})
 
         for batch in loader:
-            images, _, _, _, subject_SEEK_1h, _, left_ears, right_ears = batch[:8]
-
-            labels = subject_SEEK_1h.to(self.device)            
+            
+            images, _, _, _, subject_SEEK_1h, ele_SEEK_1h, left_ear, right_ear, _, _, _ = batch
+            
+            if predict_ele_SEEK:
+                labels = ele_SEEK_1h.to(self.device)
+            else:
+                labels = subject_SEEK_1h.to(self.device)            
             images = images.to(self.device)
 
-            embeddings = backbone.forward(images, left_ears, right_ears)
+            embeddings = backbone.forward(images, left_ear, right_ear)
 
             outputs = self.layer(embeddings)
+            print('output shape', outputs.shape, 'labels shape', labels.shape)
             loss = self.loss_fn(outputs, labels)
             total_loss += loss.item()
 
@@ -126,7 +153,7 @@ class ConceptHead:
         return average_loss, epoch_accuracies
 
 
-    def train(self, train_loader, val_loader, backbone, num_epochs=10):
+    def train(self, train_loader, val_loader, backbone, num_epochs=10, predict_ele_SEEK = False):
         """
         Trains the ConceptHead model.
 
@@ -140,6 +167,8 @@ class ConceptHead:
         """
 
         print(f"Training ConceptHead for {num_epochs} epochs, reseting weights, and the backbone parameters are,", any(param.requires_grad for param in backbone.layer.parameters()), ' concept head parameters are ', any(param.requires_grad for param in self.layer.parameters()))
+        self.optimizer = Adam(list(backbone.layer.parameters()) + list(self.layer.parameters()), self.lr)
+
 
         # Initialize weights for Linear layers
         for m in self.layer.modules():
@@ -153,22 +182,33 @@ class ConceptHead:
 
         for epoch in range(num_epochs):
             # Perform a training and validation pass
-            train_loss, train_acc = self.epoch_pass(train_loader, backbone, training=True)
-            val_loss, val_acc = self.epoch_pass(val_loader, backbone, training=False)
+            train_loss, train_acc = self.epoch_pass(train_loader, backbone, training=True, predict_ele_SEEK = predict_ele_SEEK)
+            val_loss, val_acc = self.epoch_pass(val_loader, backbone, training=False, predict_ele_SEEK = predict_ele_SEEK)
 
             # Save best model weights
             if val_acc["average"] > best_val_accuracy:
                 best_val_accuracy = val_acc["average"]
                 best_weights = self.layer.state_dict()
 
+            wandb.log({
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "train_acc_avg": train_acc["average"],
+                "val_acc_avg": val_acc["average"],
+            })
+
             history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc["average"], "val_acc_avg": val_acc["average"], "train_acc_whole_code": train_acc["whole_code"], "val_acc_whole_code": val_acc["whole_code"]})
 
             # Optionally print progress
             if epoch % self.print_every == 0:
-                print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} - Train Acc: {train_acc['average'] * 100:.2f}%, Val Acc: {val_acc['average'] * 100:.2f}% - Train whole-code: {train_acc['whole_code'] * 100:.2f}%, Val whole-code: {val_acc['whole_code'] * 100:.2f}%")
+                print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} - Train Acc: {train_acc['average'] * 100:.2f}%, Val Acc: {val_acc['average'] * 100:.2f}% - Train whole-code: {train_acc['whole_code'] * 100:.2f}%, Val whole-code: {val_acc['whole_code'] * 100:.2f}% - Train left ear: {train_acc['left_ear'] * 100:.2f}%, Val left ear: {val_acc['left_ear'] * 100:.2f}% - Train right ear: {train_acc['right_ear'] * 100:.2f}%, Val right ear: {val_acc['right_ear'] * 100:.2f}%")
 
         # Save best weights
         torch.save(best_weights, self.experiment_dir / 'concept_w.pt')
+        wandb.log_artifact(self.experiment_dir / 'concept_w.pt', name="concept_w.pt", type="model")
+
+        self.layer.load_state_dict(best_weights)
 
         # Convert history to a DataFrame and save as CSV
         history_df = pd.DataFrame(history)
@@ -176,7 +216,7 @@ class ConceptHead:
 
         return history_df
 
-    def test(self, test_loader, backbone):
+    def test(self, test_loader, backbone, predict_ele_SEEK = False):
         """
         Tests the ConceptHead model on a test set.
 
@@ -187,7 +227,15 @@ class ConceptHead:
         - test_loss (float): Loss on the test set.
         - test_acc (dict): Accuracy metrics on the test set.
         """
-        test_loss, test_acc = self.epoch_pass(test_loader, backbone, training=False)
+        test_loss, test_acc = self.epoch_pass(test_loader, backbone, training=False, predict_ele_SEEK = predict_ele_SEEK)
+        
+        wandb.summary["test_loss"] = test_loss
+        wandb.summary["test_acc"] = test_acc["average"]
+        wandb.summary["test_acc_whole_code"] = test_acc["whole_code"]
+        wandb.summary["all_test_acc"] = test_acc
+
+        print(f"ConceptHead - Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc['average'] * 100:.2f}% - Test whole-code: {test_acc['whole_code'] * 100:.2f}%")
+
         print(f"ConceptHead - Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc['average'] * 100:.2f}%")
         
         with open(self.experiment_dir / 'concept_head_test_accuracy.txt', 'w') as f:
@@ -197,6 +245,8 @@ class ConceptHead:
                 f.write(accuracy_str + '\n')
         
         torch.save(self.layer.state_dict(), self.experiment_dir / 'concept_w.pt')
+
+        wandb.finish()
 
         return test_loss, test_acc
 
@@ -250,14 +300,14 @@ class ConceptHead:
         for param in self.layer.parameters():
             param.requires_grad = True
 
-    def collect_embeddings(self, loader, backbone):
+    def collect_embeddings(self, loader, backbone, intervention_fn = None):
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
 
         self.layer.eval()
-
-        for batch in loader:
-            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[6].to(self.device), batch[7].to(self.device)
+        print('collecting concepts from concept head')
+        for batch in tqdm(loader):
+            images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device)
 
             with torch.no_grad():
                 embeddings = backbone.forward(images, left_ears, right_ears)
@@ -265,12 +315,42 @@ class ConceptHead:
                 outputs = self.layer(embeddings)
 
                 predicted_SEEK = SEEK.closest_valid_one_hot(outputs)
+
+                if intervention_fn is not None:
+                    predicted_SEEK = intervention_fn(predicted_SEEK, subject_SEEK, ele_SEEK)
+                
+                predicted_SEEK = predicted_SEEK.to(self.device)
+
                 subject_SEEK = torch.stack([SEEK(s).one_hot_encode() for s in subject_SEEK]).to(self.device)
 
                 collected_embeddings = torch.cat((collected_embeddings, predicted_SEEK))
                 collected_labels = torch.cat((collected_labels, ele_id_label))
 
         return collected_embeddings, collected_labels
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     ch = ConceptHead()

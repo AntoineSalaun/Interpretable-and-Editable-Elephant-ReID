@@ -48,6 +48,15 @@ class EleHandler(data.Dataset):
             # Remap `ele_id` for the current subset
             self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
             self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
+
+        if subset == 'IDI':
+            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+            self.dictonary = self.dictonary.reset_index(drop=True)
+
+            # Remap `ele_id` for the current subset
+            self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
+            self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
+
                 
 
     def __len__(self):
@@ -79,7 +88,7 @@ class EleHandler(data.Dataset):
         subject_SEEK_1hot = SEEK(subject_SEEK).one_hot_encode()
         ele_SEEK_1hot = SEEK(ele_SEEK).one_hot_encode()
 
-        return preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK
+        return preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK, idx
     
     def _load_ear(self, ear_path):
         """Helper function to load ear images, returning zeros if path is NaN."""
@@ -101,19 +110,43 @@ class EleHandler(data.Dataset):
         image = Image.open(image_path).convert('RGB').copy()
         return image
 
-
-    
     def print_image(self, idx, print_with_transform=True):
+        # Create a figure with subplots for main image and ears
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+        
+        # Main image
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
-        print(image_path)
+        print(f"Main image: {image_path}")
         image = Image.open(image_path).convert('RGB')
         
         if self.transform is not None and print_with_transform:
             image = self.transform(image)
+            ax1.imshow(image.permute(1, 2, 0))
+        else:
+            ax1.imshow(image)
+        ax1.axis('off')
+        ax1.set_title('Main Image')
         
-        # Display the image using matplotlib
-        plt.imshow(image.permute(1, 2, 0))  # Unpermute for display (C, H, W -> H, W, C)
-        plt.axis('off')
+        # Left ear
+        left_ear_path = self.dictonary.iloc[idx]['left_ear_path']
+        if pd.notna(left_ear_path):
+            left_ear_image_path = self.image_dir / left_ear_path
+            print(f"Left ear: {left_ear_image_path}")
+            left_ear = Image.open(left_ear_image_path).convert('RGB')
+            ax2.imshow(left_ear)
+        ax2.axis('off')
+        ax2.set_title('Left Ear')
+        
+        # Right ear
+        right_ear_path = self.dictonary.iloc[idx]['right_ear_path']
+        if pd.notna(right_ear_path):
+            right_ear_image_path = self.image_dir / right_ear_path
+            print(f"Right ear: {right_ear_image_path}")
+            right_ear = Image.open(right_ear_image_path).convert('RGB')
+            ax3.imshow(right_ear)
+        ax3.axis('off')
+        ax3.set_title('Right Ear')
+        
         plt.show()
         
         # Print metadata

@@ -1,0 +1,49 @@
+_wandb:
+    value:
+        cli_version: 0.19.6
+        m: []
+        python_version: 3.13.0
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 41
+                - 49
+                - 53
+                - 55
+                - 63
+                - 105
+            "2":
+                - 1
+                - 5
+                - 11
+                - 41
+                - 49
+                - 53
+                - 55
+                - 63
+                - 105
+            "3":
+                - 2
+                - 3
+                - 16
+                - 23
+                - 24
+                - 55
+            "4": 3.13.0
+            "5": 0.19.6
+            "6": 4.48.2
+            "8":
+                - 1
+                - 5
+            "12": 0.19.6
+            "13": linux-x86_64
+Arface-Margin:
+    value: 0.5
+Arface-Scale:
+    value: 64
+learning_rate:
+    value: 0.0001
+loss:
+    value: ArcFace

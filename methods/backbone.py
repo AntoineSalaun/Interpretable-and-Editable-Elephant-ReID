@@ -28,7 +28,7 @@ class Backbone(nn.Module):
                 raise ValueError(f"Unsupported model: {model_name}")
 
             # Load pretraining weights if provided (only for MegaDescriptor)
-            if model_name == "MegaDescriptor" and pretraining in ["savannah_elephants", "forest_elephants"]:
+            if model_name == "MegaDescriptor" and pretraining in ["savannah_elephants", "forest_elephants", "MD_finetuned_w", "MD_finetuned_w"]:
                 weight_path = Path(__file__).parent.parent / f"weights/{pretraining}.pt"
                 state_dict = torch.load(weight_path, map_location=self.device)
 
@@ -57,6 +57,7 @@ class Backbone(nn.Module):
 
     def freeze(self):
         """Freezes the model's parameters to prevent unnecessary training."""
+        self.layer.eval()
         for param in self.layer.parameters():
             param.requires_grad = False
     
@@ -89,12 +90,7 @@ class Backbone(nn.Module):
         for batch_idx, batch in enumerate(loader):
             images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[6].to('cuda'), batch[7].to('cuda')
 
-            embeddings = self.layer(images)
-                
-            if self.with_ears:
-                left_embeddings = self.layer(left_ears.to(self.device))
-                right_embeddings = self.layer(right_ears.to(self.device))
-                embeddings = torch.cat((embeddings, left_embeddings, right_embeddings), dim=1) 
+            embeddings = self.forward(images, left_ears, right_ears)
 
             loss = self.loss_fn(embeddings, ele_id_label)
             

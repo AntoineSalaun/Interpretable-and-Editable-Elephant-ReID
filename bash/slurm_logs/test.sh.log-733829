@@ -1,0 +1,122 @@
+cpu-bind=MASK - beery-a100-2, task  0  0 [3246926]: mask 0x10000000000000000 set
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250210_152424-tliy5wd9
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run treasured-plasma-3
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-reid-Projector-debug
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-reid-Projector-debug/runs/tliy5wd9
+/data/vision/beery/scratch/antoine/CBM_reid/methods/projector.py:253: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  torch.load(self.experiment_dir / 'projector_w.pt')
+wandb: WARNING Saving files without folders. If you want to preserve subdirectories pass base_path to wandb.save, i.e. wandb.save("/mnt/folder/file.h5", base_path="/mnt")
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:         batch_recall@1 ▁▁▂▄▅▆▆▇▇▇▇▇▇▇▇▇██████████████
+wandb:                  epoch ▁▁▁▂▂▂▂▃▃▃▃▄▄▄▄▅▅▅▅▆▆▆▆▇▇▇▇███
+wandb:   epoch_train_recall@1 ▁▁▂▃▄▅▆▇▇▇▇▇██████████████████
+wandb: epoch_train_recall@100 ▁▂▃▅▆▆▆▆▆▇▇▇▇▇▇███████████████
+wandb:  epoch_train_recall@20 ▁▁▃▅▆▇▇▇▇▇▇▇▇▇▇▇▇█████████████
+wandb:   epoch_train_recall@5 ▁▁▂▄▅▆▇▇▇▇▇███████████████████
+wandb:     epoch_val_recall@1 ▁▁▂▃▄▅▆▆▇▇▇▇▇▇▇▇██████████████
+wandb:   epoch_val_recall@100 ▁▁▃▄▅▅▆▆▆▆▇▇▇▇▇▇▇▇▇▇██████████
+wandb:    epoch_val_recall@20 ▁▁▂▄▅▆▆▆▆▇▇▇▇▇▇▇▇▇████████████
+wandb:     epoch_val_recall@5 ▁▁▂▃▅▆▆▆▇▇▇▇▇▇▇▇▇▇████████████
+wandb:             train_loss █▇▇▆▅▄▄▃▃▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:         batch_recall@1 93.22614
+wandb:                  epoch 30
+wandb:   epoch_train_recall@1 74.30591
+wandb: epoch_train_recall@100 98.2837
+wandb:  epoch_train_recall@20 93.5891
+wandb:   epoch_train_recall@5 86.26956
+wandb:     epoch_val_recall@1 67.02209
+wandb:   epoch_val_recall@100 95.12567
+wandb:    epoch_val_recall@20 88.80427
+wandb:     epoch_val_recall@5 81.4166
+wandb:             train_loss 0.72465
+wandb: 
+wandb: 🚀 View run treasured-plasma-3 at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-reid-Projector-debug/runs/tliy5wd9
+wandb: ⭐️ View project at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-reid-Projector-debug
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20250210_152424-tliy5wd9/logs
+CBM experiment
+Concept head parameters require gradients: False 
+Backbone parameters require gradients: False 
+Projector parameters require gradients: True
+Epoch 1/30 - Train Loss: 7.2255, BATCH-Recall@1: 26.15%, --- TRAIN-EPOCH - Recall@1: 7.12%, Recall@5: 12.67%, Recall@20: 23.27%, Recall@100: 48.36% --- VAL-EPOCH - Recall@1: 3.35%, Recall@5: 8.76%, Recall@20: 18.51%, Recall@100: 40.90%
+Epoch 2/30 - Train Loss: 6.6036, BATCH-Recall@1: 27.47%, --- TRAIN-EPOCH - Recall@1: 8.73%, Recall@5: 15.55%, Recall@20: 26.91%, Recall@100: 52.55% --- VAL-EPOCH - Recall@1: 5.18%, Recall@5: 11.27%, Recall@20: 21.93%, Recall@100: 44.63%
+Epoch 3/30 - Train Loss: 5.9934, BATCH-Recall@1: 34.86%, --- TRAIN-EPOCH - Recall@1: 14.13%, Recall@5: 25.44%, Recall@20: 41.80%, Recall@100: 65.57% --- VAL-EPOCH - Recall@1: 9.06%, Recall@5: 19.12%, Recall@20: 32.90%, Recall@100: 54.30%
+Epoch 4/30 - Train Loss: 5.2397, BATCH-Recall@1: 51.10%, --- TRAIN-EPOCH - Recall@1: 26.60%, Recall@5: 45.13%, Recall@20: 60.27%, Recall@100: 76.63% --- VAL-EPOCH - Recall@1: 19.80%, Recall@5: 33.66%, Recall@20: 49.73%, Recall@100: 65.35%
+Epoch 5/30 - Train Loss: 4.4724, BATCH-Recall@1: 66.07%, --- TRAIN-EPOCH - Recall@1: 39.78%, Recall@5: 59.11%, Recall@20: 72.69%, Recall@100: 81.12% --- VAL-EPOCH - Recall@1: 29.55%, Recall@5: 48.59%, Recall@20: 61.69%, Recall@100: 70.37%
+Epoch 6/30 - Train Loss: 3.7860, BATCH-Recall@1: 73.28%, --- TRAIN-EPOCH - Recall@1: 49.27%, Recall@5: 68.96%, Recall@20: 78.65%, Recall@100: 83.14% --- VAL-EPOCH - Recall@1: 38.84%, Recall@5: 58.26%, Recall@20: 66.72%, Recall@100: 74.56%
+Epoch 7/30 - Train Loss: 3.1992, BATCH-Recall@1: 77.77%, --- TRAIN-EPOCH - Recall@1: 56.34%, Recall@5: 74.05%, Recall@20: 80.92%, Recall@100: 85.11% --- VAL-EPOCH - Recall@1: 46.38%, Recall@5: 62.30%, Recall@20: 69.76%, Recall@100: 77.08%
+Epoch 8/30 - Train Loss: 2.7534, BATCH-Recall@1: 79.99%, --- TRAIN-EPOCH - Recall@1: 60.93%, Recall@5: 77.39%, Recall@20: 82.33%, Recall@100: 86.42% --- VAL-EPOCH - Recall@1: 50.42%, Recall@5: 65.35%, Recall@20: 71.52%, Recall@100: 79.21%
+Epoch 9/30 - Train Loss: 2.3935, BATCH-Recall@1: 81.71%, --- TRAIN-EPOCH - Recall@1: 64.01%, Recall@5: 78.85%, Recall@20: 83.19%, Recall@100: 87.58% --- VAL-EPOCH - Recall@1: 53.77%, Recall@5: 67.25%, Recall@20: 73.34%, Recall@100: 81.11%
+Epoch 10/30 - Train Loss: 2.1003, BATCH-Recall@1: 82.31%, --- TRAIN-EPOCH - Recall@1: 66.23%, Recall@5: 79.61%, Recall@20: 84.05%, Recall@100: 88.24% --- VAL-EPOCH - Recall@1: 55.67%, Recall@5: 68.62%, Recall@20: 74.87%, Recall@100: 83.24%
+Epoch 11/30 - Train Loss: 1.8572, BATCH-Recall@1: 83.17%, --- TRAIN-EPOCH - Recall@1: 68.45%, Recall@5: 80.31%, Recall@20: 85.06%, Recall@100: 89.45% --- VAL-EPOCH - Recall@1: 58.04%, Recall@5: 69.76%, Recall@20: 76.47%, Recall@100: 85.91%
+Epoch 12/30 - Train Loss: 1.6703, BATCH-Recall@1: 84.28%, --- TRAIN-EPOCH - Recall@1: 69.31%, Recall@5: 81.07%, Recall@20: 85.87%, Recall@100: 91.17% --- VAL-EPOCH - Recall@1: 59.18%, Recall@5: 70.53%, Recall@20: 77.84%, Recall@100: 87.28%
+Epoch 13/30 - Train Loss: 1.5091, BATCH-Recall@1: 85.14%, --- TRAIN-EPOCH - Recall@1: 69.81%, Recall@5: 81.78%, Recall@20: 86.42%, Recall@100: 92.48% --- VAL-EPOCH - Recall@1: 59.79%, Recall@5: 71.74%, Recall@20: 78.98%, Recall@100: 87.74%
+Epoch 14/30 - Train Loss: 1.3769, BATCH-Recall@1: 86.01%, --- TRAIN-EPOCH - Recall@1: 70.42%, Recall@5: 82.08%, Recall@20: 87.18%, Recall@100: 93.74% --- VAL-EPOCH - Recall@1: 60.70%, Recall@5: 72.89%, Recall@20: 80.05%, Recall@100: 87.97%
+Epoch 15/30 - Train Loss: 1.2712, BATCH-Recall@1: 87.17%, --- TRAIN-EPOCH - Recall@1: 71.08%, Recall@5: 82.48%, Recall@20: 87.68%, Recall@100: 94.55% --- VAL-EPOCH - Recall@1: 61.61%, Recall@5: 73.88%, Recall@20: 80.65%, Recall@100: 88.73%
+Epoch 16/30 - Train Loss: 1.1793, BATCH-Recall@1: 87.67%, --- TRAIN-EPOCH - Recall@1: 71.38%, Recall@5: 82.94%, Recall@20: 88.19%, Recall@100: 94.90% --- VAL-EPOCH - Recall@1: 62.38%, Recall@5: 74.56%, Recall@20: 82.33%, Recall@100: 89.26%
+Epoch 17/30 - Train Loss: 1.1055, BATCH-Recall@1: 88.48%, --- TRAIN-EPOCH - Recall@1: 71.78%, Recall@5: 83.39%, Recall@20: 88.49%, Recall@100: 95.25% --- VAL-EPOCH - Recall@1: 62.83%, Recall@5: 75.55%, Recall@20: 83.17%, Recall@100: 89.57%
+Epoch 18/30 - Train Loss: 1.0416, BATCH-Recall@1: 89.03%, --- TRAIN-EPOCH - Recall@1: 72.19%, Recall@5: 83.44%, Recall@20: 88.89%, Recall@100: 95.61% --- VAL-EPOCH - Recall@1: 63.44%, Recall@5: 75.93%, Recall@20: 83.55%, Recall@100: 90.33%
+Epoch 19/30 - Train Loss: 0.9883, BATCH-Recall@1: 89.54%, --- TRAIN-EPOCH - Recall@1: 72.29%, Recall@5: 83.95%, Recall@20: 89.70%, Recall@100: 95.76% --- VAL-EPOCH - Recall@1: 63.90%, Recall@5: 76.77%, Recall@20: 84.01%, Recall@100: 90.94%
+Epoch 20/30 - Train Loss: 0.9411, BATCH-Recall@1: 90.14%, --- TRAIN-EPOCH - Recall@1: 72.54%, Recall@5: 84.10%, Recall@20: 90.46%, Recall@100: 96.06% --- VAL-EPOCH - Recall@1: 64.20%, Recall@5: 77.53%, Recall@20: 85.00%, Recall@100: 91.17%
+Epoch 21/30 - Train Loss: 0.9034, BATCH-Recall@1: 90.80%, --- TRAIN-EPOCH - Recall@1: 72.89%, Recall@5: 84.40%, Recall@20: 90.66%, Recall@100: 96.37% --- VAL-EPOCH - Recall@1: 64.36%, Recall@5: 78.22%, Recall@20: 85.99%, Recall@100: 91.85%
+Epoch 22/30 - Train Loss: 0.8735, BATCH-Recall@1: 91.05%, --- TRAIN-EPOCH - Recall@1: 73.20%, Recall@5: 84.50%, Recall@20: 91.12%, Recall@100: 96.72% --- VAL-EPOCH - Recall@1: 64.74%, Recall@5: 78.60%, Recall@20: 86.29%, Recall@100: 92.76%
+Epoch 23/30 - Train Loss: 0.8441, BATCH-Recall@1: 91.36%, --- TRAIN-EPOCH - Recall@1: 73.25%, Recall@5: 84.70%, Recall@20: 91.47%, Recall@100: 97.12% --- VAL-EPOCH - Recall@1: 65.12%, Recall@5: 79.21%, Recall@20: 86.82%, Recall@100: 93.22%
+Epoch 24/30 - Train Loss: 0.8189, BATCH-Recall@1: 91.56%, --- TRAIN-EPOCH - Recall@1: 73.40%, Recall@5: 84.91%, Recall@20: 91.77%, Recall@100: 97.27% --- VAL-EPOCH - Recall@1: 65.42%, Recall@5: 79.36%, Recall@20: 87.20%, Recall@100: 93.68%
+Epoch 25/30 - Train Loss: 0.7985, BATCH-Recall@1: 91.86%, --- TRAIN-EPOCH - Recall@1: 73.45%, Recall@5: 85.26%, Recall@20: 92.18%, Recall@100: 97.53% --- VAL-EPOCH - Recall@1: 65.80%, Recall@5: 79.82%, Recall@20: 87.74%, Recall@100: 93.83%
+Epoch 26/30 - Train Loss: 0.7780, BATCH-Recall@1: 92.22%, --- TRAIN-EPOCH - Recall@1: 73.85%, Recall@5: 85.41%, Recall@20: 92.28%, Recall@100: 97.73% --- VAL-EPOCH - Recall@1: 66.11%, Recall@5: 80.20%, Recall@20: 88.04%, Recall@100: 94.06%
+Epoch 27/30 - Train Loss: 0.7614, BATCH-Recall@1: 92.57%, --- TRAIN-EPOCH - Recall@1: 74.00%, Recall@5: 85.82%, Recall@20: 92.43%, Recall@100: 98.03% --- VAL-EPOCH - Recall@1: 66.41%, Recall@5: 80.88%, Recall@20: 88.35%, Recall@100: 94.52%
+Epoch 28/30 - Train Loss: 0.7470, BATCH-Recall@1: 92.77%, --- TRAIN-EPOCH - Recall@1: 74.26%, Recall@5: 85.92%, Recall@20: 92.83%, Recall@100: 98.13% --- VAL-EPOCH - Recall@1: 66.57%, Recall@5: 81.11%, Recall@20: 88.42%, Recall@100: 94.59%
+Epoch 29/30 - Train Loss: 0.7331, BATCH-Recall@1: 93.07%, --- TRAIN-EPOCH - Recall@1: 74.26%, Recall@5: 86.17%, Recall@20: 93.24%, Recall@100: 98.23% --- VAL-EPOCH - Recall@1: 66.79%, Recall@5: 81.26%, Recall@20: 88.50%, Recall@100: 94.59%
+Epoch 30/30 - Train Loss: 0.7246, BATCH-Recall@1: 93.23%, --- TRAIN-EPOCH - Recall@1: 74.31%, Recall@5: 86.27%, Recall@20: 93.59%, Recall@100: 98.28% --- VAL-EPOCH - Recall@1: 67.02%, Recall@5: 81.42%, Recall@20: 88.80%, Recall@100: 95.13%
+evaluation under oracle correction
+evaluating projector   with intervention
+Train Recalls:
+Recall@1: 74.31%
+Recall@5: 86.27%
+Recall@10: 90.46%
+Recall@20: 93.59%
+Recall@100: 98.28%
+Test Recalls:
+Recall@1: 84.31%
+Recall@5: 92.99%
+Recall@10: 96.12%
+Recall@20: 97.87%
+Recall@100: 99.39%
+evaluation under perfect subject correction
+evaluating projector   with intervention
+Train Recalls:
+Recall@1: 3.99%
+Recall@5: 11.61%
+Recall@10: 16.71%
+Recall@20: 23.37%
+Recall@100: 52.75%
+Test Recalls:
+Recall@1: 8.53%
+Recall@5: 17.52%
+Recall@10: 23.99%
+Recall@20: 33.89%
+Recall@100: 66.41%
+evaluation under no correction
+evaluating projector  
+Train Recalls:
+Recall@1: 2.32%
+Recall@5: 7.02%
+Recall@10: 11.56%
+Recall@20: 17.21%
+Recall@100: 44.98%
+Test Recalls:
+Recall@1: 4.87%
+Recall@5: 11.12%
+Recall@10: 16.83%
+Recall@20: 24.07%
+Recall@100: 57.12%

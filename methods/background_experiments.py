@@ -32,36 +32,33 @@ train_indices, test_indices = dataset.split_perpendicular_to_elephants_and_encou
 train_subset = Subset(dataset, train_indices)
 test_subset = Subset(dataset, test_indices)
 
-train_loader = DataLoader(train_subset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_subset, batch_size=64, shuffle=True)
+train_loader = DataLoader(train_subset, batch_size=64, shuffle=False)
+test_loader = DataLoader(test_subset, batch_size=64, shuffle=False)
 
-full_dataset = EleHandler()
-indices = np.random.permutation(len(full_dataset))
+code = 'Projector_PoC'
 
-ch_train_loader = DataLoader(Subset(full_dataset, indices[:int(0.7 * len(indices))]), batch_size=512, shuffle=True)
-ch_val_loader = DataLoader(Subset(full_dataset, indices[int(0.7 * len(indices)):int(0.85 * len(indices))]), batch_size=512, shuffle=True)
-ch_test_loader = DataLoader(Subset(full_dataset, indices[int(0.85 * len(indices)):]), batch_size=512, shuffle=True)
+def perfect_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
+    return subject_SEEK
 
-code = 'baseline-3-MD'
-print('===================', code, '===================')
-r31 = Retrieval(experiment_code=code)
+def oracle_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
+    return elephant_SEEK
 
-MD = Backbone(with_ears = True, lr = 1e-4, pretraining = "savannah_elephants", experiment_code=code)
-ch1 = ConceptHead(experiment_code=code)
-ch1.train(ch_train_loader, val_loader=ch_val_loader, backbone= MD, num_epochs=200)
-ch1.test(ch_test_loader, backbone= MD)
+ch = ConceptHead(experiment_code=code)
+ba = Backbone(pretraining='savannah_elephants', experiment_code=code)
 
-ch1.test(test_loader, backbone= MD)
-r31.evaluate_model(ch1, train_loader, test_loader, ba = MD, show_matches=False, show_tsne=False)
+r = Retrieval(experiment_code=code)
 
-code = 'baseline-3-miew'
-print('===================', code, '===================')
-r32 = Retrieval(experiment_code=code)
+pr = Projector(criterion = 'ArcFace', lr = 0.001, scale = 64, margin = 0.5, experiment_code=code)
 
-miew = Backbone(with_ears = True, lr = 1e-4, model_name = "MiewID-msv3", experiment_code=code)
-ch2 = ConceptHead(experiment_code=code)
-ch2.train(ch_train_loader, val_loader=ch_val_loader, backbone= miew, num_epochs=200)
-ch2.test(ch_test_loader, backbone= miew)
+ba.freeze()
+ch.freeze()
+pr.unfreeze()
 
-ch2.test(test_loader, backbone= miew)
-r32.evaluate_model(ch2, train_loader, test_loader, ba = miew, show_matches=False, show_tsne=False)
+pr.train(train_loader, test_loader, ba, ch, num_epochs=200, intervention_fn=oracle_correction)
+
+print('evaluation under oracle correction')
+r.evaluate_model(pr, train_loader, test_loader, ba, ch, show_matches=False, show_tsne=False, show_plot=False, intervention_fn=oracle_correction)
+print('evaluation under perfect subject correction')
+r.evaluate_model(pr, train_loader, test_loader, ba, ch, show_matches=False, show_tsne=False, show_plot=False, intervention_fn=perfect_correction)
+print('evaluation under no correction')
+r.evaluate_model(pr, train_loader, test_loader, ba, ch, show_matches=False, show_tsne=False, show_plot=False, intervention_fn=None)
