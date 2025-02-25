@@ -183,16 +183,10 @@ class SEEK:
         if (whole_vector.size(1) != 23 and left_vector.size(1) != 20 and right_vector.size(1) != 20) and (whole_vector.size(1) != 6 and left_vector.size(1) != 5 and right_vector.size(1) != 5):
             raise ValueError(f"Input vector must have length 23, 20 and 20 OR 6, 5 amd 5 - got {whole_vector.size(1)}, {left_vector.size(1)} and {right_vector.size(1)}")
         
-        if (whole_vector.size(1) != 23 and left_vector.size(1) != 20 and right_vector.size(1) != 20): 
-            reconstructed_vector = whole_vector[:, 0:11]
-            reconstructed_vector = torch.cat((reconstructed_vector, right_vector), dim=1)
-            reconstructed_vector = torch.cat((reconstructed_vector, left_vector), dim=1)
-            reconstructed_vector = torch.cat((reconstructed_vector, whole_vector[:, 11:]), dim=1)
-        elif (whole_vector.size(1) != 6 and left_vector.size(1) != 5 and right_vector.size(1) != 5):
-            reconstructed_vector = whole_vector[:, 0:4]
-            reconstructed_vector = torch.cat((reconstructed_vector, right_vector), dim=1)
-            reconstructed_vector = torch.cat((reconstructed_vector, left_vector), dim=1)
-            reconstructed_vector = torch.cat((reconstructed_vector, whole_vector[:, 4:]), dim=1)
+        reconstructed_vector = whole_vector[:, 0:11]
+        reconstructed_vector = torch.cat((reconstructed_vector, right_vector), dim=1)
+        reconstructed_vector = torch.cat((reconstructed_vector, left_vector), dim=1)
+        reconstructed_vector = torch.cat((reconstructed_vector, whole_vector[:, 11:]), dim=1)
 
         if whole_vector.shape[0] == 1:
             reconstructed_vector = reconstructed_vector.squeeze(0)
@@ -207,6 +201,7 @@ class SEEK:
         print(seek_instance)
         one_hot_vector = seek_instance.one_hot_encode()
         print("Original one-hot :\n", one_hot_vector)
+        print('parsed from one hot', SEEK(one_hot_vector))
 
         whole_one_hot, left_one_hot, right_one_hot = SEEK.separate_one_hot(one_hot_vector)
         print("Whole one-hot vector:\n", whole_one_hot)
@@ -219,7 +214,131 @@ class SEEK:
         print("Reconstructed SEEK:\n", SEEK(reconstructed_one_hot))
         assert str(seek_instance) == str(SEEK(reconstructed_one_hot)), "Reconstructed instance does not match original"
         print("Test passed: Reconstructed instance matches the original")
+    
+    def aggregate_seek(SEEK_codes, ele_ids):
+        def make_seek_df(SEEK_codes, ele_ids):
+            data = []
+            seeks = []
+
+            for i in range(SEEK_codes.shape[0]):
+                row = SEEK(SEEK_codes[i]).categorical_tensor()[0].tolist()
+                data.append(row)
+                seeks.append(SEEK(SEEK_codes[i]).__str__())
+            import pandas as pd
+            df = pd.DataFrame(data, columns=SEEK.attribute_names)
+
+            df['subj_seek_str'] = seeks
+            df['ele_id'] = ele_ids.cpu()
+            df['encounter_id'] = 1
+
+            return df
+
+        # Collect SEEK codes
+        df = make_seek_df(SEEK_codes, ele_ids)
+
+        # Copy DataFrame for mapped values
+        df_mapped = df.copy()
+
+        # Get mapping dictionary
+        mapping = SEEK.mappings
+
+        # Apply mapping correctly (avoiding index shift)
+        for col in df.columns:
+            if col in mapping:  # Ensure column exists in mapping
+                max_idx = len(mapping[col]) - 1
+                df_mapped[col] = df[col].apply(lambda x: mapping[col][x] if 0 <= x <= max_idx else None)
+
+
+        ### HEURISTIC RULES (copied from the original code)
+        def get_val(p_counts, u, most_likely, other, cutoff=.8, fraction=1):
+            if u in p_counts and p_counts[u] > cutoff:
+                return u
+            if other in p_counts and most_likely in p_counts:
+                if p_counts[other] > (p_counts[most_likely] * fraction):
+                    return other
+                else:
+                    return most_likely
+            if other in p_counts:
+                return other
+            if most_likely in p_counts:
+                return most_likely
+            return None
+
+        def get_sex_val(p): return get_val(p, u='_', most_likely='B', other='C', fraction=2)
+        def get_age_val(p): return get_val(p, u='_', most_likely='00', other='20')
+        def get_tusk_val(p): return get_val(p, u='_', most_likely='1', other='0')
+
+        def get_tear_hole_val(p, cutoff=.9, frac=2):
+            u, z = '_', '0'
+            if u in p and p[u] > cutoff: return u
+            other_sum = sum(value for key, value in p.items() if key != z and key != u)
+            if z in p and p[z] > (other_sum * frac): return z
+            return max((k for k in p if k not in {u, z}), key=lambda k: p[k], default=None)
+
+        def get_feature_val(p): return get_val(p, u='1', most_likely='0', other='_', fraction=1.5)
+
+        ### FUNCTION TO GENERATE SEEK CODE STRING
+        def generate_seek_code(row):
+            """Generates a SEEK code string from DataFrame attributes for each row."""
+            return (
+                f"{row['sex']}{row['age']}T{row['right_tusk']}{row['left_tusk']}"
+                f"E{row['R_tear_1']}{row['R_hole_1']}{row['R_tear_2']}{row['R_hole_2']}-"
+                f"{row['L_tear_1']}{row['L_hole_1']}{row['L_tear_2']}{row['L_hole_2']}X"
+                f"{row['right_extreme']}{row['left_extreme']}S{row['ear_special']}{row['body_special']}"
+            )
+
+        ### FUNCTION TO AGGREGATE SEEK CODES AT ELEPHANT LEVEL
+        def aggregate_elephant_seek_codes(df):
+            """Aggregates subject-level SEEK codes into elephant-level SEEK codes while keeping image order."""
+            
+            ### FUNCTION TO GENERATE SEEK CODE STRING
         
+            elephant_seek_dict = {}
+
+            for ele_id, group in df.groupby('ele_id'):
+                if ele_id not in elephant_seek_dict:
+                    elephant_seek_dict[ele_id] = {}
+
+                for col in df.columns:
+                    if col not in ['ele_id', 'encounter_id']:
+                        counts = group[col].value_counts(normalize=True).to_dict()
+
+                        if col == 'sex':
+                            elephant_seek_dict[ele_id][col] = get_sex_val(counts)
+                        elif col == 'age':
+                            elephant_seek_dict[ele_id][col] = get_age_val(counts)
+                        elif col in ['right_tusk', 'left_tusk']:
+                            elephant_seek_dict[ele_id][col] = get_tusk_val(counts)
+                        elif col in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1']:
+                            elephant_seek_dict[ele_id][col] = get_tear_hole_val(counts, cutoff=.9, frac=2)
+                        elif col in ['R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']:
+                            elephant_seek_dict[ele_id][col] = get_tear_hole_val(counts, cutoff=.95, frac=2.5)
+                        elif col in ['right_extreme', 'left_extreme', 'ear_special', 'body_special']:
+                            elephant_seek_dict[ele_id][col] = get_feature_val(counts)
+            import pandas as pd
+            elephant_seek_df = pd.DataFrame.from_dict(elephant_seek_dict, orient='index')
+            elephant_seek_df.index.name = 'ele_id'
+
+            # Merge back the aggregated SEEK codes into the original DataFrame (keeping original order)
+            merged_df = df.copy()
+            for col in elephant_seek_df.columns:
+                merged_df[col] = merged_df['ele_id'].map(elephant_seek_df[col])
+
+            # Generate the SEEK code for each row
+            merged_df["SEEK_code"] = merged_df.apply(generate_seek_code, axis=1)
+
+
+            #print([SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]])
+            ele_seek_list = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
+            subject_seek_list = [SEEK(seek).one_hot_encode() for seek in df["subj_seek_str"]]
+            ele_id = torch.tensor([int(x) for x in merged_df["ele_id"].tolist()], dtype=torch.long)
+
+            ele_seek = torch.stack(ele_seek_list)
+            subject_seek = torch.stack(subject_seek_list)
+
+            return subject_seek, ele_seek, ele_id
+        return aggregate_elephant_seek_codes(df_mapped)
+
 
 # Updated test function
 def test_seek():
@@ -244,6 +363,9 @@ def test_seek():
 
 
 
+
+
+    
 
 # Run the test function if the script is executed directly
 if __name__ == "__main__":

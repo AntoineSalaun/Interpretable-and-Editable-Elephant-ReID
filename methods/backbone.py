@@ -28,7 +28,7 @@ class Backbone(nn.Module):
                 raise ValueError(f"Unsupported model: {model_name}")
 
             # Load pretraining weights if provided (only for MegaDescriptor)
-            if model_name == "MegaDescriptor" and pretraining in ["savannah_elephants", "forest_elephants", "MD_finetuned_w", "MD_finetuned_w"]:
+            if model_name == "MegaDescriptor" and pretraining is not None:
                 weight_path = Path(__file__).parent.parent / f"weights/{pretraining}.pt"
                 state_dict = torch.load(weight_path, map_location=self.device)
 
@@ -66,6 +66,7 @@ class Backbone(nn.Module):
         # Unfreeze the backbone parameters
         for param in self.layer.parameters():
             param.requires_grad = True
+    
 
     def forward(self, images, left_ears = None, right_ears = None):
 
@@ -145,7 +146,7 @@ class Backbone(nn.Module):
         history_df.to_csv(self.experiment_dir / 'backbone_training_history.csv', index=False)
 
     
-    def collect_embeddings(self, loader, ba = None, ch = None):
+    def collect_embeddings(self, loader, ba = None, ch = None, intervention_fn = None):
         
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')

@@ -43,7 +43,7 @@ class ConceptHead:
 
         self.layer.load_state_dict(torch.load(Path(__file__).parent.parent / "weights/concept_w.pt", map_location=self.device, weights_only=False)) if (Path(__file__).parent.parent / "weights/concept_w.pt").exists() and reset_weights == False else None
 
-        self.optimizer = Adam(self.layer.parameters(), lr)
+        
         self.loss_fn = loss
         self.lr = lr
 
@@ -135,7 +135,7 @@ class ConceptHead:
             embeddings = backbone.forward(images, left_ear, right_ear)
 
             outputs = self.layer(embeddings)
-            print('output shape', outputs.shape, 'labels shape', labels.shape)
+            #print('output shape', outputs.shape, 'labels shape', labels.shape)
             loss = self.loss_fn(outputs, labels)
             total_loss += loss.item()
 
@@ -327,9 +327,7 @@ class ConceptHead:
                 collected_labels = torch.cat((collected_labels, ele_id_label))
 
         return collected_embeddings, collected_labels
-
-
-
+ 
 
 
 

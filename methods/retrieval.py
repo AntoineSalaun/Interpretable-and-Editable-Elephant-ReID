@@ -177,7 +177,7 @@ class Retrieval:
         plt.savefig(self.experiment_dir / 'accuracy_vs_samples.png')
         plt.show() 
 
-    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, show_tsne = True, show_plot = True, show_matches = True, intervention_fn = None):
+    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, show_tsne = True, show_plot = True, show_matches = True, intervention_fn = None, aggregate_seeks=False):
 
         ks = [1, 5, 10, 20, 100]
 
@@ -191,13 +191,14 @@ class Retrieval:
                 query_embeddings, query_labels = model.collect_embeddings(test_loader)
             elif ba is not None and ch is None: # evaluating concept head
                 print('evaluating concept head ', ' with intervention' if intervention_fn is not None else '')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, intervention_fn = intervention_fn)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, intervention_fn = intervention_fn)
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
             else: # evaluating projector
                 print('evaluating projector ', ' with intervention' if intervention_fn is not None else '')
                 gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, ch, intervention_fn = intervention_fn)
                 query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, ch, intervention_fn = intervention_fn)
             
+
             gallery_sim_matrix = self.cosine_similarity_matrix(gallery_embeddings)
             train_recalls = {k: self.compute_recall_at_k(gallery_sim_matrix, gallery_labels, gallery_labels, k=k) for k in ks}
 
