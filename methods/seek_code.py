@@ -228,7 +228,11 @@ class SEEK:
             df = pd.DataFrame(data, columns=SEEK.attribute_names)
 
             df['subj_seek_str'] = seeks
-            df['ele_id'] = ele_ids.cpu()
+            if isinstance(ele_ids, torch.Tensor):
+                df['ele_id'] = ele_ids.cpu()
+            else: 
+                df['ele_id'] = ele_ids
+                
             df['encounter_id'] = 1
 
             return df
@@ -331,13 +335,19 @@ class SEEK:
             #print([SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]])
             ele_seek_list = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
             subject_seek_list = [SEEK(seek).one_hot_encode() for seek in df["subj_seek_str"]]
-            ele_id = torch.tensor([int(x) for x in merged_df["ele_id"].tolist()], dtype=torch.long)
+            ele_id = merged_df["ele_id"].tolist()
 
             ele_seek = torch.stack(ele_seek_list)
             subject_seek = torch.stack(subject_seek_list)
 
             return subject_seek, ele_seek, ele_id
         return aggregate_elephant_seek_codes(df_mapped)
+    
+    def perfect_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
+        return subject_SEEK
+
+    def oracle_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
+        return elephant_SEEK
 
 
 # Updated test function

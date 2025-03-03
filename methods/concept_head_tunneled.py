@@ -186,6 +186,7 @@ class ConceptHeadTunneled:
 
 
     def collect_embeddings(self, loader, backbone, intervention_fn = None, aggregate_seeks = False):
+        
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
 
@@ -193,6 +194,7 @@ class ConceptHeadTunneled:
 
         print('collecting concepts from concept head')
         for batch in tqdm(loader):
+            #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK, idx
             images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device)
 
             with torch.no_grad():
@@ -205,13 +207,13 @@ class ConceptHeadTunneled:
                 if intervention_fn is not None:
                     predicted_SEEK = intervention_fn(predicted_SEEK, subject_SEEK, ele_SEEK)
                 
-                predicted_SEEK = predicted_SEEK.to(self.device)
-
-                collected_embeddings = torch.cat((collected_embeddings, predicted_SEEK))
+                collected_embeddings = torch.cat((collected_embeddings, predicted_SEEK.to(self.device)))
                 collected_labels = torch.cat((collected_labels, ele_id_label))
         
         if aggregate_seeks:
             subject_seek, collected_embeddings, collected_labels = SEEK.aggregate_seek(collected_embeddings, collected_labels)
+        collected_embeddings = collected_embeddings.cpu()
+        collected_labels = collected_labels
 
         return collected_embeddings, collected_labels
 
