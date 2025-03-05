@@ -3,7 +3,6 @@
 /weights/MegaD_elephant_w.pt
 /weights/MegaD_elephant_w.pt
 /weights/savanna_elephants_md_v2_epoch_60.pt
-
 preprocessed/
 
 experiments/
@@ -19,6 +18,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.env
 .Python
 build/
 develop-eggs/

@@ -150,7 +150,8 @@ class Projector(nn.Module):
         best_train_recall = 0
         retrieval = Retrieval(experiment_code=self.exp_code)
         print(f'Parameters requiring gradients - Projector: {any(p.requires_grad for p in self.layer.parameters())}, Backbone_for_concepts: {any(p.requires_grad for p in backbone_for_concepts.layer.parameters())}, Backbone: {any(p.requires_grad for p in backbone.layer.parameters())}, Concept_head: {any(p.requires_grad for p in concept_head.layer.parameters())}')
-        
+        self.optimizer = optim.Adam(list(self.layer.parameters())+list(backbone.layer.parameters()), lr=self.lr)
+
         for epoch in range(num_epochs):
             train_loss, batch_recall = self.epoch_pass(train_loader, backbone_for_concepts, backbone, concept_head, training=True)
             epoch_train_recall = retrieval.one_out_retrieval(model=self, backbone_for_concepts=backbone_for_concepts, backbone=backbone, loader=train_loader, ch=concept_head)
