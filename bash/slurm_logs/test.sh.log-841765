@@ -1,0 +1,44 @@
+cpu-bind=MASK - beery-a100-2, task  0  0 [3279511]: mask 0x20 set
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+Model loaded from /data/vision/beery/scratch/antoine/CBM_reid/weights/concept_w.pt
+loading weights for the concept head
+--------------TEST---------------
+sex Accuracy: 99.85%
+age Accuracy: 99.26%
+right_tusk Accuracy: 89.30%
+left_tusk Accuracy: 91.39%
+R_tear_1 Accuracy: 38.99%
+R_hole_1 Accuracy: 81.42%
+R_tear_2 Accuracy: 61.88%
+R_hole_2 Accuracy: 96.80%
+L_tear_1 Accuracy: 38.17%
+L_hole_1 Accuracy: 83.90%
+L_tear_2 Accuracy: 68.75%
+L_hole_2 Accuracy: 96.90%
+right_extreme Accuracy: 63.14%
+left_extreme Accuracy: 58.15%
+ear_special Accuracy: 92.07%
+body_special Accuracy: 86.19%
+average Accuracy: 77.89%
+whole_code Accuracy: 1.93%
+left_ear Accuracy: 69.17%
+right_ear Accuracy: 68.45%
+big_errors Accuracy: 0.00%
+evaluating concept head  
+collecting concepts from concept head
+  0%|          | 0/31 [00:00<?, ?it/s]  3%|▎         | 1/31 [00:00<00:16,  1.82it/s]  6%|▋         | 2/31 [00:01<00:15,  1.86it/s] 10%|▉         | 3/31 [00:01<00:14,  1.89it/s] 13%|█▎        | 4/31 [00:02<00:14,  1.89it/s] 16%|█▌        | 5/31 [00:02<00:13,  1.87it/s] 19%|█▉        | 6/31 [00:03<00:13,  1.87it/s] 23%|██▎       | 7/31 [00:03<00:13,  1.82it/s] 26%|██▌       | 8/31 [00:04<00:12,  1.83it/s] 29%|██▉       | 9/31 [00:04<00:11,  1.85it/s] 32%|███▏      | 10/31 [00:05<00:11,  1.83it/s] 35%|███▌      | 11/31 [00:05<00:10,  1.86it/s] 39%|███▊      | 12/31 [00:06<00:10,  1.87it/s] 42%|████▏     | 13/31 [00:06<00:09,  1.88it/s] 45%|████▌     | 14/31 [00:07<00:09,  1.86it/s] 48%|████▊     | 15/31 [00:08<00:08,  1.85it/s] 52%|█████▏    | 16/31 [00:08<00:08,  1.85it/s] 55%|█████▍    | 17/31 [00:09<00:07,  1.84it/s] 58%|█████▊    | 18/31 [00:09<00:07,  1.85it/s] 61%|██████▏   | 19/31 [00:10<00:06,  1.84it/s] 65%|██████▍   | 20/31 [00:10<00:05,  1.85it/s] 68%|██████▊   | 21/31 [00:11<00:05,  1.84it/s] 71%|███████   | 22/31 [00:11<00:04,  1.83it/s] 74%|███████▍  | 23/31 [00:12<00:04,  1.84it/s] 77%|███████▋  | 24/31 [00:12<00:03,  1.85it/s] 81%|████████  | 25/31 [00:13<00:03,  1.84it/s] 84%|████████▍ | 26/31 [00:14<00:02,  1.86it/s] 87%|████████▋ | 27/31 [00:14<00:02,  1.84it/s] 90%|█████████ | 28/31 [00:15<00:01,  1.84it/s] 94%|█████████▎| 29/31 [00:15<00:01,  1.85it/s] 97%|█████████▋| 30/31 [00:16<00:00,  1.85it/s]100%|██████████| 31/31 [00:16<00:00,  1.89it/s]100%|██████████| 31/31 [00:16<00:00,  1.85it/s]
+collecting concepts from concept head
+  0%|          | 0/21 [00:00<?, ?it/s]  5%|▍         | 1/21 [00:00<00:10,  1.87it/s] 10%|▉         | 2/21 [00:01<00:10,  1.85it/s] 14%|█▍        | 3/21 [00:01<00:09,  1.82it/s] 19%|█▉        | 4/21 [00:02<00:09,  1.85it/s] 24%|██▍       | 5/21 [00:02<00:08,  1.86it/s] 29%|██▊       | 6/21 [00:03<00:08,  1.86it/s] 33%|███▎      | 7/21 [00:03<00:07,  1.86it/s] 38%|███▊      | 8/21 [00:04<00:06,  1.87it/s] 43%|████▎     | 9/21 [00:04<00:06,  1.86it/s] 48%|████▊     | 10/21 [00:05<00:05,  1.84it/s] 52%|█████▏    | 11/21 [00:05<00:05,  1.85it/s] 57%|█████▋    | 12/21 [00:06<00:04,  1.84it/s] 62%|██████▏   | 13/21 [00:07<00:04,  1.84it/s] 67%|██████▋   | 14/21 [00:07<00:03,  1.83it/s] 71%|███████▏  | 15/21 [00:08<00:03,  1.84it/s] 76%|███████▌  | 16/21 [00:08<00:02,  1.86it/s] 81%|████████  | 17/21 [00:09<00:02,  1.85it/s] 86%|████████▌ | 18/21 [00:09<00:01,  1.85it/s] 90%|█████████ | 19/21 [00:10<00:01,  1.83it/s] 95%|█████████▌| 20/21 [00:10<00:00,  1.83it/s]100%|██████████| 21/21 [00:11<00:00,  2.15it/s]100%|██████████| 21/21 [00:11<00:00,  1.89it/s]
+wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250305_171248-bkxh7evm
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run oracle-just-projector
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/bkxh7evm
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))

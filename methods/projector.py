@@ -67,11 +67,15 @@ class Projector(nn.Module):
     
     def epoch_pass(self, loader, backbone_for_concepts, backbone, ch, training=True, intervention_fn = None):
 
+
+        self.layer.train() if training else self.layer.eval()
+        backbone.layer.train() if training else backbone.layer.eval()
+        backbone_for_concepts.layer.eval()
+        ch.layer.eval()
+    
         total_loss, total_accuracy, total_batches = 0, 0, 0
         
-        for batch_idx, batch in enumerate(loader):
-                    # Are we training ?
-            self.layer.train() if training else self.layer.eval()   
+        for batch_idx, batch in enumerate(loader):               
             images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[5], batch[6].to('cuda'), batch[7].to('cuda')
             
             #with torch.no_grad():
@@ -80,7 +84,7 @@ class Projector(nn.Module):
             # Compute the concepts from the backbone embeddings
             concept_logits = ch.layer(embeddings_for_concepts)
             
-            hard_predicted_concepts = SEEK.closest_valid_one_hot(concept_logits)
+            #hard_predicted_concepts = SEEK.closest_valid_one_hot(concept_logits)
             
             # Allow for intervention
             if intervention_fn is not None:
@@ -88,15 +92,12 @@ class Projector(nn.Module):
                 edited_concepts = intervention_fn(concept_logits, subject_SEEK, ele_SEEK)
             else: 
                 #print('No intervention function applied, edited_concepts = hard_predicted_concepts')
-                edited_concepts = hard_predicted_concepts
+                edited_concepts = concept_logits
 
             # Projecting the concepts back to the embeddings space
             projected_concepts = self.layer(edited_concepts.to('cuda'))
 
-            # We add the concepts projected back to the intiial embeddings space
-            edited_embeddings = projected_concepts + embeddings
-
-            #print('ele_id_label:', ele_id_label)
+            edited_embeddings = embeddings + projected_concepts 
 
             loss = self.loss_fn(edited_embeddings, ele_id_label)
 
@@ -124,6 +125,7 @@ class Projector(nn.Module):
         
         self.layer.eval()
         backbone.layer.eval()
+        backbone_for_concepts.layer.eval()
         concept_head.layer.eval()
         
         for batch in loader:
@@ -132,12 +134,15 @@ class Projector(nn.Module):
             with torch.no_grad():
                 embeddings = backbone.forward(images, left_ears, right_ears)   
                 embeddings_for_concepts = backbone_for_concepts.forward(images, left_ears, right_ears)  
+                
                 concept_logits = concept_head.layer(embeddings_for_concepts)
-                #hard_concepts = SEEK.closest_valid_one_hot(concept_logits)
+                
                 edited_concepts = intervention_fn(concept_logits, subject_SEEK, ele_SEEK) if intervention_fn is not None else concept_logits
-                edited_concepts = edited_concepts.to('cuda')
-                projected_concepts = self.layer(edited_concepts)
-                edited_embeddings = projected_concepts + embeddings
+                
+                projected_concepts = self.layer(edited_concepts.to('cuda'))
+                
+                edited_embeddings = embeddings + projected_concepts
+
 
             collected_embeddings = torch.cat((collected_embeddings, edited_embeddings))
             collected_labels = torch.cat((collected_labels, ele_id_label))
@@ -158,10 +163,12 @@ class Projector(nn.Module):
 
             epoch_val_recall = retrieval.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader, ba=backbone, ch=concept_head, backbone_for_concepts=backbone_for_concepts, print_results=False  )
             #backbone_val_recall = retrieval.evaluate_model(model=backbone, train_loader=train_loader, test_loader=val_loader  )
-            
-            wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}, **{f"val-Recall@{k}": v * 100 for k, v in epoch_val_recall.items()}})
+            # Calculate and log layer norms
+            projector_norm = sum(p.norm().item() for p in self.layer.parameters())
+            backbone_norm = sum(p.norm().item() for p in backbone.layer.parameters())
+            wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, "projector_norm": projector_norm, "backbone_norm": backbone_norm, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}, **{f"val-Recall@{k}": v * 100 for k, v in epoch_val_recall.items()}})
             history.append({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}, **{f"val-Recall@{k}": v * 100 for k, v in epoch_val_recall.items()}})
-            print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
+            print(f"Epoch {epoch+1}/{num_epochs} | Norms: bakcbone {backbone_norm} - proj {projector_norm} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
             
             if epoch_train_recall[1] > best_train_recall:
                 best_train_recall = epoch_train_recall[1]

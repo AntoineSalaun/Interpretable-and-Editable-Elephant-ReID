@@ -16,8 +16,8 @@ train_indices, test_indices = dataset.split_perpendicular_to_elephants_and_encou
 train_subset = Subset(dataset, train_indices)
 test_subset = Subset(dataset, test_indices)
 
-train_loader = DataLoader(train_subset, batch_size=32, shuffle=False)
-test_loader = DataLoader(test_subset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_subset, batch_size=64, shuffle=False)
+test_loader = DataLoader(test_subset, batch_size=64, shuffle=False)
 
 MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
 
@@ -40,50 +40,6 @@ def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK):
         else:
             return concept_logits
 
-def hard(concept_logits, subject_SEEK, elephant_SEEK):
-    return SEEK.closest_valid_one_hot(concept_logits)
-
-print('=========== TRAINING WITH CORRECT OR SOFT 50% ===========')
-# Initialize Projector
-pr = Projector(lr=5e-4, scale=64, margin=0.5, experiment_code='soft_corrected', intervention_fn=correct_or_soft)
-concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
-
-# Freeze other models and unfreeze the projector
-MD_for_concepts.freeze()
-concept_head.freeze()
-pr.unfreeze()
-
-# Train the model
-pr.train(
-    train_loader, 
-    test_loader, 
-    backbone_for_concepts=MD_for_concepts, 
-    backbone=MD_finedtuned, 
-    concept_head=concept_head, 
-    num_epochs=300
-)
-
-# Define intervention functions for testing
-test_intervention_fns = {
-    "100% Correction": SEEK.oracle_correction,
-    "50% Correction + soft": correct_or_soft,
-    "0% Correction": None,
-    "0% Correction Hard": hard
-}
-
-# Run the structured test method
-pr.test(
-    backbone_for_concepts=MD_for_concepts, 
-    backbone=MD_finedtuned, 
-    concept_head=concept_head, 
-    train_loader=train_loader, 
-    test_loader=test_loader, 
-    intervention_fns=test_intervention_fns
-)
-
-
-print('=========== TRAINING WITH CORRECT OR HARD 50% ===========')
-import torch
 def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
         # Randomly choose between oracle correction and perfect correction
         if torch.rand(1) < 0.5:
@@ -94,12 +50,16 @@ def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
 def hard(concept_logits, subject_SEEK, elephant_SEEK):
     return SEEK.closest_valid_one_hot(concept_logits)
 
-# Initialize Projector
-pr = Projector(lr=5e-4, scale=64, margin=0.5, experiment_code='hard_corrected', intervention_fn=correct_or_hard)
+code = 'oracle-just-projector'
+
+MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
+MD_finedtuned = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
+pr = Projector(lr=5e-4, scale=64, margin=0.5, experiment_code=code, intervention_fn=SEEK.oracle_correction)
 concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
 
 # Freeze other models and unfreeze the projector
 MD_for_concepts.freeze()
+MD_finedtuned.freeze()
 concept_head.freeze()
 pr.unfreeze()
 
@@ -110,14 +70,13 @@ pr.train(
     backbone_for_concepts=MD_for_concepts, 
     backbone=MD_finedtuned, 
     concept_head=concept_head, 
-    num_epochs=300
+    num_epochs=500
 )
 
 # Define intervention functions for testing
 test_intervention_fns = {
     "100% Correction": SEEK.oracle_correction,
     "50% Correction + soft": correct_or_soft,
-    "50% Correction + hard": correct_or_hard,
     "0% Correction": None,
     "0% Correction Hard": hard
 }
@@ -133,15 +92,16 @@ pr.test(
 )
 
 
-print('=========== ## Training with 0% corrected soft concepts ===========')
+code = 'oracle-backbone+projector'
 
-
-# Initialize Projector
-pr = Projector(lr=5e-4, scale=64, margin=0.5, experiment_code='soft_not_corrected', intervention_fn=None)
+MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
+MD_finedtuned = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
+pr = Projector(lr=5e-4, scale=64, margin=0.5, experiment_code=code, intervention_fn=SEEK.oracle_correction)
 concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
 
 # Freeze other models and unfreeze the projector
 MD_for_concepts.freeze()
+MD_finedtuned.unfreeze()
 concept_head.freeze()
 pr.unfreeze()
 
@@ -152,14 +112,13 @@ pr.train(
     backbone_for_concepts=MD_for_concepts, 
     backbone=MD_finedtuned, 
     concept_head=concept_head, 
-    num_epochs=300
+    num_epochs=500
 )
 
 # Define intervention functions for testing
 test_intervention_fns = {
     "100% Correction": SEEK.oracle_correction,
     "50% Correction + soft": correct_or_soft,
-    "50% Correction + hard": correct_or_hard,
     "0% Correction": None,
     "0% Correction Hard": hard
 }
