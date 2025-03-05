@@ -20,76 +20,13 @@ class Retrieval:
         with open(self.experiment_dir / 'note.txt', 'a') as f: 
             f.write('---projector---')
 
-    def collect_edited_embeddings(self, loader, backbone, concept_head, projector, intervention_fn =None):
-        print('collecting the embeddings')
-        backbone.freeze()
-        concept_head.freeze()
-        projector.freeze()
-        
-        collected_embeddings = torch.tensor([]).to('cuda')
-        collected_labels = torch.tensor([]).to('cuda')
-
-        
-        for batch in tqdm(loader):
-            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[6].to('cuda'), batch[7].to('cuda')
-            
-            with torch.no_grad():
-                embeddings = backbone.forward(images, left_ears, right_ears)   
-                # Compute the concepts from the backbone embeddings
-                concept_logits = concept_head.layer(embeddings)
-                hard_predicted_concepts = SEEK.closest_valid_one_hot(concept_logits)
-                
-                # Allow for intervention ???
-                if intervention_fn is not None:
-                    #print('We apply an intervention function')
-                    edited_concepts = intervention_fn(hard_predicted_concepts, subject_SEEK)
-                else: 
-                    #print('No intervention function applied, edited_concepts = hard_predicted_concepts')
-                    edited_concepts = hard_predicted_concepts
-
-                # Projecting the concepts back to the embeddings space
-                projected_concepts = projector.layer(edited_concepts)
-                    
-                # We add the concepts projected back to the intiial embeddings space
-                edited_embeddings = projected_concepts + embeddings
-
-                collected_embeddings = torch.cat((collected_embeddings, edited_embeddings))
-                collected_labels = torch.cat((collected_labels, ele_id_label))
-        
-        return collected_embeddings, collected_labels
-
-    def collect_MD_embeddings(self, loader, backbone, intervention_fn =None):
-
-        backbone.freeze()
-        
-        collected_embeddings = torch.tensor([]).to('cuda')
-        collected_labels = torch.tensor([]).to('cuda')
-
-        
-        for batch in tqdm(loader):
-            images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[6].to('cuda'), batch[7].to('cuda')
-            
-            with torch.no_grad():
-                embeddings = backbone.forward(images, left_ears, right_ears)   
-                # Compute the concepts from the backbone embeddings
-
-                collected_embeddings = torch.cat((collected_embeddings, embeddings))
-                collected_labels = torch.cat((collected_labels, ele_id_label))
-        
-        return collected_embeddings, collected_labels
 
     def cosine_similarity_matrix(self, query_embeddings, gallery_embeddings = None):
         """
         Compute the cosine similarity matrix between query and gallery embeddings.
-
-        Args:
-            query_embeddings (torch.Tensor): Tensor of query embeddings (num_queries, embedding_dim).
-            gallery_embeddings (torch.Tensor): Tensor of gallery embeddings (num_gallery, embedding_dim).
-
-        Returns:
-            torch.Tensor: Similarity matrix (num_queries, num_gallery).
         """
         square = False
+
         if gallery_embeddings is None: 
             square = True
             gallery_embeddings = query_embeddings
@@ -107,18 +44,6 @@ class Retrieval:
         return similarity_matrix
 
     def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k=1):
-        """
-        Compute Recall@k for a retrieval task.
-
-        Args:
-            similarity_matrix (torch.Tensor): Similarity matrix (num_queries, num_gallery).
-            query_labels (torch.Tensor): Labels for query embeddings (num_queries,).
-            gallery_labels (torch.Tensor): Labels for gallery embeddings (num_gallery,).
-            k (int): Number of top results to consider.
-
-        Returns:
-            float: Recall@k as a percentage.
-        """
         # Get the indices of the top-k gallery items for each query
         top_k_indices = torch.topk(similarity_matrix, k=k, dim=1, largest=True).indices
 
@@ -177,55 +102,52 @@ class Retrieval:
         plt.savefig(self.experiment_dir / 'accuracy_vs_samples.png')
         plt.show() 
 
-    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, show_tsne = True, show_plot = True, show_matches = True, intervention_fn = None, aggregate_seeks=False):
+    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, backbone_for_concepts = None, show_tsne = False, show_plot = False, show_matches = False, intervention_fn = None, aggregate_seeks=False, print_results = True):
 
         ks = [1, 5, 10, 20, 100]
 
-        model.freeze()
+        #model.freeze()
 
         with torch.no_grad():
             # Train
             if ba is None and ch is None: # evaluating backbone
-                print('evaluating backbone')
+                if print_results: print('evaluating backbone')
                 gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader)
                 query_embeddings, query_labels = model.collect_embeddings(test_loader)
             elif ba is not None and ch is None: # evaluating concept head
-                print('evaluating concept head ', ' with intervention' if intervention_fn is not None else '')
+                if print_results:  print('evaluating concept head ', 'with intervention' if intervention_fn is not None else '')
                 gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
                 query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
             else: # evaluating projector
-                print('evaluating projector ', ' with intervention' if intervention_fn is not None else '')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, ch, intervention_fn = intervention_fn)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, ch, intervention_fn = intervention_fn)
-            
+                if print_results: print('evaluating projector ', 'with intervention' if intervention_fn is not None else '')
+                gallery_embeddings, gallery_labels = model.collect_embeddings(loader=train_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(loader=test_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
 
             gallery_sim_matrix = self.cosine_similarity_matrix(gallery_embeddings)
             train_recalls = {k: self.compute_recall_at_k(gallery_sim_matrix, gallery_labels, gallery_labels, k=k) for k in ks}
 
             # Test with new queries
-            
             test_similarity_matrix = self.cosine_similarity_matrix(query_embeddings, gallery_embeddings)
 
             # Compute Recall@k
             test_recalls = {k: self.compute_recall_at_k(test_similarity_matrix, query_labels, gallery_labels, k=k) for k in ks}
             
-            print("Train Recalls:")
-            for k in ks:
-                print(f"Recall@{k}: {train_recalls[k]*100:.2f}%")
-            
-            print("Test Recalls:")
-            for k in ks:
-                print(f"Recall@{k}: {test_recalls[k]*100:.2f}%")
+            if print_results:
+                print("Train Recalls:")
+                for k in ks:
+                    print(f"Recall@{k}: {train_recalls[k]*100:.2f}%")
+                
+                print("Test Recalls:")
+                for k in ks:
+                    print(f"Recall@{k}: {test_recalls[k]*100:.2f}%")
+
             with open(self.experiment_dir / 'recalls.txt', 'w') as f: f.write(f"Train - Recall@{ks}: {train_recalls}\nTest - Recall@{ks}: {test_recalls}\n")
                         
             if show_tsne: self.make_tsne(gallery_embeddings, gallery_labels)
-
-            # Plot accuracy vs. number of samples per individual
             if show_plot: self.plot_accuracy_vs_samples(test_similarity_matrix, query_labels, gallery_labels, ks)
-
-            # Visualize retrieval results for queries with unique labels
-            # train_loader.dataset.dataset, test_loader.dataset.dataset give access to the whole dataset (twice .dataset in orde to accest the Subset's whole dataset)
             if show_matches: self.visualize_matches(test_similarity_matrix, query_labels, gallery_labels, train_loader.dataset.dataset, train_loader.dataset.dataset, train_loader.dataset.dataset)
+
+            return test_recalls
 
 
     def visualize_matches(self, similarity_matrix, query_labels, gallery_labels, retrieval_dataset, query_subset, gallery_subset, n_vis=4, k=600):
@@ -374,8 +296,8 @@ class Retrieval:
         plt.show()
         plt.savefig(self.experiment_dir / 'tsne.png')
 
-    def one_out_retrieval(self, model, loader, print = False, ba = None, ch = None, intervention_fn = None):
-        embeddings, labels = model.collect_embeddings(loader, ba, ch, intervention_fn = intervention_fn)
+    def one_out_retrieval(self, model, backbone_for_concepts, backbone, loader, print = False, ba = None, ch = None, intervention_fn = None):
+        embeddings, labels = model.collect_embeddings(loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone, intervention_fn = intervention_fn, concept_head=ch)
         similarity_matrix = self.cosine_similarity_matrix(embeddings)
         recalls = {k: self.compute_recall_at_k(similarity_matrix, labels, labels, k=k) for k in [1, 5, 20, 100]}
         if print: print(f"One-out Recall@1: {recalls[1]*100:.2f}% - Recall@5: {recalls[5]*100:.2f}% - Recall@20: {recalls[20]*100:.2f}% - Recall@100: {recalls[100]*100:.2f}%")

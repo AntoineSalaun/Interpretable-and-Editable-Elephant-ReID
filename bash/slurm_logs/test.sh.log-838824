@@ -1,0 +1,176 @@
+cpu-bind=MASK - beery-a100-1, task  0  0 [1908057]: mask 0x40000000 set
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+Model loaded from /data/vision/beery/scratch/antoine/CBM_reid/weights/concept_w.pt
+loading weights for the concept head
+--------------TEST---------------
+sex Accuracy: 99.85%
+age Accuracy: 99.26%
+right_tusk Accuracy: 87.28%
+left_tusk Accuracy: 91.67%
+R_tear_1 Accuracy: 37.95%
+R_hole_1 Accuracy: 81.77%
+R_tear_2 Accuracy: 62.65%
+R_hole_2 Accuracy: 96.80%
+L_tear_1 Accuracy: 37.05%
+L_hole_1 Accuracy: 82.37%
+L_tear_2 Accuracy: 69.87%
+L_hole_2 Accuracy: 97.25%
+right_extreme Accuracy: 63.91%
+left_extreme Accuracy: 58.78%
+ear_special Accuracy: 92.49%
+body_special Accuracy: 86.61%
+average Accuracy: 78.29%
+whole_code Accuracy: 1.86%
+left_ear Accuracy: 69.06%
+right_ear Accuracy: 68.62%
+big_errors Accuracy: 7.14%
+evaluating concept head  
+collecting concepts from concept head
+  0%|          | 0/62 [00:00<?, ?it/s]  2%|▏         | 1/62 [00:00<00:12,  4.93it/s]  3%|▎         | 2/62 [00:00<00:12,  4.85it/s]  5%|▍         | 3/62 [00:00<00:11,  4.99it/s]  6%|▋         | 4/62 [00:00<00:11,  4.93it/s]  8%|▊         | 5/62 [00:01<00:11,  5.02it/s] 10%|▉         | 6/62 [00:01<00:11,  5.02it/s] 11%|█▏        | 7/62 [00:01<00:10,  5.01it/s] 13%|█▎        | 8/62 [00:01<00:10,  5.07it/s] 15%|█▍        | 9/62 [00:01<00:10,  5.07it/s] 16%|█▌        | 10/62 [00:01<00:10,  5.06it/s] 18%|█▊        | 11/62 [00:02<00:10,  5.04it/s] 19%|█▉        | 12/62 [00:02<00:09,  5.09it/s] 21%|██        | 13/62 [00:02<00:09,  5.06it/s] 23%|██▎       | 14/62 [00:02<00:09,  4.98it/s] 24%|██▍       | 15/62 [00:02<00:09,  4.98it/s] 26%|██▌       | 16/62 [00:03<00:09,  5.03it/s] 27%|██▋       | 17/62 [00:03<00:09,  4.99it/s] 29%|██▉       | 18/62 [00:03<00:08,  5.02it/s] 31%|███       | 19/62 [00:03<00:08,  5.05it/s] 32%|███▏      | 20/62 [00:03<00:08,  5.03it/s] 34%|███▍      | 21/62 [00:04<00:08,  5.07it/s] 35%|███▌      | 22/62 [00:04<00:07,  5.17it/s] 37%|███▋      | 23/62 [00:04<00:07,  5.10it/s] 39%|███▊      | 24/62 [00:04<00:07,  5.13it/s] 40%|████      | 25/62 [00:04<00:07,  5.09it/s] 42%|████▏     | 26/62 [00:05<00:07,  4.85it/s] 44%|████▎     | 27/62 [00:05<00:07,  4.79it/s] 45%|████▌     | 28/62 [00:05<00:07,  4.85it/s] 47%|████▋     | 29/62 [00:05<00:06,  4.91it/s] 48%|████▊     | 30/62 [00:06<00:06,  4.78it/s] 50%|█████     | 31/62 [00:06<00:06,  4.80it/s] 52%|█████▏    | 32/62 [00:06<00:06,  4.80it/s] 53%|█████▎    | 33/62 [00:06<00:05,  4.87it/s] 55%|█████▍    | 34/62 [00:06<00:05,  4.88it/s] 56%|█████▋    | 35/62 [00:07<00:05,  4.93it/s] 58%|█████▊    | 36/62 [00:07<00:05,  5.00it/s] 60%|█████▉    | 37/62 [00:07<00:05,  5.00it/s] 61%|██████▏   | 38/62 [00:07<00:04,  4.98it/s] 63%|██████▎   | 39/62 [00:07<00:04,  5.00it/s] 65%|██████▍   | 40/62 [00:08<00:04,  4.98it/s] 66%|██████▌   | 41/62 [00:08<00:04,  5.03it/s] 68%|██████▊   | 42/62 [00:08<00:03,  5.03it/s] 69%|██████▉   | 43/62 [00:08<00:03,  5.05it/s] 71%|███████   | 44/62 [00:08<00:03,  5.03it/s] 73%|███████▎  | 45/62 [00:09<00:03,  5.02it/s] 74%|███████▍  | 46/62 [00:09<00:03,  5.03it/s] 76%|███████▌  | 47/62 [00:09<00:02,  5.05it/s] 77%|███████▋  | 48/62 [00:09<00:02,  5.07it/s] 79%|███████▉  | 49/62 [00:09<00:02,  5.12it/s] 81%|████████  | 50/62 [00:10<00:02,  5.10it/s] 82%|████████▏ | 51/62 [00:10<00:02,  5.12it/s] 84%|████████▍ | 52/62 [00:10<00:01,  5.13it/s] 85%|████████▌ | 53/62 [00:10<00:01,  5.05it/s] 87%|████████▋ | 54/62 [00:10<00:01,  5.00it/s] 89%|████████▊ | 55/62 [00:10<00:01,  5.05it/s] 90%|█████████ | 56/62 [00:11<00:01,  5.07it/s] 92%|█████████▏| 57/62 [00:11<00:00,  5.05it/s] 94%|█████████▎| 58/62 [00:11<00:00,  5.09it/s] 95%|█████████▌| 59/62 [00:11<00:00,  5.10it/s] 97%|█████████▋| 60/62 [00:11<00:00,  5.07it/s] 98%|█████████▊| 61/62 [00:12<00:00,  5.09it/s]100%|██████████| 62/62 [00:12<00:00,  5.21it/s]100%|██████████| 62/62 [00:12<00:00,  5.02it/s]
+collecting concepts from concept head
+  0%|          | 0/42 [00:00<?, ?it/s]  2%|▏         | 1/42 [00:00<00:09,  4.32it/s]  5%|▍         | 2/42 [00:00<00:08,  4.56it/s]  7%|▋         | 3/42 [00:00<00:08,  4.58it/s] 10%|▉         | 4/42 [00:00<00:08,  4.70it/s] 12%|█▏        | 5/42 [00:01<00:07,  4.78it/s] 14%|█▍        | 6/42 [00:01<00:07,  4.82it/s] 17%|█▋        | 7/42 [00:01<00:07,  4.90it/s] 19%|█▉        | 8/42 [00:01<00:06,  4.90it/s] 21%|██▏       | 9/42 [00:01<00:06,  4.86it/s] 24%|██▍       | 10/42 [00:02<00:06,  4.84it/s] 26%|██▌       | 11/42 [00:02<00:06,  4.95it/s] 29%|██▊       | 12/42 [00:02<00:06,  4.95it/s] 31%|███       | 13/42 [00:02<00:05,  4.97it/s] 33%|███▎      | 14/42 [00:02<00:05,  5.03it/s] 36%|███▌      | 15/42 [00:03<00:05,  5.06it/s] 38%|███▊      | 16/42 [00:03<00:05,  5.04it/s] 40%|████      | 17/42 [00:03<00:04,  5.06it/s] 43%|████▎     | 18/42 [00:03<00:04,  5.02it/s] 45%|████▌     | 19/42 [00:03<00:04,  5.00it/s] 48%|████▊     | 20/42 [00:04<00:04,  5.00it/s] 50%|█████     | 21/42 [00:04<00:04,  4.99it/s] 52%|█████▏    | 22/42 [00:04<00:04,  4.98it/s] 55%|█████▍    | 23/42 [00:04<00:03,  4.95it/s] 57%|█████▋    | 24/42 [00:04<00:03,  5.00it/s] 60%|█████▉    | 25/42 [00:05<00:03,  4.99it/s] 62%|██████▏   | 26/42 [00:05<00:03,  4.96it/s] 64%|██████▍   | 27/42 [00:05<00:03,  4.96it/s] 67%|██████▋   | 28/42 [00:05<00:02,  4.99it/s] 69%|██████▉   | 29/42 [00:05<00:02,  5.01it/s] 71%|███████▏  | 30/42 [00:06<00:02,  5.00it/s] 74%|███████▍  | 31/42 [00:06<00:02,  5.07it/s] 76%|███████▌  | 32/42 [00:06<00:01,  5.11it/s] 79%|███████▊  | 33/42 [00:06<00:01,  5.06it/s] 81%|████████  | 34/42 [00:06<00:01,  5.04it/s] 83%|████████▎ | 35/42 [00:07<00:01,  5.01it/s] 86%|████████▌ | 36/42 [00:07<00:01,  5.01it/s] 88%|████████▊ | 37/42 [00:07<00:00,  5.02it/s] 90%|█████████ | 38/42 [00:07<00:00,  4.96it/s] 93%|█████████▎| 39/42 [00:07<00:00,  4.97it/s] 95%|█████████▌| 40/42 [00:08<00:00,  4.95it/s] 98%|█████████▊| 41/42 [00:08<00:00,  4.99it/s]100%|██████████| 42/42 [00:08<00:00,  5.06it/s]
+wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250304_235532-ya41axwv
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run soft_corrected
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/ya41axwv
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:   BATCH-Recall@1 ▅▃▃▃▂▂▁▁▂▂▂▃▃▃▄▄▅▅▅▆▇▇▇▇▇▇██████████████
+wandb:            epoch ▁▁▁▁▂▂▂▂▂▂▂▂▃▃▃▄▄▄▄▄▅▅▅▅▅▅▅▅▅▅▆▆▆▆▇▇▇▇▇█
+wandb:   train-Recall@1 ▄▃▃▂▃▁▁▁▁▁▂▃▃▄▄▅▅▅▆▆▆▆▆▆▆▇▇▇▇▇█████████▇
+wandb: train-Recall@100 ▁▆▇▇▇▇▇▇▇██████████████████████▇▇▇▇▇▇▇▇▇
+wandb:  train-Recall@20 ▁▇▇▇▇▇▇▆▇▇▇▇▇▆▆▇▇▇▇▇▇▇▇▇████████████████
+wandb:   train-Recall@5 ▁▁▃▆▇▆▆▅▄▄▄▄▄▅▅▅▅▅▅▅▇▇▇▇▇▇▇▇████████████
+wandb:       train_loss █▇▇▆▆▄▄▄▄▄▄▄▃▃▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁
+wandb:     val-Recall@1 ▇▆▄▃▂▃▃▁▁▁▂▂▃▄▆▆▇▆▇█████████████▇▇▇▇▇▇▇▇
+wandb:    val-Recall@10 ▇▆▄▄▅▄▃▂▂▃▂▂▁▂▃▄▄▄▅▇▆▇▇▇▇██▇▇▇▇████▇█▇██
+wandb:   val-Recall@100 ▅▇▅▅▃▄▃▁▂▂▂▁▁▃▅▆▆▆▆▇█▇▇▇▇██▇▇▇▇▇▆▅▅▆▆▆▆▆
+wandb:    val-Recall@20 ▆▇▅▅▅▃▂▂▁▁▁▂▃▄▄▅▆▅▅▆▇▇▇▇▇▇▆▇▇▇████████▇█
+wandb:     val-Recall@5 ▅█▆▅▄▁▁▁▁▁▂▁▂▃▃▃▅▅▅▅▆▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇▇▇▆
+wandb: 
+wandb: Run summary:
+wandb:      0% Correction Hard-Recall@1 13.25209
+wandb:     0% Correction Hard-Recall@10 28.86519
+wandb:    0% Correction Hard-Recall@100 63.97563
+wandb:     0% Correction Hard-Recall@20 38.08073
+wandb:      0% Correction Hard-Recall@5 23.38157
+wandb:           0% Correction-Recall@1 18.5834
+wandb:          0% Correction-Recall@10 35.1866
+wandb:         0% Correction-Recall@100 65.57502
+wandb:          0% Correction-Recall@20 42.26961
+wandb:           0% Correction-Recall@5 28.78903
+wandb:         100% Correction-Recall@1 71.89642
+wandb:        100% Correction-Recall@10 91.39375
+wandb:       100% Correction-Recall@100 98.17212
+wandb:        100% Correction-Recall@20 94.28789
+wandb:         100% Correction-Recall@5 86.82407
+wandb:   50% Correction + soft-Recall@1 27.64661
+wandb:  50% Correction + soft-Recall@10 40.67022
+wandb: 50% Correction + soft-Recall@100 64.28027
+wandb:  50% Correction + soft-Recall@20 46.68698
+wandb:   50% Correction + soft-Recall@5 36.02437
+wandb:                   BATCH-Recall@1 94.75806
+wandb:             Final-Train-Recall@1 42.45331
+wandb:           Final-Train-Recall@100 96.71883
+wandb:            Final-Train-Recall@20 85.15901
+wandb:             Final-Train-Recall@5 66.78445
+wandb:                            epoch 300
+wandb:                   train-Recall@1 42.45331
+wandb:                 train-Recall@100 96.71883
+wandb:                  train-Recall@20 85.15901
+wandb:                   train-Recall@5 66.78445
+wandb:                       train_loss 0.44494
+wandb:                    val-Recall@10 35.1866
+wandb:                   val-Recall@100 65.57502
+wandb:                    val-Recall@20 42.26961
+wandb:                     val-Recall@5 28.78903
+wandb: 
+wandb: 🚀 View run soft_corrected at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/ya41axwv
+wandb: ⭐️ View project at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20250304_235532-ya41axwv/logs
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250305_053804-ws5wgw69
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run hard_corrected
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/ws5wgw69
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:   BATCH-Recall@1 ▃▂▂▁▁▁▁▂▃▃▄▅▅▆▆▇▇▇▇▇▇▇▇▇▇▇██████████████
+wandb:            epoch ▁▁▁▂▂▂▂▂▂▂▃▃▃▃▃▄▄▄▅▅▅▅▆▆▆▆▆▆▆▆▆▇▇▇▇▇▇▇▇█
+wandb:   train-Recall@1 ▆▇▆▄▄▁▁▂▂▂▂▂▂▄▅▆▆▆▆▆▆▇▇▇▇▇▇▇▇▆▆▆▆▆▇█████
+wandb: train-Recall@100 ▁▇▇▇▇▇▇█▇▇▇▇▇▇████████▇▇▇▇▇▇▇▇▆▆▆▆▆▅▅▅▅▅
+wandb:  train-Recall@20 █▁▂▇▇▇▆▆▅▆▆▆▅▅▆▇▇▇▇▇██▇▇▇▇█▇█▇▇████▇▇▆▆▆
+wandb:   train-Recall@5 █▁▁▄▅▄▄▄▄▄▄▄▅▄▄▄▄▄▄▅▅▅▅▅▆▅▅▆▆▆▆▆▆▆▆▅▅▅▅▅
+wandb:       train_loss ██▇▇▇▆▆▆▆▅▅▅▅▅▅▅▄▄▄▄▃▃▃▃▃▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁
+wandb:     val-Recall@1 █▇▇▄▃▁▂▂▂▂▂▃▆▆▇▇▇███████▇▇▇██▇▇▇▇▇▇▇▇▇▇▇
+wandb:    val-Recall@10 ▃▅█▄▂▃▁▄▄▁▂▃▂▂▄▄▄▄▃▂▄▆▆▆▆▄▄▄▄▅▃▄▂▁▂▂▂▁▂▃
+wandb:   val-Recall@100 ▆▅▇▇█▇▇▇▆▆▇▆▅▇▆▅▅▅▅▆▄▃▃▂▃▂▃▂▂▂▂▂▂▂▂▁▁▁▁▁
+wandb:    val-Recall@20 ▅▆▅▄▅▃▃▃▃▁▁▁▃▃▅▅▅▆▆▆▇▇▇▇█▇▇▆▆▇▇▇▇▆▇▆▆▆▆▆
+wandb:     val-Recall@5 ▃█▆█▅▅▄▄▁▂▅▅▅▅▅▅▅▆▆▇▆▆▆▆▆▅▅▅▅▅▅▅▅▅▆▆▆▅▅▆
+wandb: 
+wandb: Run summary:
+wandb:      0% Correction Hard-Recall@1 13.32826
+wandb:     0% Correction Hard-Recall@10 30.08378
+wandb:    0% Correction Hard-Recall@100 63.4425
+wandb:     0% Correction Hard-Recall@20 37.92841
+wandb:      0% Correction Hard-Recall@5 24.21935
+wandb:           0% Correction-Recall@1 19.04037
+wandb:          0% Correction-Recall@10 34.95811
+wandb:         0% Correction-Recall@100 64.20411
+wandb:          0% Correction-Recall@20 42.11729
+wandb:           0% Correction-Recall@5 28.86519
+wandb:         100% Correction-Recall@1 72.20107
+wandb:        100% Correction-Recall@10 90.78446
+wandb:       100% Correction-Recall@100 98.17212
+wandb:        100% Correction-Recall@20 93.90708
+wandb:         100% Correction-Recall@5 86.74791
+wandb:   50% Correction + hard-Recall@1 32.44478
+wandb:  50% Correction + hard-Recall@10 49.65727
+wandb: 50% Correction + hard-Recall@100 74.40975
+wandb:  50% Correction + hard-Recall@20 56.43564
+wandb:   50% Correction + hard-Recall@5 43.33587
+wandb:   50% Correction + soft-Recall@1 27.8751
+wandb:  50% Correction + soft-Recall@10 42.8789
+wandb: 50% Correction + soft-Recall@100 65.19421
+wandb:  50% Correction + soft-Recall@20 48.05788
+wandb:   50% Correction + soft-Recall@5 38.46154
+wandb:                   BATCH-Recall@1 95.35769
+wandb:             Final-Train-Recall@1 41.84755
+wandb:           Final-Train-Recall@100 95.65876
+wandb:            Final-Train-Recall@20 83.6951
+wandb:             Final-Train-Recall@5 65.21959
+wandb:                            epoch 300
+wandb:                   train-Recall@1 41.84755
+wandb:                 train-Recall@100 95.65876
+wandb:                  train-Recall@20 83.6951
+wandb:                   train-Recall@5 65.21959
+wandb:                       train_loss 0.41257
+wandb:                    val-Recall@10 34.95811
+wandb:                   val-Recall@100 64.20411
+wandb:                    val-Recall@20 42.11729
+wandb:                     val-Recall@5 28.86519
+wandb: 
+wandb: 🚀 View run hard_corrected at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/ws5wgw69
+wandb: ⭐️ View project at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20250305_053804-ws5wgw69/logs
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250305_111719-8dvlu9w9
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run soft_not_corrected
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/8dvlu9w9
+wandb: WARNING Fatal error while uploading data. Some run data will not be synced, but it will still be written to disk. Use `wandb sync` at the end of the run to try uploading.

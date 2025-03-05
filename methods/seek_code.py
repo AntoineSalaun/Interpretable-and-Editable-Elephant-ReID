@@ -1,7 +1,5 @@
 import torch
 
-import torch
-
 class SEEK:
     # Class variables for attribute mappings, lengths, and attribute names
     mappings = {
@@ -160,7 +158,7 @@ class SEEK:
         return torch.stack(cat_labels).to('cuda'), torch.stack(whole_labels).to('cuda'), torch.stack(left_labels).to('cuda'), torch.stack(right_labels).to('cuda')
     
         
-    @staticmethod
+    #@staticmethod
     def separate_one_hot(labels_1h):
         # Check if the input is a tensor        
         if labels_1h.dim() == 1:
@@ -348,6 +346,13 @@ class SEEK:
 
     def oracle_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
         return elephant_SEEK
+    
+    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK):
+            # Randomly choose between oracle correction and perfect correction
+            if torch.rand(1) < 0.5:
+                return elephant_SEEK
+            else:
+                return concept_logits
 
 
 # Updated test function
