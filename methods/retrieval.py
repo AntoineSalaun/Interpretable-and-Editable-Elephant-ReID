@@ -296,7 +296,7 @@ class Retrieval:
         plt.show()
         plt.savefig(self.experiment_dir / 'tsne.png')
 
-    def one_out_retrieval(self, model, backbone_for_concepts, backbone, loader, print = False, ba = None, ch = None, intervention_fn = None):
+    def one_out_retrieval(self, model, loader,  backbone_for_concepts=None, backbone=None, print = False, ba = None, ch = None, intervention_fn = None):
         embeddings, labels = model.collect_embeddings(loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone, intervention_fn = intervention_fn, concept_head=ch)
         similarity_matrix = self.cosine_similarity_matrix(embeddings)
         recalls = {k: self.compute_recall_at_k(similarity_matrix, labels, labels, k=k) for k in [1, 5, 20, 100]}

@@ -171,7 +171,7 @@ class ConceptHeadTunneled:
             
     def unfreeze(self):
         """Unfreezes all layers in the ConceptHead for training."""
-        for layer in [self.whole_image_layer, self.left_ear_layer, self.right_ear_layer]:
+        for layer in [self.layer.whole_image_layer, self.layer.left_ear_layer, self.layer.right_ear_layer]:
             layer.train()
             for param in layer.parameters():
                 param.requires_grad = True

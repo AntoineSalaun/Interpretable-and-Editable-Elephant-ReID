@@ -1,0 +1,965 @@
+cpu-bind=MASK - beery-a100-2, task  0  0 [2230176]: mask 0x10000000000000000 set
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250310_225241-497d73o1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run onlyproj-alpha=0.75-lr=1e-5-correct-or-sosft
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/497d73o1
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:   BATCH-Recall@1 ▂▄▂▁▃▁▁▂▃▃▃▂▂▂▂▂▃▃▁▃▂▃▄▅▃▅▅▆▆▆▆▇▆▆█▆▆▆█▆
+wandb:    backbone_norm ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:            epoch ▁▁▁▁▂▂▂▂▂▂▃▃▃▃▄▄▄▄▄▄▅▅▅▅▅▅▆▆▆▆▇▇▇▇██████
+wandb:   projector_norm ▁▁▁▁▁▂▂▂▂▂▂▂▂▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▆▇▇▇▇▇▇▇█
+wandb:   train-Recall@1 ▂▂▂▁▁▁▁▁▁▁▁▂▂▂▂▂▂▃▃▃▄▅▅▅▅▆▆▆▆▇▇▇▇▇▇█████
+wandb: train-Recall@100 ▃▂▂▂▁▁▁▁▂▂▂▃▄▄▄▅▅▅▅▆▆▇▇▇▇▇▇▇████████████
+wandb:  train-Recall@20 ▂▂▂▂▂▁▁▁▁▁▁▁▂▂▂▂▃▃▃▃▃▄▅▅▅▅▆▆▆▆▇▇▇▇▇█████
+wandb:   train-Recall@5 ▂▂▁▁▁▁▁▁▁▁▁▁▁▂▂▃▃▃▄▄▄▄▄▄▄▅▅▅▆▆▆▇▇▇▇▇████
+wandb:       train_loss ██▇▇▇▇▆▆▆▅▅▅▅▅▅▅▅▄▄▄▄▃▃▃▃▃▃▃▂▂▂▂▂▂▂▁▁▁▁▁
+wandb:     val-Recall@1 ▂▃▃▁▁▂▂▂▃▅▁▂▁▃▂▄▃▃▅▃▅▃▅▄▅▃▅▆▆▅█▃▄▆▅▆▆▆▆▅
+wandb:    val-Recall@10 ▃▅▂▃▄▄▄▄▂▄▃▄▃▃▃▄▄▅▁▅▄▆▄▆▅▆▆▅▆▇▆▆▅▆█▅▆▆▇▇
+wandb:   val-Recall@100 ▂▅▃▄▅▅▃▃▁▃▃▃▂▃▁▂▃▃▁▄▂▄▂▆▅▅▆▅▅▅▄██▇▅▇▇▇▆█
+wandb:    val-Recall@20 ▄▂▃▃▁▂▂█▂▃▂▄▅▄▃▄▆▄▆▃▆▅▅▆▆▅██▇▇▇▅█▆█▇█▇▆▇
+wandb:     val-Recall@5 ▂▃▅▄▄▂▆▄▃▂▃▁▃▅▄▅▅▆▂▅▃▆▃▄▅▇▄▅▅███▇█▇▆▅▇▆▇
+wandb: 
+wandb: Run summary:
+wandb:      0% Correction Hard-Recall@1 37.77609
+wandb:     0% Correction Hard-Recall@10 60.39604
+wandb:    0% Correction Hard-Recall@100 84.08225
+wandb:     0% Correction Hard-Recall@20 66.94593
+wandb:      0% Correction Hard-Recall@5 53.69383
+wandb:           0% Correction-Recall@1 32.82559
+wandb:          0% Correction-Recall@10 52.93222
+wandb:         0% Correction-Recall@100 77.68469
+wandb:          0% Correction-Recall@20 59.71059
+wandb:           0% Correction-Recall@5 46.53465
+wandb:         100% Correction-Recall@1 41.96497
+wandb:        100% Correction-Recall@10 65.27037
+wandb:       100% Correction-Recall@100 88.42346
+wandb:        100% Correction-Recall@20 71.82026
+wandb:         100% Correction-Recall@5 58.41584
+wandb:   50% Correction + soft-Recall@1 33.81569
+wandb:  50% Correction + soft-Recall@10 55.97867
+wandb: 50% Correction + soft-Recall@100 80.65499
+wandb:  50% Correction + soft-Recall@20 63.06169
+wandb:   50% Correction + soft-Recall@5 49.35263
+wandb:                   BATCH-Recall@1 8.52062
+wandb:             Final-Train-Recall@1 63.2004
+wandb:           Final-Train-Recall@100 98.99041
+wandb:            Final-Train-Recall@20 94.04341
+wandb:             Final-Train-Recall@5 84.80565
+wandb:                    backbone_norm 3739.54049
+wandb:                            epoch 200
+wandb:                   projector_norm 12.00834
+wandb:                   train-Recall@1 63.2004
+wandb:                 train-Recall@100 98.99041
+wandb:                  train-Recall@20 94.04341
+wandb:                   train-Recall@5 84.80565
+wandb:                       train_loss 2.64208
+wandb:                    val-Recall@10 58.33968
+wandb:                   val-Recall@100 84.53922
+wandb:                    val-Recall@20 65.34653
+wandb:                     val-Recall@5 52.09444
+wandb: 
+wandb: 🚀 View run onlyproj-alpha=0.75-lr=1e-5-correct-or-sosft at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/497d73o1
+wandb: ⭐️ View project at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20250310_225241-497d73o1/logs
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250311_024905-3mkgh1lt
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run proj+ba-alpha=0.75-lr=1e-5-correct-or-sosft
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/3mkgh1lt
+wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb:   BATCH-Recall@1 ▁▂▂▃▃▄▅▄▅▆▆▆▇▆▆▆▇▇█▆█▇▆▇▇▇▆▆▇█▇▇▇▇█▇▇▇▇▇
+wandb:    backbone_norm ▁▃▃▃▄▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇██████████
+wandb:            epoch ▁▁▁▁▁▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▄▅▅▅▅▅▅▆▆▆▆▆▆▇▇▇████
+wandb:   projector_norm ▁▁▁▁▁▂▂▂▂▂▂▃▃▃▃▃▃▃▄▄▄▅▅▅▅▆▆▆▆▆▆▇▇▇▇█████
+wandb:   train-Recall@1 ▁▁▂▄▅▆▆▇▇▇▇▇▇▇▇▇▇▇██████████████████████
+wandb: train-Recall@100 ▁▃▄▅▇███████████████████████████████████
+wandb:  train-Recall@20 ▁▃▆▇▇███████████████████████████████████
+wandb:   train-Recall@5 ▁▃▃▄▅▆▆▇▇▇▇▇████████████████████████████
+wandb:       train_loss █▆▆▄▃▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     val-Recall@1 ▂▄▁▃▂█▅▅▄▆▆▅▆▇▆▅▆▆▆▅▅▆▅▆▆▇▆▆▆▅▇▆▅▆▅▆▅▆▅▆
+wandb:    val-Recall@10 ▂▂▄▆▁▄▇▆█▇▆▆▇▆▇▇█▇▆▆▆▆▆▆▆▇▆▆▇▆▆▆▆▆▇▇▇▇▆▇
+wandb:   val-Recall@100 ▂▆▁▂▄▇▇▇▇█▇█▆▇▇▆▇▅▆▆▅▅▆▇▆▆▆▆▅▅▆▆▆▆▅▅▅▅▅▆
+wandb:    val-Recall@20 ▄▃▁▇▅█▆▇▇▆▇▆▇▆█▇▆▇▇█▇▆▇▇▇▇▆▇▇▇▇▇▇▇▆▇▇▆▇▇
+wandb:     val-Recall@5 ▄▁▅▄▅▇▆▇█▇▇▇██▇██▇█▇▆█▇▇▇█▇▇▇██▇█▇▇█▇▇█▇
+wandb: 
+wandb: Run summary:
+wandb:      0% Correction Hard-Recall@1 30.61691
+wandb:     0% Correction Hard-Recall@10 52.09444
+wandb:    0% Correction Hard-Recall@100 76.69459
+wandb:     0% Correction Hard-Recall@20 58.56816
+wandb:      0% Correction Hard-Recall@5 44.24981
+wandb:           0% Correction-Recall@1 31.75933
+wandb:          0% Correction-Recall@10 52.93222
+wandb:         0% Correction-Recall@100 77.22772
+wandb:          0% Correction-Recall@20 59.10129
+wandb:           0% Correction-Recall@5 45.92536
+wandb:         100% Correction-Recall@1 32.44478
+wandb:        100% Correction-Recall@10 55.44554
+wandb:       100% Correction-Recall@100 80.95963
+wandb:        100% Correction-Recall@20 61.76695
+wandb:         100% Correction-Recall@5 47.67708
+wandb:   50% Correction + soft-Recall@1 31.91165
+wandb:  50% Correction + soft-Recall@10 53.08454
+wandb: 50% Correction + soft-Recall@100 79.13176
+wandb:  50% Correction + soft-Recall@20 59.86291
+wandb:   50% Correction + soft-Recall@5 46.76314
+wandb:                   BATCH-Recall@1 17.06108
+wandb:             Final-Train-Recall@1 97.87986
+wandb:           Final-Train-Recall@100 99.94952
+wandb:            Final-Train-Recall@20 99.89904
+wandb:             Final-Train-Recall@5 99.84856
+wandb:                    backbone_norm 3740.09367
+wandb:                            epoch 200
+wandb:                   projector_norm 11.48137
+wandb:                   train-Recall@1 97.87986
+wandb:                 train-Recall@100 99.94952
+wandb:                  train-Recall@20 99.89904
+wandb:                   train-Recall@5 99.84856
+wandb:                       train_loss 0.03608
+wandb:                    val-Recall@10 53.00838
+wandb:                   val-Recall@100 79.28408
+wandb:                    val-Recall@20 60.01523
+wandb:                     val-Recall@5 45.69688
+wandb: 
+wandb: 🚀 View run proj+ba-alpha=0.75-lr=1e-5-correct-or-sosft at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/3mkgh1lt
+wandb: ⭐️ View project at: https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20250311_024905-3mkgh1lt/logs
+Model loaded from /data/vision/beery/scratch/antoine/CBM_reid/weights/concept_w.pt
+loading weights for the concept head
+Parameters requiring gradients - Projector: True, Backbone_for_concepts: False, Backbone: False, Concept_head: False
+Embeddings norm: 52.24787139892578, Projected concepts norm: 14.45654296875
+Epoch 1/200 | Norms: bakcbone 3739.54048538208 - proj 11.389426231384277 | Loss: 7.1365 | Batch R@1: 5.56% | Train: R@1=48.7% R@5=67.2% R@20=82.3% R@100=95.1% | Val: R@1=29.3% R@5=41.8% R@10=48.9% R@20=54.8% R@100=76.0%
+Embeddings norm: 53.1048698425293, Projected concepts norm: 14.616327285766602
+Epoch 2/200 | Norms: bakcbone 3739.54048538208 - proj 11.389625072479248 | Loss: 7.0250 | Batch R@1: 5.00% | Train: R@1=48.6% R@5=67.1% R@20=82.3% R@100=95.1% | Val: R@1=28.0% R@5=39.1% R@10=45.9% R@20=53.5% R@100=73.5%
+Embeddings norm: 50.137874603271484, Projected concepts norm: 14.267597198486328
+Epoch 3/200 | Norms: bakcbone 3739.54048538208 - proj 11.390176773071289 | Loss: 6.9706 | Batch R@1: 5.05% | Train: R@1=48.4% R@5=66.9% R@20=82.2% R@100=95.1% | Val: R@1=28.5% R@5=40.1% R@10=45.8% R@20=53.7% R@100=73.0%
+Embeddings norm: 51.16835021972656, Projected concepts norm: 14.49962043762207
+Epoch 4/200 | Norms: bakcbone 3739.54048538208 - proj 11.390828132629395 | Loss: 6.8941 | Batch R@1: 4.59% | Train: R@1=48.3% R@5=66.7% R@20=82.1% R@100=95.1% | Val: R@1=32.4% R@5=45.5% R@10=51.6% R@20=59.9% R@100=77.8%
+Embeddings norm: 48.97007751464844, Projected concepts norm: 13.774557113647461
+Epoch 5/200 | Norms: bakcbone 3739.54048538208 - proj 11.391659498214722 | Loss: 6.8409 | Batch R@1: 5.45% | Train: R@1=48.1% R@5=66.4% R@20=81.9% R@100=95.0% | Val: R@1=34.0% R@5=45.8% R@10=53.0% R@20=59.9% R@100=79.1%
+Embeddings norm: 49.246952056884766, Projected concepts norm: 13.985530853271484
+Epoch 6/200 | Norms: bakcbone 3739.54048538208 - proj 11.392579793930054 | Loss: 6.7691 | Batch R@1: 3.73% | Train: R@1=48.0% R@5=66.3% R@20=81.7% R@100=94.9% | Val: R@1=31.0% R@5=43.0% R@10=49.9% R@20=56.3% R@100=74.7%
+Embeddings norm: 49.80978775024414, Projected concepts norm: 14.988567352294922
+Epoch 7/200 | Norms: bakcbone 3739.54048538208 - proj 11.39361572265625 | Loss: 6.7209 | Batch R@1: 5.75% | Train: R@1=47.8% R@5=66.0% R@20=81.5% R@100=94.9% | Val: R@1=27.3% R@5=38.5% R@10=44.7% R@20=53.8% R@100=74.6%
+Embeddings norm: 53.2009162902832, Projected concepts norm: 14.660909652709961
+Epoch 8/200 | Norms: bakcbone 3739.54048538208 - proj 11.394802570343018 | Loss: 6.6558 | Batch R@1: 6.91% | Train: R@1=47.5% R@5=65.8% R@20=81.3% R@100=94.8% | Val: R@1=29.8% R@5=40.7% R@10=47.3% R@20=55.1% R@100=75.0%
+Embeddings norm: 52.28396987915039, Projected concepts norm: 15.168418884277344
+Epoch 9/200 | Norms: bakcbone 3739.54048538208 - proj 11.396087884902954 | Loss: 6.6216 | Batch R@1: 4.79% | Train: R@1=47.5% R@5=65.8% R@20=81.2% R@100=94.7% | Val: R@1=32.7% R@5=44.6% R@10=50.6% R@20=58.6% R@100=77.1%
+Embeddings norm: 51.072227478027344, Projected concepts norm: 15.019922256469727
+Epoch 10/200 | Norms: bakcbone 3739.54048538208 - proj 11.397437334060669 | Loss: 6.5799 | Batch R@1: 4.29% | Train: R@1=47.4% R@5=65.6% R@20=81.0% R@100=94.6% | Val: R@1=31.4% R@5=43.9% R@10=49.3% R@20=54.9% R@100=75.2%
+Embeddings norm: 49.93114471435547, Projected concepts norm: 14.690985679626465
+Epoch 11/200 | Norms: bakcbone 3739.54048538208 - proj 11.398833751678467 | Loss: 6.5196 | Batch R@1: 5.10% | Train: R@1=47.2% R@5=65.4% R@20=80.8% R@100=94.6% | Val: R@1=34.3% R@5=45.9% R@10=51.9% R@20=58.5% R@100=77.3%
+Embeddings norm: 51.84515380859375, Projected concepts norm: 14.478105545043945
+Epoch 12/200 | Norms: bakcbone 3739.54048538208 - proj 11.400352478027344 | Loss: 6.5067 | Batch R@1: 4.44% | Train: R@1=46.9% R@5=65.2% R@20=80.6% R@100=94.5% | Val: R@1=30.8% R@5=43.4% R@10=50.0% R@20=57.1% R@100=76.4%
+Embeddings norm: 50.61578369140625, Projected concepts norm: 15.996183395385742
+Epoch 13/200 | Norms: bakcbone 3739.54048538208 - proj 11.401936054229736 | Loss: 6.4584 | Batch R@1: 4.50% | Train: R@1=46.7% R@5=65.0% R@20=80.5% R@100=94.4% | Val: R@1=30.3% R@5=43.6% R@10=49.7% R@20=55.5% R@100=77.7%
+Embeddings norm: 49.934852600097656, Projected concepts norm: 15.125469207763672
+Epoch 14/200 | Norms: bakcbone 3739.54048538208 - proj 11.403576374053955 | Loss: 6.4173 | Batch R@1: 5.10% | Train: R@1=46.7% R@5=64.7% R@20=80.4% R@100=94.3% | Val: R@1=34.4% R@5=48.7% R@10=54.3% R@20=61.7% R@100=78.8%
+Embeddings norm: 49.37571716308594, Projected concepts norm: 15.317598342895508
+Epoch 15/200 | Norms: bakcbone 3739.54048538208 - proj 11.40522313117981 | Loss: 6.3883 | Batch R@1: 4.34% | Train: R@1=46.5% R@5=64.6% R@20=80.2% R@100=94.2% | Val: R@1=30.8% R@5=41.8% R@10=49.6% R@20=56.2% R@100=75.6%
+Embeddings norm: 50.753971099853516, Projected concepts norm: 15.864547729492188
+Epoch 16/200 | Norms: bakcbone 3739.54048538208 - proj 11.406834840774536 | Loss: 6.3645 | Batch R@1: 5.24% | Train: R@1=46.3% R@5=64.5% R@20=79.8% R@100=94.1% | Val: R@1=29.3% R@5=40.6% R@10=47.0% R@20=52.6% R@100=73.8%
+Embeddings norm: 51.381221771240234, Projected concepts norm: 15.209001541137695
+Epoch 17/200 | Norms: bakcbone 3739.54048538208 - proj 11.408554077148438 | Loss: 6.3126 | Batch R@1: 3.99% | Train: R@1=46.1% R@5=64.2% R@20=79.7% R@100=94.0% | Val: R@1=33.1% R@5=45.2% R@10=50.0% R@20=58.0% R@100=77.5%
+Embeddings norm: 52.79621887207031, Projected concepts norm: 16.148868560791016
+Epoch 18/200 | Norms: bakcbone 3739.54048538208 - proj 11.410322666168213 | Loss: 6.3013 | Batch R@1: 5.36% | Train: R@1=46.1% R@5=64.0% R@20=79.6% R@100=94.0% | Val: R@1=29.7% R@5=41.1% R@10=47.6% R@20=54.4% R@100=74.9%
+Embeddings norm: 49.69017028808594, Projected concepts norm: 15.494832992553711
+Epoch 19/200 | Norms: bakcbone 3739.54048538208 - proj 11.412126064300537 | Loss: 6.2698 | Batch R@1: 5.36% | Train: R@1=46.0% R@5=64.0% R@20=79.5% R@100=94.0% | Val: R@1=28.9% R@5=39.7% R@10=46.1% R@20=52.8% R@100=73.7%
+Embeddings norm: 50.74964904785156, Projected concepts norm: 16.62335205078125
+Epoch 20/200 | Norms: bakcbone 3739.54048538208 - proj 11.413912534713745 | Loss: 6.2433 | Batch R@1: 5.66% | Train: R@1=45.9% R@5=63.8% R@20=79.5% R@100=94.0% | Val: R@1=21.2% R@5=31.6% R@10=37.6% R@20=45.2% R@100=67.9%
+Embeddings norm: 51.04499053955078, Projected concepts norm: 15.341314315795898
+Epoch 21/200 | Norms: bakcbone 3739.54048538208 - proj 11.415748834609985 | Loss: 6.2121 | Batch R@1: 4.29% | Train: R@1=45.9% R@5=63.6% R@20=79.4% R@100=93.9% | Val: R@1=26.4% R@5=35.8% R@10=41.7% R@20=48.8% R@100=70.8%
+Embeddings norm: 52.13002395629883, Projected concepts norm: 15.020818710327148
+Epoch 22/200 | Norms: bakcbone 3739.54048538208 - proj 11.417625427246094 | Loss: 6.1782 | Batch R@1: 4.44% | Train: R@1=45.8% R@5=63.6% R@20=79.3% R@100=93.8% | Val: R@1=35.3% R@5=49.0% R@10=56.1% R@20=63.1% R@100=82.0%
+Embeddings norm: 54.42558288574219, Projected concepts norm: 16.144756317138672
+Epoch 23/200 | Norms: bakcbone 3739.54048538208 - proj 11.419535160064697 | Loss: 6.1537 | Batch R@1: 4.44% | Train: R@1=45.7% R@5=63.4% R@20=79.2% R@100=93.8% | Val: R@1=33.0% R@5=45.8% R@10=52.0% R@20=58.8% R@100=78.3%
+Embeddings norm: 48.992393493652344, Projected concepts norm: 16.181434631347656
+Epoch 24/200 | Norms: bakcbone 3739.54048538208 - proj 11.42140245437622 | Loss: 6.1194 | Batch R@1: 4.34% | Train: R@1=45.5% R@5=63.4% R@20=79.3% R@100=93.8% | Val: R@1=27.4% R@5=37.7% R@10=42.9% R@20=50.5% R@100=71.7%
+Embeddings norm: 49.22810363769531, Projected concepts norm: 16.28803253173828
+Epoch 25/200 | Norms: bakcbone 3739.54048538208 - proj 11.423403024673462 | Loss: 6.1047 | Batch R@1: 4.20% | Train: R@1=45.3% R@5=63.3% R@20=79.2% R@100=93.8% | Val: R@1=28.9% R@5=40.2% R@10=45.6% R@20=51.5% R@100=72.0%
+Embeddings norm: 51.17906188964844, Projected concepts norm: 16.49772071838379
+Epoch 26/200 | Norms: bakcbone 3739.54048538208 - proj 11.425383567810059 | Loss: 6.0892 | Batch R@1: 5.25% | Train: R@1=45.2% R@5=63.2% R@20=79.2% R@100=93.7% | Val: R@1=24.6% R@5=36.9% R@10=43.1% R@20=51.0% R@100=70.8%
+Embeddings norm: 51.8572998046875, Projected concepts norm: 15.521040916442871
+Epoch 27/200 | Norms: bakcbone 3739.54048538208 - proj 11.427340269088745 | Loss: 6.0469 | Batch R@1: 4.39% | Train: R@1=45.1% R@5=63.1% R@20=79.1% R@100=93.7% | Val: R@1=26.5% R@5=37.5% R@10=43.8% R@20=50.1% R@100=70.8%
+Embeddings norm: 50.07632827758789, Projected concepts norm: 16.62320327758789
+Epoch 28/200 | Norms: bakcbone 3739.54048538208 - proj 11.429282188415527 | Loss: 6.0305 | Batch R@1: 4.13% | Train: R@1=45.1% R@5=63.1% R@20=79.1% R@100=93.7% | Val: R@1=26.7% R@5=37.8% R@10=43.0% R@20=48.8% R@100=67.9%
+Embeddings norm: 52.552249908447266, Projected concepts norm: 15.894086837768555
+Epoch 29/200 | Norms: bakcbone 3739.54048538208 - proj 11.431323051452637 | Loss: 5.9924 | Batch R@1: 5.40% | Train: R@1=45.0% R@5=63.0% R@20=79.2% R@100=93.7% | Val: R@1=30.8% R@5=42.7% R@10=48.9% R@20=55.5% R@100=74.8%
+Embeddings norm: 51.41889190673828, Projected concepts norm: 16.828231811523438
+Epoch 30/200 | Norms: bakcbone 3739.54048538208 - proj 11.433417320251465 | Loss: 5.9588 | Batch R@1: 4.59% | Train: R@1=45.0% R@5=63.0% R@20=79.2% R@100=93.6% | Val: R@1=31.3% R@5=44.2% R@10=50.9% R@20=57.7% R@100=77.2%
+Embeddings norm: 52.29552459716797, Projected concepts norm: 16.08546257019043
+Epoch 31/200 | Norms: bakcbone 3739.54048538208 - proj 11.435503959655762 | Loss: 5.9603 | Batch R@1: 4.80% | Train: R@1=45.0% R@5=62.9% R@20=79.2% R@100=93.7% | Val: R@1=31.5% R@5=43.6% R@10=49.0% R@20=54.9% R@100=75.6%
+Embeddings norm: 51.68391799926758, Projected concepts norm: 16.96255111694336
+Epoch 32/200 | Norms: bakcbone 3739.54048538208 - proj 11.43763017654419 | Loss: 5.9211 | Batch R@1: 5.25% | Train: R@1=44.9% R@5=62.9% R@20=79.2% R@100=93.6% | Val: R@1=29.0% R@5=40.2% R@10=46.4% R@20=52.9% R@100=73.3%
+Embeddings norm: 50.22576904296875, Projected concepts norm: 16.30120086669922
+Epoch 33/200 | Norms: bakcbone 3739.54048538208 - proj 11.439789772033691 | Loss: 5.9063 | Batch R@1: 4.85% | Train: R@1=45.0% R@5=62.8% R@20=79.1% R@100=93.6% | Val: R@1=31.5% R@5=43.0% R@10=49.4% R@20=56.6% R@100=75.6%
+Embeddings norm: 51.60359191894531, Projected concepts norm: 16.75521469116211
+Epoch 34/200 | Norms: bakcbone 3739.54048538208 - proj 11.442015409469604 | Loss: 5.8639 | Batch R@1: 4.80% | Train: R@1=45.0% R@5=62.8% R@20=79.1% R@100=93.6% | Val: R@1=26.7% R@5=38.6% R@10=44.3% R@20=52.2% R@100=71.4%
+Embeddings norm: 51.39958572387695, Projected concepts norm: 16.24367332458496
+Epoch 35/200 | Norms: bakcbone 3739.54048538208 - proj 11.444241046905518 | Loss: 5.8599 | Batch R@1: 4.09% | Train: R@1=45.0% R@5=62.9% R@20=79.1% R@100=93.6% | Val: R@1=26.4% R@5=37.8% R@10=44.5% R@20=51.3% R@100=71.0%
+Embeddings norm: 51.13429641723633, Projected concepts norm: 16.740144729614258
+Epoch 36/200 | Norms: bakcbone 3739.54048538208 - proj 11.446480751037598 | Loss: 5.8387 | Batch R@1: 5.56% | Train: R@1=45.0% R@5=62.8% R@20=79.1% R@100=93.6% | Val: R@1=30.1% R@5=42.1% R@10=48.1% R@20=55.4% R@100=74.2%
+Embeddings norm: 49.8929443359375, Projected concepts norm: 17.283123016357422
+Epoch 37/200 | Norms: bakcbone 3739.54048538208 - proj 11.448787212371826 | Loss: 5.8060 | Batch R@1: 5.10% | Train: R@1=45.1% R@5=62.9% R@20=79.1% R@100=93.6% | Val: R@1=29.3% R@5=40.1% R@10=45.6% R@20=53.0% R@100=72.3%
+Embeddings norm: 50.77045440673828, Projected concepts norm: 17.526893615722656
+Epoch 38/200 | Norms: bakcbone 3739.54048538208 - proj 11.451114892959595 | Loss: 5.7909 | Batch R@1: 4.64% | Train: R@1=45.1% R@5=62.9% R@20=79.1% R@100=93.6% | Val: R@1=29.5% R@5=40.5% R@10=46.5% R@20=52.9% R@100=72.4%
+Embeddings norm: 50.69720458984375, Projected concepts norm: 17.016756057739258
+Epoch 39/200 | Norms: bakcbone 3739.54048538208 - proj 11.453447341918945 | Loss: 5.7639 | Batch R@1: 4.10% | Train: R@1=45.1% R@5=62.9% R@20=79.1% R@100=93.6% | Val: R@1=30.8% R@5=43.9% R@10=49.5% R@20=56.4% R@100=76.1%
+Embeddings norm: 51.04461669921875, Projected concepts norm: 16.715351104736328
+Epoch 40/200 | Norms: bakcbone 3739.54048538208 - proj 11.455756664276123 | Loss: 5.7435 | Batch R@1: 5.30% | Train: R@1=45.1% R@5=63.0% R@20=79.1% R@100=93.7% | Val: R@1=37.9% R@5=51.9% R@10=57.7% R@20=64.6% R@100=82.9%
+Embeddings norm: 50.284324645996094, Projected concepts norm: 16.875547409057617
+Epoch 41/200 | Norms: bakcbone 3739.54048538208 - proj 11.458112478256226 | Loss: 5.7063 | Batch R@1: 4.39% | Train: R@1=45.1% R@5=63.1% R@20=79.1% R@100=93.7% | Val: R@1=30.0% R@5=41.9% R@10=47.1% R@20=54.9% R@100=75.0%
+Embeddings norm: 53.80971908569336, Projected concepts norm: 16.896343231201172
+Epoch 42/200 | Norms: bakcbone 3739.54048538208 - proj 11.460470199584961 | Loss: 5.7094 | Batch R@1: 4.24% | Train: R@1=45.1% R@5=63.2% R@20=79.1% R@100=93.7% | Val: R@1=31.7% R@5=44.4% R@10=50.5% R@20=58.0% R@100=76.2%
+Embeddings norm: 50.72864532470703, Projected concepts norm: 16.564531326293945
+Epoch 43/200 | Norms: bakcbone 3739.54048538208 - proj 11.462828159332275 | Loss: 5.6743 | Batch R@1: 4.89% | Train: R@1=45.1% R@5=63.3% R@20=79.1% R@100=93.7% | Val: R@1=31.4% R@5=42.6% R@10=49.4% R@20=55.8% R@100=74.7%
+Embeddings norm: 50.80713653564453, Projected concepts norm: 17.495559692382812
+Epoch 44/200 | Norms: bakcbone 3739.54048538208 - proj 11.465319871902466 | Loss: 5.6455 | Batch R@1: 5.60% | Train: R@1=45.1% R@5=63.3% R@20=79.1% R@100=93.8% | Val: R@1=28.3% R@5=39.1% R@10=45.3% R@20=53.6% R@100=73.0%
+Embeddings norm: 51.28931427001953, Projected concepts norm: 15.76797103881836
+Epoch 45/200 | Norms: bakcbone 3739.54048538208 - proj 11.467743158340454 | Loss: 5.6207 | Batch R@1: 5.10% | Train: R@1=45.1% R@5=63.4% R@20=79.2% R@100=93.8% | Val: R@1=31.0% R@5=43.0% R@10=49.9% R@20=56.2% R@100=74.8%
+Embeddings norm: 49.30358123779297, Projected concepts norm: 16.592185974121094
+Epoch 46/200 | Norms: bakcbone 3739.54048538208 - proj 11.470188617706299 | Loss: 5.5783 | Batch R@1: 4.69% | Train: R@1=45.2% R@5=63.5% R@20=79.3% R@100=93.8% | Val: R@1=30.5% R@5=41.7% R@10=48.2% R@20=55.1% R@100=76.0%
+Embeddings norm: 50.3193359375, Projected concepts norm: 17.37091064453125
+Epoch 47/200 | Norms: bakcbone 3739.54048538208 - proj 11.47272253036499 | Loss: 5.5821 | Batch R@1: 5.55% | Train: R@1=45.3% R@5=63.5% R@20=79.3% R@100=93.8% | Val: R@1=27.8% R@5=39.0% R@10=45.2% R@20=51.0% R@100=70.4%
+Embeddings norm: 51.271400451660156, Projected concepts norm: 17.329578399658203
+Epoch 48/200 | Norms: bakcbone 3739.54048538208 - proj 11.475242853164673 | Loss: 5.5604 | Batch R@1: 5.82% | Train: R@1=45.2% R@5=63.6% R@20=79.4% R@100=93.8% | Val: R@1=27.7% R@5=39.2% R@10=45.3% R@20=52.8% R@100=73.0%
+Embeddings norm: 53.154335021972656, Projected concepts norm: 16.948253631591797
+Epoch 49/200 | Norms: bakcbone 3739.54048538208 - proj 11.47780466079712 | Loss: 5.5282 | Batch R@1: 4.74% | Train: R@1=45.2% R@5=63.7% R@20=79.5% R@100=93.8% | Val: R@1=35.0% R@5=48.4% R@10=54.8% R@20=61.8% R@100=80.1%
+Embeddings norm: 48.068241119384766, Projected concepts norm: 17.459745407104492
+Epoch 50/200 | Norms: bakcbone 3739.54048538208 - proj 11.480349063873291 | Loss: 5.5150 | Batch R@1: 4.29% | Train: R@1=45.3% R@5=63.8% R@20=79.5% R@100=93.9% | Val: R@1=23.1% R@5=32.9% R@10=39.2% R@20=45.7% R@100=65.3%
+Embeddings norm: 49.15247344970703, Projected concepts norm: 17.403636932373047
+Epoch 51/200 | Norms: bakcbone 3739.54048538208 - proj 11.483016014099121 | Loss: 5.4930 | Batch R@1: 5.25% | Train: R@1=45.4% R@5=63.9% R@20=79.7% R@100=93.9% | Val: R@1=38.6% R@5=53.3% R@10=60.0% R@20=66.3% R@100=84.2%
+Embeddings norm: 49.748313903808594, Projected concepts norm: 17.596385955810547
+Epoch 52/200 | Norms: bakcbone 3739.54048538208 - proj 11.485623836517334 | Loss: 5.4617 | Batch R@1: 5.44% | Train: R@1=45.4% R@5=64.0% R@20=79.8% R@100=94.0% | Val: R@1=27.3% R@5=38.2% R@10=45.2% R@20=51.4% R@100=71.6%
+Embeddings norm: 50.642066955566406, Projected concepts norm: 17.478919982910156
+Epoch 53/200 | Norms: bakcbone 3739.54048538208 - proj 11.488258123397827 | Loss: 5.4136 | Batch R@1: 4.49% | Train: R@1=45.6% R@5=64.2% R@20=79.8% R@100=94.0% | Val: R@1=30.8% R@5=43.3% R@10=49.9% R@20=55.7% R@100=74.8%
+Embeddings norm: 49.84001159667969, Projected concepts norm: 16.472801208496094
+Epoch 54/200 | Norms: bakcbone 3739.54048538208 - proj 11.490891456604004 | Loss: 5.4172 | Batch R@1: 4.90% | Train: R@1=45.6% R@5=64.3% R@20=80.1% R@100=94.0% | Val: R@1=28.6% R@5=40.9% R@10=46.8% R@20=54.2% R@100=74.2%
+Embeddings norm: 52.183135986328125, Projected concepts norm: 17.144702911376953
+Epoch 55/200 | Norms: bakcbone 3739.54048538208 - proj 11.493594884872437 | Loss: 5.3926 | Batch R@1: 5.00% | Train: R@1=45.7% R@5=64.4% R@20=80.1% R@100=94.1% | Val: R@1=26.5% R@5=35.9% R@10=41.9% R@20=50.3% R@100=71.9%
+Embeddings norm: 53.26079559326172, Projected concepts norm: 16.514049530029297
+Epoch 56/200 | Norms: bakcbone 3739.54048538208 - proj 11.496333837509155 | Loss: 5.3793 | Batch R@1: 5.40% | Train: R@1=45.8% R@5=64.5% R@20=80.2% R@100=94.1% | Val: R@1=30.7% R@5=41.8% R@10=47.8% R@20=55.1% R@100=73.9%
+Embeddings norm: 50.45812225341797, Projected concepts norm: 16.59917449951172
+Epoch 57/200 | Norms: bakcbone 3739.54048538208 - proj 11.499048948287964 | Loss: 5.3522 | Batch R@1: 4.75% | Train: R@1=46.0% R@5=64.5% R@20=80.3% R@100=94.1% | Val: R@1=25.8% R@5=37.2% R@10=44.6% R@20=50.2% R@100=71.3%
+Embeddings norm: 50.13080978393555, Projected concepts norm: 16.461286544799805
+Epoch 58/200 | Norms: bakcbone 3739.54048538208 - proj 11.501864671707153 | Loss: 5.3544 | Batch R@1: 5.00% | Train: R@1=46.2% R@5=64.6% R@20=80.5% R@100=94.2% | Val: R@1=30.0% R@5=41.7% R@10=48.4% R@20=54.5% R@100=74.9%
+Embeddings norm: 50.94512176513672, Projected concepts norm: 15.461585998535156
+Epoch 59/200 | Norms: bakcbone 3739.54048538208 - proj 11.504657745361328 | Loss: 5.3347 | Batch R@1: 5.70% | Train: R@1=46.2% R@5=64.7% R@20=80.7% R@100=94.3% | Val: R@1=31.5% R@5=44.3% R@10=50.0% R@20=57.3% R@100=77.1%
+Embeddings norm: 53.65430450439453, Projected concepts norm: 16.12358283996582
+Epoch 60/200 | Norms: bakcbone 3739.54048538208 - proj 11.507453441619873 | Loss: 5.3087 | Batch R@1: 5.35% | Train: R@1=46.3% R@5=64.9% R@20=80.6% R@100=94.2% | Val: R@1=24.1% R@5=33.7% R@10=39.9% R@20=46.2% R@100=67.8%
+Embeddings norm: 52.06526184082031, Projected concepts norm: 17.658960342407227
+Epoch 61/200 | Norms: bakcbone 3739.54048538208 - proj 11.510215997695923 | Loss: 5.2836 | Batch R@1: 4.24% | Train: R@1=46.5% R@5=64.9% R@20=80.9% R@100=94.3% | Val: R@1=28.3% R@5=39.1% R@10=44.9% R@20=51.6% R@100=72.7%
+Embeddings norm: 51.78350830078125, Projected concepts norm: 16.358421325683594
+Epoch 62/200 | Norms: bakcbone 3739.54048538208 - proj 11.51306962966919 | Loss: 5.2345 | Batch R@1: 4.44% | Train: R@1=46.5% R@5=65.2% R@20=80.9% R@100=94.4% | Val: R@1=32.1% R@5=44.4% R@10=49.9% R@20=56.4% R@100=75.2%
+Embeddings norm: 52.15357971191406, Projected concepts norm: 16.857099533081055
+Epoch 63/200 | Norms: bakcbone 3739.54048538208 - proj 11.515905618667603 | Loss: 5.2064 | Batch R@1: 4.89% | Train: R@1=46.7% R@5=65.3% R@20=81.0% R@100=94.4% | Val: R@1=28.1% R@5=37.5% R@10=43.3% R@20=50.0% R@100=70.4%
+Embeddings norm: 51.199127197265625, Projected concepts norm: 17.50362205505371
+Epoch 64/200 | Norms: bakcbone 3739.54048538208 - proj 11.518841743469238 | Loss: 5.1952 | Batch R@1: 5.15% | Train: R@1=46.7% R@5=65.5% R@20=81.0% R@100=94.5% | Val: R@1=32.2% R@5=45.2% R@10=51.9% R@20=57.9% R@100=75.9%
+Embeddings norm: 53.15243911743164, Projected concepts norm: 16.524131774902344
+Epoch 65/200 | Norms: bakcbone 3739.54048538208 - proj 11.521758556365967 | Loss: 5.1923 | Batch R@1: 5.45% | Train: R@1=46.8% R@5=65.8% R@20=81.1% R@100=94.5% | Val: R@1=27.0% R@5=38.5% R@10=45.0% R@20=51.8% R@100=71.7%
+Embeddings norm: 51.623634338378906, Projected concepts norm: 17.16744613647461
+Epoch 66/200 | Norms: bakcbone 3739.54048538208 - proj 11.5246741771698 | Loss: 5.1551 | Batch R@1: 5.35% | Train: R@1=46.9% R@5=65.8% R@20=81.2% R@100=94.5% | Val: R@1=30.5% R@5=42.1% R@10=48.2% R@20=55.8% R@100=74.6%
+Embeddings norm: 50.501914978027344, Projected concepts norm: 16.85348129272461
+Epoch 67/200 | Norms: bakcbone 3739.54048538208 - proj 11.527636051177979 | Loss: 5.1430 | Batch R@1: 4.70% | Train: R@1=47.2% R@5=66.0% R@20=81.4% R@100=94.5% | Val: R@1=30.2% R@5=41.4% R@10=46.6% R@20=52.6% R@100=73.2%
+Embeddings norm: 52.01922607421875, Projected concepts norm: 16.52235221862793
+Epoch 68/200 | Norms: bakcbone 3739.54048538208 - proj 11.530555486679077 | Loss: 5.1268 | Batch R@1: 5.91% | Train: R@1=47.5% R@5=66.1% R@20=81.4% R@100=94.6% | Val: R@1=30.5% R@5=43.0% R@10=48.9% R@20=56.5% R@100=74.9%
+Embeddings norm: 52.54513168334961, Projected concepts norm: 16.48356819152832
+Epoch 69/200 | Norms: bakcbone 3739.54048538208 - proj 11.533504247665405 | Loss: 5.0977 | Batch R@1: 4.75% | Train: R@1=47.5% R@5=66.3% R@20=81.6% R@100=94.6% | Val: R@1=28.2% R@5=39.2% R@10=45.6% R@20=52.6% R@100=73.0%
+Embeddings norm: 50.90796661376953, Projected concepts norm: 16.06484603881836
+Epoch 70/200 | Norms: bakcbone 3739.54048538208 - proj 11.5365149974823 | Loss: 5.0556 | Batch R@1: 4.34% | Train: R@1=47.7% R@5=66.5% R@20=81.7% R@100=94.7% | Val: R@1=30.7% R@5=43.1% R@10=48.7% R@20=55.6% R@100=76.8%
+Embeddings norm: 48.4739990234375, Projected concepts norm: 16.162826538085938
+Epoch 71/200 | Norms: bakcbone 3739.54048538208 - proj 11.539580583572388 | Loss: 5.0212 | Batch R@1: 4.59% | Train: R@1=47.7% R@5=66.6% R@20=82.0% R@100=94.8% | Val: R@1=32.0% R@5=45.7% R@10=52.1% R@20=59.6% R@100=78.2%
+Embeddings norm: 52.20045852661133, Projected concepts norm: 15.789569854736328
+Epoch 72/200 | Norms: bakcbone 3739.54048538208 - proj 11.542677164077759 | Loss: 5.0340 | Batch R@1: 5.25% | Train: R@1=48.0% R@5=66.5% R@20=82.0% R@100=94.9% | Val: R@1=30.6% R@5=43.1% R@10=49.8% R@20=56.7% R@100=75.9%
+Embeddings norm: 51.896881103515625, Projected concepts norm: 15.434158325195312
+Epoch 73/200 | Norms: bakcbone 3739.54048538208 - proj 11.54578709602356 | Loss: 5.0131 | Batch R@1: 5.30% | Train: R@1=48.1% R@5=66.8% R@20=82.2% R@100=95.1% | Val: R@1=30.5% R@5=42.2% R@10=48.3% R@20=55.6% R@100=74.5%
+Embeddings norm: 50.95978927612305, Projected concepts norm: 15.512685775756836
+Epoch 74/200 | Norms: bakcbone 3739.54048538208 - proj 11.548901319503784 | Loss: 4.9922 | Batch R@1: 4.54% | Train: R@1=48.1% R@5=67.0% R@20=82.5% R@100=95.1% | Val: R@1=24.4% R@5=35.2% R@10=40.1% R@20=46.4% R@100=66.9%
+Embeddings norm: 50.10722351074219, Projected concepts norm: 16.37630271911621
+Epoch 75/200 | Norms: bakcbone 3739.54048538208 - proj 11.551985263824463 | Loss: 4.9658 | Batch R@1: 5.65% | Train: R@1=48.3% R@5=67.2% R@20=82.7% R@100=95.2% | Val: R@1=30.1% R@5=42.0% R@10=47.3% R@20=54.5% R@100=73.7%
+Embeddings norm: 52.536346435546875, Projected concepts norm: 16.24212074279785
+Epoch 76/200 | Norms: bakcbone 3739.54048538208 - proj 11.55511736869812 | Loss: 4.9428 | Batch R@1: 6.06% | Train: R@1=48.4% R@5=67.2% R@20=82.8% R@100=95.1% | Val: R@1=33.0% R@5=44.6% R@10=50.4% R@20=59.1% R@100=78.0%
+Embeddings norm: 52.61693572998047, Projected concepts norm: 15.507080078125
+Epoch 77/200 | Norms: bakcbone 3739.54048538208 - proj 11.558284759521484 | Loss: 4.9186 | Batch R@1: 4.89% | Train: R@1=48.6% R@5=67.4% R@20=82.8% R@100=95.3% | Val: R@1=31.2% R@5=42.5% R@10=48.7% R@20=55.8% R@100=75.1%
+Embeddings norm: 53.178245544433594, Projected concepts norm: 16.248506546020508
+Epoch 78/200 | Norms: bakcbone 3739.54048538208 - proj 11.561427116394043 | Loss: 4.9048 | Batch R@1: 4.34% | Train: R@1=48.8% R@5=67.6% R@20=82.9% R@100=95.4% | Val: R@1=31.3% R@5=43.3% R@10=50.3% R@20=56.4% R@100=76.2%
+Embeddings norm: 52.353797912597656, Projected concepts norm: 15.943955421447754
+Epoch 79/200 | Norms: bakcbone 3739.54048538208 - proj 11.564626455307007 | Loss: 4.8718 | Batch R@1: 5.91% | Train: R@1=49.1% R@5=67.7% R@20=83.3% R@100=95.5% | Val: R@1=32.1% R@5=44.6% R@10=51.0% R@20=57.3% R@100=76.7%
+Embeddings norm: 51.89337921142578, Projected concepts norm: 16.0089168548584
+Epoch 80/200 | Norms: bakcbone 3739.54048538208 - proj 11.567812204360962 | Loss: 4.8461 | Batch R@1: 5.39% | Train: R@1=49.1% R@5=67.8% R@20=83.5% R@100=95.5% | Val: R@1=28.3% R@5=41.0% R@10=46.6% R@20=53.2% R@100=73.3%
+Embeddings norm: 51.481536865234375, Projected concepts norm: 15.655874252319336
+Epoch 81/200 | Norms: bakcbone 3739.54048538208 - proj 11.571008205413818 | Loss: 4.8213 | Batch R@1: 5.30% | Train: R@1=49.2% R@5=68.0% R@20=83.6% R@100=95.6% | Val: R@1=27.0% R@5=38.2% R@10=45.0% R@20=52.2% R@100=72.1%
+Embeddings norm: 49.51045227050781, Projected concepts norm: 15.4558744430542
+Epoch 82/200 | Norms: bakcbone 3739.54048538208 - proj 11.57429313659668 | Loss: 4.8041 | Batch R@1: 5.72% | Train: R@1=49.5% R@5=68.2% R@20=83.8% R@100=95.6% | Val: R@1=32.7% R@5=47.0% R@10=53.8% R@20=61.0% R@100=79.1%
+Embeddings norm: 47.62458038330078, Projected concepts norm: 15.498234748840332
+Epoch 83/200 | Norms: bakcbone 3739.54048538208 - proj 11.577479124069214 | Loss: 4.7776 | Batch R@1: 5.42% | Train: R@1=49.9% R@5=68.4% R@20=83.9% R@100=95.7% | Val: R@1=31.2% R@5=43.3% R@10=49.3% R@20=56.3% R@100=75.0%
+Embeddings norm: 51.506187438964844, Projected concepts norm: 14.749467849731445
+Epoch 84/200 | Norms: bakcbone 3739.54048538208 - proj 11.58078408241272 | Loss: 4.7651 | Batch R@1: 5.91% | Train: R@1=50.0% R@5=68.5% R@20=84.0% R@100=95.8% | Val: R@1=31.7% R@5=45.8% R@10=52.2% R@20=58.2% R@100=78.3%
+Embeddings norm: 50.23625183105469, Projected concepts norm: 15.42535400390625
+Epoch 85/200 | Norms: bakcbone 3739.54048538208 - proj 11.584070920944214 | Loss: 4.7541 | Batch R@1: 6.41% | Train: R@1=50.2% R@5=68.6% R@20=84.4% R@100=95.9% | Val: R@1=30.2% R@5=42.6% R@10=49.8% R@20=56.1% R@100=76.8%
+Embeddings norm: 52.065032958984375, Projected concepts norm: 15.510135650634766
+Epoch 86/200 | Norms: bakcbone 3739.54048538208 - proj 11.58742904663086 | Loss: 4.7290 | Batch R@1: 6.01% | Train: R@1=50.4% R@5=68.9% R@20=84.7% R@100=95.9% | Val: R@1=32.8% R@5=43.7% R@10=50.3% R@20=58.0% R@100=78.4%
+Embeddings norm: 52.03407287597656, Projected concepts norm: 15.270755767822266
+Epoch 87/200 | Norms: bakcbone 3739.54048538208 - proj 11.590806722640991 | Loss: 4.7010 | Batch R@1: 5.75% | Train: R@1=50.5% R@5=69.1% R@20=84.9% R@100=96.0% | Val: R@1=32.7% R@5=45.1% R@10=51.0% R@20=59.3% R@100=78.1%
+Embeddings norm: 52.99188232421875, Projected concepts norm: 15.70628547668457
+Epoch 88/200 | Norms: bakcbone 3739.54048538208 - proj 11.594216346740723 | Loss: 4.6699 | Batch R@1: 6.15% | Train: R@1=50.5% R@5=69.3% R@20=85.0% R@100=96.0% | Val: R@1=27.4% R@5=38.8% R@10=44.4% R@20=51.4% R@100=70.6%
+Embeddings norm: 48.98307418823242, Projected concepts norm: 15.642389297485352
+Epoch 89/200 | Norms: bakcbone 3739.54048538208 - proj 11.597554683685303 | Loss: 4.6902 | Batch R@1: 5.65% | Train: R@1=50.9% R@5=69.3% R@20=85.1% R@100=96.0% | Val: R@1=29.6% R@5=40.4% R@10=47.7% R@20=55.2% R@100=74.3%
+Embeddings norm: 50.489768981933594, Projected concepts norm: 15.477886199951172
+Epoch 90/200 | Norms: bakcbone 3739.54048538208 - proj 11.600948572158813 | Loss: 4.6455 | Batch R@1: 5.90% | Train: R@1=51.1% R@5=69.6% R@20=85.2% R@100=96.2% | Val: R@1=32.0% R@5=44.2% R@10=49.7% R@20=56.7% R@100=77.7%
+Embeddings norm: 50.864524841308594, Projected concepts norm: 16.112545013427734
+Epoch 91/200 | Norms: bakcbone 3739.54048538208 - proj 11.604375839233398 | Loss: 4.6338 | Batch R@1: 4.59% | Train: R@1=51.1% R@5=69.7% R@20=85.4% R@100=96.3% | Val: R@1=32.5% R@5=45.3% R@10=52.1% R@20=58.6% R@100=78.1%
+Embeddings norm: 53.73991394042969, Projected concepts norm: 15.612103462219238
+Epoch 92/200 | Norms: bakcbone 3739.54048538208 - proj 11.607815265655518 | Loss: 4.6032 | Batch R@1: 5.19% | Train: R@1=51.4% R@5=69.9% R@20=85.5% R@100=96.4% | Val: R@1=34.9% R@5=48.1% R@10=54.7% R@20=61.7% R@100=79.9%
+Embeddings norm: 50.450645446777344, Projected concepts norm: 15.203140258789062
+Epoch 93/200 | Norms: bakcbone 3739.54048538208 - proj 11.611182451248169 | Loss: 4.5764 | Batch R@1: 4.74% | Train: R@1=51.7% R@5=70.2% R@20=85.6% R@100=96.4% | Val: R@1=31.6% R@5=43.6% R@10=49.7% R@20=57.0% R@100=76.3%
+Embeddings norm: 50.26357650756836, Projected concepts norm: 15.498897552490234
+Epoch 94/200 | Norms: bakcbone 3739.54048538208 - proj 11.614635467529297 | Loss: 4.5539 | Batch R@1: 6.46% | Train: R@1=51.7% R@5=70.5% R@20=85.9% R@100=96.4% | Val: R@1=38.4% R@5=52.3% R@10=58.8% R@20=65.0% R@100=82.9%
+Embeddings norm: 51.85858917236328, Projected concepts norm: 15.1233491897583
+Epoch 95/200 | Norms: bakcbone 3739.54048538208 - proj 11.618144273757935 | Loss: 4.5443 | Batch R@1: 5.60% | Train: R@1=51.8% R@5=70.7% R@20=86.1% R@100=96.5% | Val: R@1=29.9% R@5=41.1% R@10=46.6% R@20=52.9% R@100=73.0%
+Embeddings norm: 51.581180572509766, Projected concepts norm: 14.434309005737305
+Epoch 96/200 | Norms: bakcbone 3739.54048538208 - proj 11.621641635894775 | Loss: 4.5184 | Batch R@1: 6.26% | Train: R@1=51.8% R@5=71.0% R@20=86.3% R@100=96.5% | Val: R@1=34.7% R@5=48.7% R@10=55.6% R@20=61.8% R@100=79.5%
+Embeddings norm: 50.65959930419922, Projected concepts norm: 14.492606163024902
+Epoch 97/200 | Norms: bakcbone 3739.54048538208 - proj 11.625080823898315 | Loss: 4.4848 | Batch R@1: 6.32% | Train: R@1=52.0% R@5=71.3% R@20=86.6% R@100=96.5% | Val: R@1=33.0% R@5=46.1% R@10=51.7% R@20=58.3% R@100=75.9%
+Embeddings norm: 52.05189514160156, Projected concepts norm: 14.577320098876953
+Epoch 98/200 | Norms: bakcbone 3739.54048538208 - proj 11.628557920455933 | Loss: 4.4649 | Batch R@1: 5.70% | Train: R@1=52.2% R@5=71.5% R@20=86.8% R@100=96.5% | Val: R@1=35.9% R@5=49.7% R@10=56.2% R@20=63.0% R@100=80.2%
+Embeddings norm: 50.25172424316406, Projected concepts norm: 14.311736106872559
+Epoch 99/200 | Norms: bakcbone 3739.54048538208 - proj 11.632128477096558 | Loss: 4.4582 | Batch R@1: 5.39% | Train: R@1=52.3% R@5=71.8% R@20=86.9% R@100=96.5% | Val: R@1=29.9% R@5=42.4% R@10=48.4% R@20=56.6% R@100=76.2%
+Embeddings norm: 53.530845642089844, Projected concepts norm: 14.29431438446045
+Epoch 100/200 | Norms: bakcbone 3739.54048538208 - proj 11.635619163513184 | Loss: 4.4321 | Batch R@1: 5.85% | Train: R@1=52.6% R@5=71.9% R@20=87.1% R@100=96.5% | Val: R@1=31.0% R@5=43.5% R@10=49.1% R@20=55.8% R@100=75.4%
+Embeddings norm: 49.46147918701172, Projected concepts norm: 14.94805908203125
+Epoch 101/200 | Norms: bakcbone 3739.54048538208 - proj 11.639211177825928 | Loss: 4.4095 | Batch R@1: 5.71% | Train: R@1=53.0% R@5=71.9% R@20=87.2% R@100=96.5% | Val: R@1=33.6% R@5=45.7% R@10=52.7% R@20=58.9% R@100=78.1%
+Embeddings norm: 52.26819610595703, Projected concepts norm: 13.783462524414062
+Epoch 102/200 | Norms: bakcbone 3739.54048538208 - proj 11.64273738861084 | Loss: 4.3740 | Batch R@1: 6.01% | Train: R@1=53.6% R@5=72.1% R@20=87.4% R@100=96.7% | Val: R@1=33.2% R@5=45.5% R@10=52.3% R@20=58.6% R@100=78.5%
+Embeddings norm: 52.178863525390625, Projected concepts norm: 14.337890625
+Epoch 103/200 | Norms: bakcbone 3739.54048538208 - proj 11.646262645721436 | Loss: 4.3485 | Batch R@1: 5.90% | Train: R@1=53.9% R@5=72.2% R@20=87.4% R@100=96.7% | Val: R@1=34.6% R@5=49.4% R@10=55.5% R@20=62.3% R@100=80.0%
+Embeddings norm: 51.58514404296875, Projected concepts norm: 14.376676559448242
+Epoch 104/200 | Norms: bakcbone 3739.54048538208 - proj 11.649794578552246 | Loss: 4.3399 | Batch R@1: 6.67% | Train: R@1=54.0% R@5=72.4% R@20=87.6% R@100=96.8% | Val: R@1=30.8% R@5=43.6% R@10=50.8% R@20=56.0% R@100=75.6%
+Embeddings norm: 52.27849197387695, Projected concepts norm: 14.328579902648926
+Epoch 105/200 | Norms: bakcbone 3739.54048538208 - proj 11.653320789337158 | Loss: 4.3214 | Batch R@1: 6.46% | Train: R@1=54.2% R@5=72.5% R@20=87.9% R@100=96.9% | Val: R@1=32.5% R@5=43.3% R@10=50.4% R@20=57.0% R@100=77.5%
+Embeddings norm: 51.43356704711914, Projected concepts norm: 14.597267150878906
+Epoch 106/200 | Norms: bakcbone 3739.54048538208 - proj 11.656914710998535 | Loss: 4.2962 | Batch R@1: 6.97% | Train: R@1=54.6% R@5=72.8% R@20=88.1% R@100=96.9% | Val: R@1=32.6% R@5=45.7% R@10=52.0% R@20=58.8% R@100=76.1%
+Embeddings norm: 52.27068328857422, Projected concepts norm: 13.832854270935059
+Epoch 107/200 | Norms: bakcbone 3739.54048538208 - proj 11.66054654121399 | Loss: 4.2974 | Batch R@1: 5.36% | Train: R@1=54.7% R@5=73.2% R@20=88.3% R@100=96.9% | Val: R@1=28.0% R@5=37.9% R@10=45.3% R@20=51.6% R@100=72.2%
+Embeddings norm: 53.47027587890625, Projected concepts norm: 13.600886344909668
+Epoch 108/200 | Norms: bakcbone 3739.54048538208 - proj 11.664093017578125 | Loss: 4.2618 | Batch R@1: 6.81% | Train: R@1=54.8% R@5=73.5% R@20=88.4% R@100=96.9% | Val: R@1=33.4% R@5=47.0% R@10=54.1% R@20=61.2% R@100=78.6%
+Embeddings norm: 48.906768798828125, Projected concepts norm: 14.118097305297852
+Epoch 109/200 | Norms: bakcbone 3739.54048538208 - proj 11.66777491569519 | Loss: 4.2327 | Batch R@1: 5.61% | Train: R@1=54.8% R@5=73.6% R@20=88.6% R@100=96.9% | Val: R@1=33.2% R@5=46.6% R@10=53.7% R@20=61.3% R@100=79.3%
+Embeddings norm: 49.45512390136719, Projected concepts norm: 13.726061820983887
+Epoch 110/200 | Norms: bakcbone 3739.54048538208 - proj 11.671441078186035 | Loss: 4.2325 | Batch R@1: 6.06% | Train: R@1=55.1% R@5=73.9% R@20=88.8% R@100=96.9% | Val: R@1=35.7% R@5=49.7% R@10=54.8% R@20=63.0% R@100=80.5%
+Embeddings norm: 48.383975982666016, Projected concepts norm: 14.250732421875
+Epoch 111/200 | Norms: bakcbone 3739.54048538208 - proj 11.675162076950073 | Loss: 4.2103 | Batch R@1: 5.96% | Train: R@1=55.2% R@5=74.0% R@20=88.8% R@100=96.9% | Val: R@1=31.4% R@5=43.6% R@10=50.3% R@20=56.3% R@100=76.6%
+Embeddings norm: 51.494163513183594, Projected concepts norm: 13.922733306884766
+Epoch 112/200 | Norms: bakcbone 3739.54048538208 - proj 11.678775548934937 | Loss: 4.1913 | Batch R@1: 5.55% | Train: R@1=55.5% R@5=74.4% R@20=88.8% R@100=96.9% | Val: R@1=30.1% R@5=41.7% R@10=47.8% R@20=54.8% R@100=74.7%
+Embeddings norm: 52.56908416748047, Projected concepts norm: 13.369882583618164
+Epoch 113/200 | Norms: bakcbone 3739.54048538208 - proj 11.682523012161255 | Loss: 4.1572 | Batch R@1: 8.72% | Train: R@1=55.7% R@5=74.8% R@20=89.0% R@100=97.1% | Val: R@1=27.5% R@5=39.1% R@10=45.5% R@20=53.2% R@100=73.1%
+Embeddings norm: 51.37336349487305, Projected concepts norm: 13.537153244018555
+Epoch 114/200 | Norms: bakcbone 3739.54048538208 - proj 11.686138153076172 | Loss: 4.1379 | Batch R@1: 6.00% | Train: R@1=55.9% R@5=75.0% R@20=89.3% R@100=97.1% | Val: R@1=31.2% R@5=43.3% R@10=49.3% R@20=56.1% R@100=74.6%
+Embeddings norm: 51.63554382324219, Projected concepts norm: 13.52702522277832
+Epoch 115/200 | Norms: bakcbone 3739.54048538208 - proj 11.689816236495972 | Loss: 4.1057 | Batch R@1: 6.61% | Train: R@1=56.1% R@5=75.2% R@20=89.4% R@100=97.3% | Val: R@1=34.7% R@5=49.7% R@10=56.1% R@20=63.9% R@100=81.6%
+Embeddings norm: 50.481475830078125, Projected concepts norm: 13.52061653137207
+Epoch 116/200 | Norms: bakcbone 3739.54048538208 - proj 11.693451404571533 | Loss: 4.0937 | Batch R@1: 6.46% | Train: R@1=56.4% R@5=75.3% R@20=89.4% R@100=97.3% | Val: R@1=35.5% R@5=49.2% R@10=55.8% R@20=62.8% R@100=79.9%
+Embeddings norm: 51.38555145263672, Projected concepts norm: 13.450922012329102
+Epoch 117/200 | Norms: bakcbone 3739.54048538208 - proj 11.697131633758545 | Loss: 4.0751 | Batch R@1: 6.97% | Train: R@1=56.5% R@5=75.5% R@20=89.5% R@100=97.4% | Val: R@1=29.6% R@5=41.9% R@10=48.2% R@20=54.8% R@100=75.9%
+Embeddings norm: 51.156288146972656, Projected concepts norm: 13.608026504516602
+Epoch 118/200 | Norms: bakcbone 3739.54048538208 - proj 11.70080018043518 | Loss: 4.0523 | Batch R@1: 8.29% | Train: R@1=56.5% R@5=75.9% R@20=89.5% R@100=97.5% | Val: R@1=32.0% R@5=44.9% R@10=52.0% R@20=58.9% R@100=78.1%
+Embeddings norm: 49.66607666015625, Projected concepts norm: 13.213041305541992
+Epoch 119/200 | Norms: bakcbone 3739.54048538208 - proj 11.70451045036316 | Loss: 4.0399 | Batch R@1: 6.01% | Train: R@1=56.5% R@5=75.9% R@20=89.6% R@100=97.5% | Val: R@1=35.4% R@5=49.3% R@10=56.0% R@20=62.5% R@100=81.1%
+Embeddings norm: 49.931968688964844, Projected concepts norm: 12.74612045288086
+Epoch 120/200 | Norms: bakcbone 3739.54048538208 - proj 11.708265542984009 | Loss: 3.9832 | Batch R@1: 7.67% | Train: R@1=56.6% R@5=76.1% R@20=89.7% R@100=97.7% | Val: R@1=34.0% R@5=47.9% R@10=55.0% R@20=61.5% R@100=79.1%
+Embeddings norm: 53.14341735839844, Projected concepts norm: 13.31545639038086
+Epoch 121/200 | Norms: bakcbone 3739.54048538208 - proj 11.711927890777588 | Loss: 3.9835 | Batch R@1: 7.11% | Train: R@1=56.7% R@5=76.3% R@20=89.8% R@100=97.7% | Val: R@1=29.7% R@5=41.9% R@10=48.7% R@20=55.7% R@100=76.2%
+Embeddings norm: 52.171627044677734, Projected concepts norm: 12.725226402282715
+Epoch 122/200 | Norms: bakcbone 3739.54048538208 - proj 11.715713500976562 | Loss: 3.9696 | Batch R@1: 7.22% | Train: R@1=56.7% R@5=76.4% R@20=90.1% R@100=97.7% | Val: R@1=37.5% R@5=50.4% R@10=57.6% R@20=65.7% R@100=82.6%
+Embeddings norm: 49.57811737060547, Projected concepts norm: 13.242907524108887
+Epoch 123/200 | Norms: bakcbone 3739.54048538208 - proj 11.719435453414917 | Loss: 3.9624 | Batch R@1: 6.22% | Train: R@1=56.9% R@5=76.6% R@20=90.3% R@100=97.8% | Val: R@1=34.3% R@5=48.1% R@10=54.6% R@20=61.8% R@100=79.9%
+Embeddings norm: 53.885643005371094, Projected concepts norm: 13.117300033569336
+Epoch 124/200 | Norms: bakcbone 3739.54048538208 - proj 11.723164081573486 | Loss: 3.9362 | Batch R@1: 6.96% | Train: R@1=57.0% R@5=76.6% R@20=90.3% R@100=97.8% | Val: R@1=32.1% R@5=45.1% R@10=51.3% R@20=58.0% R@100=78.0%
+Embeddings norm: 52.28546142578125, Projected concepts norm: 12.984258651733398
+Epoch 125/200 | Norms: bakcbone 3739.54048538208 - proj 11.726857900619507 | Loss: 3.9131 | Batch R@1: 7.46% | Train: R@1=57.1% R@5=77.0% R@20=90.5% R@100=97.8% | Val: R@1=34.0% R@5=46.5% R@10=53.8% R@20=60.2% R@100=78.8%
+Embeddings norm: 54.96046447753906, Projected concepts norm: 12.770198822021484
+Epoch 126/200 | Norms: bakcbone 3739.54048538208 - proj 11.730602264404297 | Loss: 3.8948 | Batch R@1: 7.06% | Train: R@1=57.3% R@5=77.2% R@20=90.6% R@100=97.8% | Val: R@1=35.1% R@5=49.4% R@10=56.3% R@20=63.0% R@100=81.2%
+Embeddings norm: 52.567073822021484, Projected concepts norm: 12.790750503540039
+Epoch 127/200 | Norms: bakcbone 3739.54048538208 - proj 11.734350442886353 | Loss: 3.8636 | Batch R@1: 7.57% | Train: R@1=57.3% R@5=77.4% R@20=90.6% R@100=98.0% | Val: R@1=30.7% R@5=43.2% R@10=50.0% R@20=57.7% R@100=77.9%
+Embeddings norm: 51.39214324951172, Projected concepts norm: 12.62165641784668
+Epoch 128/200 | Norms: bakcbone 3739.54048538208 - proj 11.738127946853638 | Loss: 3.8620 | Batch R@1: 7.62% | Train: R@1=57.5% R@5=77.7% R@20=90.6% R@100=98.0% | Val: R@1=32.4% R@5=46.7% R@10=54.0% R@20=60.7% R@100=79.1%
+Embeddings norm: 51.502193450927734, Projected concepts norm: 13.150712966918945
+Epoch 129/200 | Norms: bakcbone 3739.54048538208 - proj 11.741950035095215 | Loss: 3.8342 | Batch R@1: 7.26% | Train: R@1=57.5% R@5=77.7% R@20=90.7% R@100=98.0% | Val: R@1=31.7% R@5=44.9% R@10=52.2% R@20=59.0% R@100=77.2%
+Embeddings norm: 49.954627990722656, Projected concepts norm: 12.359966278076172
+Epoch 130/200 | Norms: bakcbone 3739.54048538208 - proj 11.745616674423218 | Loss: 3.7895 | Batch R@1: 7.43% | Train: R@1=57.8% R@5=77.8% R@20=90.7% R@100=98.0% | Val: R@1=34.9% R@5=47.5% R@10=54.6% R@20=61.7% R@100=79.7%
+Embeddings norm: 52.283302307128906, Projected concepts norm: 12.634809494018555
+Epoch 131/200 | Norms: bakcbone 3739.54048538208 - proj 11.749377727508545 | Loss: 3.7873 | Batch R@1: 7.46% | Train: R@1=57.8% R@5=77.7% R@20=90.7% R@100=98.1% | Val: R@1=35.0% R@5=51.3% R@10=57.7% R@20=64.2% R@100=80.0%
+Embeddings norm: 51.83799743652344, Projected concepts norm: 12.399622917175293
+Epoch 132/200 | Norms: bakcbone 3739.54048538208 - proj 11.753103494644165 | Loss: 3.7594 | Batch R@1: 7.01% | Train: R@1=58.1% R@5=77.9% R@20=90.8% R@100=98.1% | Val: R@1=34.3% R@5=48.7% R@10=55.2% R@20=62.1% R@100=80.0%
+Embeddings norm: 50.20954895019531, Projected concepts norm: 12.68803596496582
+Epoch 133/200 | Norms: bakcbone 3739.54048538208 - proj 11.756899356842041 | Loss: 3.7670 | Batch R@1: 8.57% | Train: R@1=58.3% R@5=78.4% R@20=91.0% R@100=98.1% | Val: R@1=32.9% R@5=46.8% R@10=53.9% R@20=61.2% R@100=79.4%
+Embeddings norm: 49.712486267089844, Projected concepts norm: 12.116565704345703
+Epoch 134/200 | Norms: bakcbone 3739.54048538208 - proj 11.760679483413696 | Loss: 3.7211 | Batch R@1: 8.32% | Train: R@1=58.2% R@5=78.4% R@20=91.0% R@100=98.2% | Val: R@1=36.2% R@5=49.4% R@10=55.9% R@20=62.7% R@100=81.0%
+Embeddings norm: 52.57644271850586, Projected concepts norm: 12.078126907348633
+Epoch 135/200 | Norms: bakcbone 3739.54048538208 - proj 11.764430046081543 | Loss: 3.7205 | Batch R@1: 8.38% | Train: R@1=58.7% R@5=78.6% R@20=91.1% R@100=98.2% | Val: R@1=33.8% R@5=47.8% R@10=54.5% R@20=61.0% R@100=80.0%
+Embeddings norm: 50.048179626464844, Projected concepts norm: 12.52487564086914
+Epoch 136/200 | Norms: bakcbone 3739.54048538208 - proj 11.768208026885986 | Loss: 3.6974 | Batch R@1: 8.64% | Train: R@1=58.8% R@5=78.7% R@20=91.2% R@100=98.2% | Val: R@1=35.9% R@5=50.6% R@10=58.0% R@20=64.7% R@100=82.8%
+Embeddings norm: 52.70201110839844, Projected concepts norm: 12.621999740600586
+Epoch 137/200 | Norms: bakcbone 3739.54048538208 - proj 11.771968126296997 | Loss: 3.6997 | Batch R@1: 7.62% | Train: R@1=59.0% R@5=79.0% R@20=91.2% R@100=98.3% | Val: R@1=30.7% R@5=42.7% R@10=50.8% R@20=58.9% R@100=78.1%
+Embeddings norm: 49.5513916015625, Projected concepts norm: 11.992773056030273
+Epoch 138/200 | Norms: bakcbone 3739.54048538208 - proj 11.775834798812866 | Loss: 3.6604 | Batch R@1: 7.52% | Train: R@1=58.9% R@5=79.2% R@20=91.4% R@100=98.3% | Val: R@1=37.1% R@5=52.2% R@10=58.3% R@20=64.9% R@100=83.2%
+Embeddings norm: 53.37348937988281, Projected concepts norm: 12.423062324523926
+Epoch 139/200 | Norms: bakcbone 3739.54048538208 - proj 11.779592990875244 | Loss: 3.6141 | Batch R@1: 7.16% | Train: R@1=59.2% R@5=79.4% R@20=91.5% R@100=98.3% | Val: R@1=36.7% R@5=51.2% R@10=57.7% R@20=63.8% R@100=81.0%
+Embeddings norm: 49.49681091308594, Projected concepts norm: 12.172528266906738
+Epoch 140/200 | Norms: bakcbone 3739.54048538208 - proj 11.783359050750732 | Loss: 3.6094 | Batch R@1: 6.81% | Train: R@1=59.4% R@5=79.5% R@20=91.5% R@100=98.4% | Val: R@1=32.5% R@5=46.1% R@10=52.9% R@20=59.6% R@100=79.2%
+Embeddings norm: 51.61096954345703, Projected concepts norm: 11.318333625793457
+Epoch 141/200 | Norms: bakcbone 3739.54048538208 - proj 11.787262201309204 | Loss: 3.6113 | Batch R@1: 7.88% | Train: R@1=59.5% R@5=79.7% R@20=91.5% R@100=98.4% | Val: R@1=35.7% R@5=48.8% R@10=56.9% R@20=62.8% R@100=81.7%
+Embeddings norm: 54.14902114868164, Projected concepts norm: 12.185139656066895
+Epoch 142/200 | Norms: bakcbone 3739.54048538208 - proj 11.790990114212036 | Loss: 3.5826 | Batch R@1: 6.46% | Train: R@1=59.7% R@5=79.9% R@20=91.6% R@100=98.4% | Val: R@1=31.9% R@5=46.2% R@10=52.7% R@20=59.9% R@100=79.7%
+Embeddings norm: 51.14215087890625, Projected concepts norm: 12.179059982299805
+Epoch 143/200 | Norms: bakcbone 3739.54048538208 - proj 11.794801712036133 | Loss: 3.5540 | Batch R@1: 8.52% | Train: R@1=59.8% R@5=80.0% R@20=91.6% R@100=98.4% | Val: R@1=38.1% R@5=54.6% R@10=60.9% R@20=66.9% R@100=85.3%
+Embeddings norm: 51.793495178222656, Projected concepts norm: 11.806386947631836
+Epoch 144/200 | Norms: bakcbone 3739.54048538208 - proj 11.798588037490845 | Loss: 3.5406 | Batch R@1: 9.39% | Train: R@1=59.9% R@5=80.2% R@20=91.7% R@100=98.4% | Val: R@1=37.8% R@5=52.6% R@10=58.9% R@20=66.1% R@100=84.8%
+Embeddings norm: 51.78429412841797, Projected concepts norm: 11.416322708129883
+Epoch 145/200 | Norms: bakcbone 3739.54048538208 - proj 11.802395105361938 | Loss: 3.5047 | Batch R@1: 8.33% | Train: R@1=60.0% R@5=80.2% R@20=91.7% R@100=98.5% | Val: R@1=38.4% R@5=52.6% R@10=59.2% R@20=65.6% R@100=83.8%
+Embeddings norm: 51.50249481201172, Projected concepts norm: 11.732563972473145
+Epoch 146/200 | Norms: bakcbone 3739.54048538208 - proj 11.806182146072388 | Loss: 3.4812 | Batch R@1: 8.08% | Train: R@1=60.1% R@5=80.7% R@20=91.8% R@100=98.5% | Val: R@1=37.3% R@5=51.9% R@10=58.7% R@20=64.7% R@100=83.9%
+Embeddings norm: 51.360939025878906, Projected concepts norm: 11.843602180480957
+Epoch 147/200 | Norms: bakcbone 3739.54048538208 - proj 11.809959888458252 | Loss: 3.4971 | Batch R@1: 8.02% | Train: R@1=60.1% R@5=81.0% R@20=91.9% R@100=98.5% | Val: R@1=35.0% R@5=49.0% R@10=56.4% R@20=64.1% R@100=81.9%
+Embeddings norm: 53.17868423461914, Projected concepts norm: 11.606832504272461
+Epoch 148/200 | Norms: bakcbone 3739.54048538208 - proj 11.81368374824524 | Loss: 3.4369 | Batch R@1: 9.24% | Train: R@1=60.1% R@5=81.1% R@20=92.0% R@100=98.6% | Val: R@1=30.8% R@5=44.6% R@10=52.1% R@20=58.3% R@100=76.7%
+Embeddings norm: 50.300071716308594, Projected concepts norm: 12.010568618774414
+Epoch 149/200 | Norms: bakcbone 3739.54048538208 - proj 11.817520380020142 | Loss: 3.4457 | Batch R@1: 8.72% | Train: R@1=60.2% R@5=81.1% R@20=92.0% R@100=98.6% | Val: R@1=36.1% R@5=51.9% R@10=58.6% R@20=65.8% R@100=83.3%
+Embeddings norm: 50.661739349365234, Projected concepts norm: 11.547933578491211
+Epoch 150/200 | Norms: bakcbone 3739.54048538208 - proj 11.821347713470459 | Loss: 3.4212 | Batch R@1: 7.98% | Train: R@1=60.2% R@5=81.2% R@20=92.1% R@100=98.6% | Val: R@1=34.0% R@5=50.3% R@10=57.0% R@20=64.0% R@100=82.1%
+Embeddings norm: 51.08112716674805, Projected concepts norm: 11.491262435913086
+Epoch 151/200 | Norms: bakcbone 3739.54048538208 - proj 11.825201988220215 | Loss: 3.4091 | Batch R@1: 9.13% | Train: R@1=60.3% R@5=81.4% R@20=92.2% R@100=98.7% | Val: R@1=33.4% R@5=48.1% R@10=53.5% R@20=59.9% R@100=79.9%
+Embeddings norm: 50.12535858154297, Projected concepts norm: 11.575321197509766
+Epoch 152/200 | Norms: bakcbone 3739.54048538208 - proj 11.82905888557434 | Loss: 3.3922 | Batch R@1: 7.47% | Train: R@1=60.4% R@5=81.6% R@20=92.3% R@100=98.7% | Val: R@1=37.1% R@5=51.8% R@10=58.5% R@20=65.0% R@100=82.5%
+Embeddings norm: 53.03150939941406, Projected concepts norm: 11.667033195495605
+Epoch 153/200 | Norms: bakcbone 3739.54048538208 - proj 11.83280897140503 | Loss: 3.3855 | Batch R@1: 8.13% | Train: R@1=60.4% R@5=81.6% R@20=92.5% R@100=98.7% | Val: R@1=38.5% R@5=54.3% R@10=61.2% R@20=67.6% R@100=85.3%
+Embeddings norm: 50.33454132080078, Projected concepts norm: 11.344532012939453
+Epoch 154/200 | Norms: bakcbone 3739.54048538208 - proj 11.836668968200684 | Loss: 3.3489 | Batch R@1: 6.61% | Train: R@1=60.4% R@5=81.7% R@20=92.6% R@100=98.7% | Val: R@1=36.4% R@5=51.3% R@10=57.9% R@20=64.6% R@100=83.8%
+Embeddings norm: 51.14216995239258, Projected concepts norm: 11.244986534118652
+Epoch 155/200 | Norms: bakcbone 3739.54048538208 - proj 11.840487241744995 | Loss: 3.3274 | Batch R@1: 8.38% | Train: R@1=60.6% R@5=81.7% R@20=92.6% R@100=98.7% | Val: R@1=31.0% R@5=46.2% R@10=52.6% R@20=59.8% R@100=79.6%
+Embeddings norm: 53.395172119140625, Projected concepts norm: 11.35513687133789
+Epoch 156/200 | Norms: bakcbone 3739.54048538208 - proj 11.8442964553833 | Loss: 3.2943 | Batch R@1: 7.52% | Train: R@1=60.9% R@5=81.8% R@20=92.6% R@100=98.7% | Val: R@1=38.9% R@5=55.7% R@10=62.4% R@20=68.5% R@100=85.1%
+Embeddings norm: 53.281368255615234, Projected concepts norm: 11.552556037902832
+Epoch 157/200 | Norms: bakcbone 3739.54048538208 - proj 11.847993850708008 | Loss: 3.3032 | Batch R@1: 8.89% | Train: R@1=61.0% R@5=81.9% R@20=92.6% R@100=98.8% | Val: R@1=34.7% R@5=50.4% R@10=57.1% R@20=63.7% R@100=81.9%
+Embeddings norm: 51.3245964050293, Projected concepts norm: 11.29656982421875
+Epoch 158/200 | Norms: bakcbone 3739.54048538208 - proj 11.851716041564941 | Loss: 3.2658 | Batch R@1: 8.17% | Train: R@1=61.1% R@5=82.0% R@20=92.7% R@100=98.7% | Val: R@1=41.3% R@5=57.8% R@10=64.1% R@20=70.5% R@100=86.8%
+Embeddings norm: 50.75616455078125, Projected concepts norm: 10.630481719970703
+Epoch 159/200 | Norms: bakcbone 3739.54048538208 - proj 11.855594396591187 | Loss: 3.2848 | Batch R@1: 8.07% | Train: R@1=61.2% R@5=82.1% R@20=92.9% R@100=98.7% | Val: R@1=31.5% R@5=47.1% R@10=53.2% R@20=60.5% R@100=79.6%
+Embeddings norm: 54.17811584472656, Projected concepts norm: 11.338384628295898
+Epoch 160/200 | Norms: bakcbone 3739.54048538208 - proj 11.85936427116394 | Loss: 3.2283 | Batch R@1: 8.59% | Train: R@1=61.5% R@5=82.2% R@20=93.0% R@100=98.7% | Val: R@1=31.8% R@5=47.9% R@10=54.2% R@20=60.5% R@100=80.7%
+Embeddings norm: 50.019866943359375, Projected concepts norm: 11.028615951538086
+Epoch 161/200 | Norms: bakcbone 3739.54048538208 - proj 11.863111972808838 | Loss: 3.2249 | Batch R@1: 9.08% | Train: R@1=61.6% R@5=82.2% R@20=93.1% R@100=98.7% | Val: R@1=37.5% R@5=53.1% R@10=58.9% R@20=65.4% R@100=83.7%
+Embeddings norm: 48.73818588256836, Projected concepts norm: 10.980892181396484
+Epoch 162/200 | Norms: bakcbone 3739.54048538208 - proj 11.866931200027466 | Loss: 3.2236 | Batch R@1: 8.29% | Train: R@1=61.6% R@5=82.3% R@20=93.0% R@100=98.7% | Val: R@1=36.4% R@5=51.6% R@10=57.0% R@20=64.9% R@100=81.9%
+Embeddings norm: 51.286163330078125, Projected concepts norm: 11.409422874450684
+Epoch 163/200 | Norms: bakcbone 3739.54048538208 - proj 11.87073040008545 | Loss: 3.1886 | Batch R@1: 7.67% | Train: R@1=61.6% R@5=82.4% R@20=93.1% R@100=98.7% | Val: R@1=32.6% R@5=47.2% R@10=54.3% R@20=62.1% R@100=80.4%
+Embeddings norm: 52.77904510498047, Projected concepts norm: 11.126791000366211
+Epoch 164/200 | Norms: bakcbone 3739.54048538208 - proj 11.87444543838501 | Loss: 3.1975 | Batch R@1: 8.33% | Train: R@1=61.7% R@5=82.5% R@20=93.3% R@100=98.8% | Val: R@1=37.9% R@5=53.7% R@10=60.8% R@20=67.2% R@100=84.3%
+Embeddings norm: 50.70714569091797, Projected concepts norm: 11.114158630371094
+Epoch 165/200 | Norms: bakcbone 3739.54048538208 - proj 11.87825059890747 | Loss: 3.1740 | Batch R@1: 7.36% | Train: R@1=61.8% R@5=82.6% R@20=93.4% R@100=98.8% | Val: R@1=37.9% R@5=53.3% R@10=58.6% R@20=65.5% R@100=83.1%
+Embeddings norm: 50.73182678222656, Projected concepts norm: 10.939729690551758
+Epoch 166/200 | Norms: bakcbone 3739.54048538208 - proj 11.881968259811401 | Loss: 3.1328 | Batch R@1: 7.77% | Train: R@1=61.8% R@5=82.6% R@20=93.4% R@100=98.8% | Val: R@1=34.7% R@5=48.7% R@10=54.5% R@20=62.1% R@100=82.1%
+Embeddings norm: 50.97660827636719, Projected concepts norm: 11.299250602722168
+Epoch 167/200 | Norms: bakcbone 3739.54048538208 - proj 11.88582468032837 | Loss: 3.1608 | Batch R@1: 8.39% | Train: R@1=61.8% R@5=82.8% R@20=93.4% R@100=98.8% | Val: R@1=35.1% R@5=50.6% R@10=56.7% R@20=62.5% R@100=83.0%
+Embeddings norm: 51.85242462158203, Projected concepts norm: 11.624723434448242
+Epoch 168/200 | Norms: bakcbone 3739.54048538208 - proj 11.889593124389648 | Loss: 3.1260 | Batch R@1: 8.63% | Train: R@1=61.8% R@5=83.1% R@20=93.5% R@100=98.8% | Val: R@1=33.8% R@5=48.4% R@10=53.5% R@20=60.4% R@100=79.8%
+Embeddings norm: 51.87611389160156, Projected concepts norm: 10.906578063964844
+Epoch 169/200 | Norms: bakcbone 3739.54048538208 - proj 11.893360137939453 | Loss: 3.0686 | Batch R@1: 9.83% | Train: R@1=61.9% R@5=83.1% R@20=93.5% R@100=98.9% | Val: R@1=36.9% R@5=52.2% R@10=58.6% R@20=65.9% R@100=83.3%
+Embeddings norm: 49.24352264404297, Projected concepts norm: 10.861851692199707
+Epoch 170/200 | Norms: bakcbone 3739.54048538208 - proj 11.897159099578857 | Loss: 3.0771 | Batch R@1: 7.84% | Train: R@1=61.9% R@5=83.2% R@20=93.6% R@100=99.0% | Val: R@1=36.0% R@5=50.1% R@10=56.5% R@20=64.0% R@100=82.5%
+Embeddings norm: 49.988853454589844, Projected concepts norm: 11.365777969360352
+Epoch 171/200 | Norms: bakcbone 3739.54048538208 - proj 11.900976657867432 | Loss: 3.0704 | Batch R@1: 8.48% | Train: R@1=62.0% R@5=83.3% R@20=93.6% R@100=98.9% | Val: R@1=35.8% R@5=50.6% R@10=57.3% R@20=65.2% R@100=82.5%
+Embeddings norm: 51.03364562988281, Projected concepts norm: 10.884513854980469
+Epoch 172/200 | Norms: bakcbone 3739.54048538208 - proj 11.90473222732544 | Loss: 3.0276 | Batch R@1: 7.46% | Train: R@1=62.2% R@5=83.2% R@20=93.7% R@100=98.9% | Val: R@1=36.9% R@5=52.9% R@10=59.6% R@20=66.6% R@100=84.5%
+Embeddings norm: 51.649139404296875, Projected concepts norm: 11.10550308227539
+Epoch 173/200 | Norms: bakcbone 3739.54048538208 - proj 11.908435583114624 | Loss: 3.0490 | Batch R@1: 8.48% | Train: R@1=62.3% R@5=83.4% R@20=93.7% R@100=98.9% | Val: R@1=33.0% R@5=47.8% R@10=53.6% R@20=61.8% R@100=79.4%
+Embeddings norm: 51.74473190307617, Projected concepts norm: 10.678376197814941
+Epoch 174/200 | Norms: bakcbone 3739.54048538208 - proj 11.912222862243652 | Loss: 3.0316 | Batch R@1: 8.07% | Train: R@1=62.3% R@5=83.5% R@20=93.7% R@100=98.9% | Val: R@1=36.9% R@5=52.0% R@10=59.0% R@20=66.6% R@100=85.1%
+Embeddings norm: 51.249977111816406, Projected concepts norm: 10.920858383178711
+Epoch 175/200 | Norms: bakcbone 3739.54048538208 - proj 11.915913820266724 | Loss: 3.0046 | Batch R@1: 9.04% | Train: R@1=62.5% R@5=83.7% R@20=93.8% R@100=98.9% | Val: R@1=35.9% R@5=52.0% R@10=58.3% R@20=64.9% R@100=83.0%
+Embeddings norm: 53.061092376708984, Projected concepts norm: 10.889835357666016
+Epoch 176/200 | Norms: bakcbone 3739.54048538208 - proj 11.919668197631836 | Loss: 2.9844 | Batch R@1: 7.89% | Train: R@1=62.5% R@5=83.7% R@20=93.8% R@100=98.9% | Val: R@1=35.0% R@5=51.0% R@10=56.6% R@20=64.0% R@100=82.2%
+Embeddings norm: 50.787498474121094, Projected concepts norm: 10.608269691467285
+Epoch 177/200 | Norms: bakcbone 3739.54048538208 - proj 11.923449039459229 | Loss: 2.9778 | Batch R@1: 8.83% | Train: R@1=62.5% R@5=83.9% R@20=93.8% R@100=98.9% | Val: R@1=35.6% R@5=49.0% R@10=56.2% R@20=62.2% R@100=82.2%
+Embeddings norm: 51.65178298950195, Projected concepts norm: 10.85220718383789
+Epoch 178/200 | Norms: bakcbone 3739.54048538208 - proj 11.92712950706482 | Loss: 2.9434 | Batch R@1: 8.88% | Train: R@1=62.5% R@5=84.0% R@20=93.8% R@100=98.9% | Val: R@1=32.3% R@5=47.1% R@10=53.5% R@20=60.4% R@100=80.0%
+Embeddings norm: 51.03717803955078, Projected concepts norm: 10.475689888000488
+Epoch 179/200 | Norms: bakcbone 3739.54048538208 - proj 11.930856466293335 | Loss: 2.9330 | Batch R@1: 8.58% | Train: R@1=62.6% R@5=84.0% R@20=93.8% R@100=98.9% | Val: R@1=35.5% R@5=50.6% R@10=56.5% R@20=65.0% R@100=82.9%
+Embeddings norm: 52.088802337646484, Projected concepts norm: 10.683992385864258
+Epoch 180/200 | Norms: bakcbone 3739.54048538208 - proj 11.93461561203003 | Loss: 2.9350 | Batch R@1: 10.24% | Train: R@1=62.6% R@5=84.0% R@20=93.8% R@100=98.9% | Val: R@1=32.4% R@5=46.8% R@10=52.9% R@20=59.5% R@100=78.9%
+Embeddings norm: 48.41104507446289, Projected concepts norm: 10.690778732299805
+Epoch 181/200 | Norms: bakcbone 3739.54048538208 - proj 11.938304662704468 | Loss: 2.9153 | Batch R@1: 9.59% | Train: R@1=62.7% R@5=84.0% R@20=93.9% R@100=98.9% | Val: R@1=35.0% R@5=49.5% R@10=56.1% R@20=63.5% R@100=81.1%
+Embeddings norm: 49.8043212890625, Projected concepts norm: 10.631086349487305
+Epoch 182/200 | Norms: bakcbone 3739.54048538208 - proj 11.94195032119751 | Loss: 2.8733 | Batch R@1: 8.43% | Train: R@1=62.7% R@5=84.1% R@20=94.0% R@100=98.9% | Val: R@1=36.7% R@5=51.6% R@10=58.0% R@20=64.5% R@100=82.9%
+Embeddings norm: 51.53547668457031, Projected concepts norm: 10.352041244506836
+Epoch 183/200 | Norms: bakcbone 3739.54048538208 - proj 11.945624589920044 | Loss: 2.8654 | Batch R@1: 7.37% | Train: R@1=62.8% R@5=84.1% R@20=94.0% R@100=99.0% | Val: R@1=35.4% R@5=50.8% R@10=56.7% R@20=63.3% R@100=82.0%
+Embeddings norm: 50.27024841308594, Projected concepts norm: 10.64079475402832
+Epoch 184/200 | Norms: bakcbone 3739.54048538208 - proj 11.949326276779175 | Loss: 2.8382 | Batch R@1: 10.40% | Train: R@1=62.8% R@5=84.0% R@20=94.0% R@100=99.0% | Val: R@1=35.6% R@5=50.1% R@10=56.2% R@20=62.8% R@100=81.0%
+Embeddings norm: 49.846473693847656, Projected concepts norm: 10.455260276794434
+Epoch 185/200 | Norms: bakcbone 3739.54048538208 - proj 11.952948331832886 | Loss: 2.8265 | Batch R@1: 8.53% | Train: R@1=62.8% R@5=84.2% R@20=94.0% R@100=99.0% | Val: R@1=37.1% R@5=52.4% R@10=58.3% R@20=65.3% R@100=83.5%
+Embeddings norm: 52.479026794433594, Projected concepts norm: 10.450481414794922
+Epoch 186/200 | Norms: bakcbone 3739.54048538208 - proj 11.956671237945557 | Loss: 2.8419 | Batch R@1: 9.79% | Train: R@1=62.8% R@5=84.3% R@20=94.0% R@100=99.0% | Val: R@1=35.3% R@5=50.5% R@10=56.5% R@20=63.7% R@100=81.3%
+Embeddings norm: 52.057228088378906, Projected concepts norm: 10.458674430847168
+Epoch 187/200 | Norms: bakcbone 3739.54048538208 - proj 11.960381746292114 | Loss: 2.8055 | Batch R@1: 9.75% | Train: R@1=62.9% R@5=84.3% R@20=94.0% R@100=99.0% | Val: R@1=35.0% R@5=49.9% R@10=56.2% R@20=62.1% R@100=82.2%
+Embeddings norm: 51.93227005004883, Projected concepts norm: 10.159540176391602
+Epoch 188/200 | Norms: bakcbone 3739.54048538208 - proj 11.96407175064087 | Loss: 2.8002 | Batch R@1: 9.68% | Train: R@1=63.1% R@5=84.4% R@20=94.1% R@100=99.0% | Val: R@1=37.7% R@5=52.7% R@10=59.6% R@20=66.0% R@100=83.7%
+Embeddings norm: 50.58790588378906, Projected concepts norm: 10.903883934020996
+Epoch 189/200 | Norms: bakcbone 3739.54048538208 - proj 11.967810869216919 | Loss: 2.7925 | Batch R@1: 9.99% | Train: R@1=63.1% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=37.3% R@5=53.2% R@10=59.8% R@20=67.2% R@100=85.5%
+Embeddings norm: 52.149192810058594, Projected concepts norm: 10.49728012084961
+Epoch 190/200 | Norms: bakcbone 3739.54048538208 - proj 11.97150468826294 | Loss: 2.7539 | Batch R@1: 8.72% | Train: R@1=63.1% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=34.7% R@5=48.6% R@10=55.7% R@20=62.0% R@100=80.8%
+Embeddings norm: 50.21451950073242, Projected concepts norm: 10.473661422729492
+Epoch 191/200 | Norms: bakcbone 3739.54048538208 - proj 11.975167989730835 | Loss: 2.7648 | Batch R@1: 9.99% | Train: R@1=63.1% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=35.2% R@5=50.1% R@10=56.0% R@20=62.7% R@100=81.6%
+Embeddings norm: 50.574317932128906, Projected concepts norm: 10.373697280883789
+Epoch 192/200 | Norms: bakcbone 3739.54048538208 - proj 11.9788978099823 | Loss: 2.7514 | Batch R@1: 8.28% | Train: R@1=63.1% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=36.3% R@5=53.5% R@10=60.3% R@20=66.6% R@100=84.2%
+Embeddings norm: 50.49607849121094, Projected concepts norm: 10.22892951965332
+Epoch 193/200 | Norms: bakcbone 3739.54048538208 - proj 11.98261833190918 | Loss: 2.7522 | Batch R@1: 10.55% | Train: R@1=63.2% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=35.9% R@5=51.1% R@10=57.0% R@20=62.8% R@100=81.9%
+Embeddings norm: 52.38331604003906, Projected concepts norm: 10.515442848205566
+Epoch 194/200 | Norms: bakcbone 3739.54048538208 - proj 11.986239433288574 | Loss: 2.7260 | Batch R@1: 8.44% | Train: R@1=63.3% R@5=84.5% R@20=94.1% R@100=99.0% | Val: R@1=36.4% R@5=51.4% R@10=59.1% R@20=66.2% R@100=82.0%
+Embeddings norm: 50.88274383544922, Projected concepts norm: 10.506237983703613
+Epoch 195/200 | Norms: bakcbone 3739.54048538208 - proj 11.98995041847229 | Loss: 2.7196 | Batch R@1: 7.63% | Train: R@1=63.3% R@5=84.6% R@20=94.1% R@100=99.0% | Val: R@1=35.3% R@5=52.2% R@10=57.8% R@20=64.4% R@100=82.1%
+Embeddings norm: 54.966819763183594, Projected concepts norm: 10.316749572753906
+Epoch 196/200 | Norms: bakcbone 3739.54048538208 - proj 11.993648052215576 | Loss: 2.7004 | Batch R@1: 7.93% | Train: R@1=63.3% R@5=84.6% R@20=94.1% R@100=99.0% | Val: R@1=37.8% R@5=52.9% R@10=58.8% R@20=66.7% R@100=84.4%
+Embeddings norm: 50.23004150390625, Projected concepts norm: 10.281543731689453
+Epoch 197/200 | Norms: bakcbone 3739.54048538208 - proj 11.997323513031006 | Loss: 2.6962 | Batch R@1: 8.18% | Train: R@1=63.3% R@5=84.8% R@20=94.0% R@100=99.0% | Val: R@1=32.9% R@5=46.2% R@10=52.8% R@20=59.2% R@100=80.3%
+Embeddings norm: 48.85704040527344, Projected concepts norm: 10.47209644317627
+Epoch 198/200 | Norms: bakcbone 3739.54048538208 - proj 12.00093150138855 | Loss: 2.6533 | Batch R@1: 9.84% | Train: R@1=63.3% R@5=84.8% R@20=94.0% R@100=99.0% | Val: R@1=37.9% R@5=54.3% R@10=59.8% R@20=67.3% R@100=84.9%
+Embeddings norm: 52.27549743652344, Projected concepts norm: 10.361019134521484
+Epoch 199/200 | Norms: bakcbone 3739.54048538208 - proj 12.004618406295776 | Loss: 2.6321 | Batch R@1: 7.93% | Train: R@1=63.2% R@5=84.8% R@20=94.0% R@100=99.0% | Val: R@1=35.6% R@5=50.8% R@10=56.7% R@20=63.1% R@100=81.6%
+Embeddings norm: 52.690650939941406, Projected concepts norm: 10.316083908081055
+Epoch 200/200 | Norms: bakcbone 3739.54048538208 - proj 12.008341789245605 | Loss: 2.6421 | Batch R@1: 8.52% | Train: R@1=63.2% R@5=84.8% R@20=94.0% R@100=99.0% | Val: R@1=36.4% R@5=52.1% R@10=58.3% R@20=65.3% R@100=84.5%
+Retrieval with 100% Correction correction-------------------------------------
+100% Correction - Recall@1: 41.96%, Recall@5: 58.42%, Recall@10: 65.27%, Recall@20: 71.82%, Recall@100: 88.42%
+Retrieval with 50% Correction + soft correction-------------------------------------
+50% Correction + soft - Recall@1: 33.82%, Recall@5: 49.35%, Recall@10: 55.98%, Recall@20: 63.06%, Recall@100: 80.65%
+Retrieval with 0% Correction correction-------------------------------------
+0% Correction - Recall@1: 32.83%, Recall@5: 46.53%, Recall@10: 52.93%, Recall@20: 59.71%, Recall@100: 77.68%
+Retrieval with 0% Correction Hard correction-------------------------------------
+0% Correction Hard - Recall@1: 37.78%, Recall@5: 53.69%, Recall@10: 60.40%, Recall@20: 66.95%, Recall@100: 84.08%
+Model loaded from /data/vision/beery/scratch/antoine/CBM_reid/weights/concept_w.pt
+loading weights for the concept head
+Parameters requiring gradients - Projector: True, Backbone_for_concepts: False, Backbone: True, Concept_head: False
+Embeddings norm: 55.295265197753906, Projected concepts norm: 14.650721549987793
+Epoch 1/200 | Norms: bakcbone 3739.541352748871 - proj 11.400601387023926 | Loss: 7.1097 | Batch R@1: 5.50% | Train: R@1=50.6% R@5=68.6% R@20=84.3% R@100=95.4% | Val: R@1=30.6% R@5=41.1% R@10=48.0% R@20=55.4% R@100=75.6%
+Embeddings norm: 49.73369216918945, Projected concepts norm: 14.545900344848633
+Epoch 2/200 | Norms: bakcbone 3739.5440180301666 - proj 11.400830268859863 | Loss: 6.6459 | Batch R@1: 4.28% | Train: R@1=51.6% R@5=69.9% R@20=84.8% R@100=95.6% | Val: R@1=28.9% R@5=41.4% R@10=48.0% R@20=53.9% R@100=73.2%
+Embeddings norm: 55.84181213378906, Projected concepts norm: 14.288680076599121
+Epoch 3/200 | Norms: bakcbone 3739.548705816269 - proj 11.40107774734497 | Loss: 6.2886 | Batch R@1: 4.91% | Train: R@1=52.2% R@5=70.8% R@20=85.5% R@100=95.8% | Val: R@1=31.8% R@5=44.6% R@10=51.3% R@20=57.7% R@100=76.9%
+Embeddings norm: 54.95539855957031, Projected concepts norm: 14.659921646118164
+Epoch 4/200 | Norms: bakcbone 3739.553495645523 - proj 11.401300430297852 | Loss: 5.9908 | Batch R@1: 6.87% | Train: R@1=52.8% R@5=72.3% R@20=86.5% R@100=95.9% | Val: R@1=25.7% R@5=38.2% R@10=44.0% R@20=51.0% R@100=72.4%
+Embeddings norm: 56.47160339355469, Projected concepts norm: 15.45079231262207
+Epoch 5/200 | Norms: bakcbone 3739.558190345764 - proj 11.401546001434326 | Loss: 5.7007 | Batch R@1: 5.96% | Train: R@1=53.3% R@5=73.2% R@20=86.7% R@100=96.0% | Val: R@1=31.0% R@5=43.0% R@10=50.3% R@20=57.6% R@100=75.2%
+Embeddings norm: 58.100711822509766, Projected concepts norm: 14.748455047607422
+Epoch 6/200 | Norms: bakcbone 3739.5662698745728 - proj 11.401713609695435 | Loss: 5.4176 | Batch R@1: 7.22% | Train: R@1=53.6% R@5=73.8% R@20=87.3% R@100=96.3% | Val: R@1=29.0% R@5=42.3% R@10=47.9% R@20=54.7% R@100=76.1%
+Embeddings norm: 58.031951904296875, Projected concepts norm: 14.568822860717773
+Epoch 7/200 | Norms: bakcbone 3739.5744273662567 - proj 11.401898384094238 | Loss: 5.1622 | Batch R@1: 6.30% | Train: R@1=55.1% R@5=74.9% R@20=87.7% R@100=96.4% | Val: R@1=30.7% R@5=44.4% R@10=50.6% R@20=57.0% R@100=75.9%
+Embeddings norm: 58.482749938964844, Projected concepts norm: 13.905769348144531
+Epoch 8/200 | Norms: bakcbone 3739.5820236206055 - proj 11.402057409286499 | Loss: 4.9296 | Batch R@1: 6.01% | Train: R@1=55.4% R@5=76.0% R@20=88.1% R@100=96.6% | Val: R@1=32.9% R@5=46.4% R@10=53.2% R@20=60.0% R@100=79.9%
+Embeddings norm: 58.274131774902344, Projected concepts norm: 14.008293151855469
+Epoch 9/200 | Norms: bakcbone 3739.59046792984 - proj 11.402165174484253 | Loss: 4.6395 | Batch R@1: 6.20% | Train: R@1=56.4% R@5=77.0% R@20=88.6% R@100=96.6% | Val: R@1=31.9% R@5=44.7% R@10=50.7% R@20=57.7% R@100=77.2%
+Embeddings norm: 56.99876403808594, Projected concepts norm: 13.473686218261719
+Epoch 10/200 | Norms: bakcbone 3739.5997109413147 - proj 11.402225732803345 | Loss: 4.4028 | Batch R@1: 7.07% | Train: R@1=57.7% R@5=77.7% R@20=88.7% R@100=97.2% | Val: R@1=30.5% R@5=42.8% R@10=50.8% R@20=57.6% R@100=77.8%
+Embeddings norm: 57.29265213012695, Projected concepts norm: 13.84378433227539
+Epoch 11/200 | Norms: bakcbone 3739.609431028366 - proj 11.402287483215332 | Loss: 4.1568 | Batch R@1: 6.92% | Train: R@1=58.9% R@5=78.5% R@20=89.4% R@100=97.2% | Val: R@1=27.7% R@5=41.1% R@10=47.2% R@20=55.2% R@100=74.8%
+Embeddings norm: 61.77388381958008, Projected concepts norm: 14.485898971557617
+Epoch 12/200 | Norms: bakcbone 3739.6184005737305 - proj 11.402308940887451 | Loss: 3.8905 | Batch R@1: 6.61% | Train: R@1=60.0% R@5=79.4% R@20=89.8% R@100=97.3% | Val: R@1=31.2% R@5=45.6% R@10=52.6% R@20=59.4% R@100=78.0%
+Embeddings norm: 58.590858459472656, Projected concepts norm: 13.606853485107422
+Epoch 13/200 | Norms: bakcbone 3739.6280341148376 - proj 11.402333736419678 | Loss: 3.7147 | Batch R@1: 5.61% | Train: R@1=60.6% R@5=79.9% R@20=90.1% R@100=97.6% | Val: R@1=32.8% R@5=46.3% R@10=53.4% R@20=60.7% R@100=79.4%
+Embeddings norm: 58.82365036010742, Projected concepts norm: 13.436880111694336
+Epoch 14/200 | Norms: bakcbone 3739.639267206192 - proj 11.402336359024048 | Loss: 3.5008 | Batch R@1: 6.51% | Train: R@1=62.9% R@5=80.5% R@20=91.1% R@100=97.9% | Val: R@1=28.5% R@5=41.5% R@10=48.5% R@20=55.9% R@100=75.8%
+Embeddings norm: 58.43528747558594, Projected concepts norm: 13.762946128845215
+Epoch 15/200 | Norms: bakcbone 3739.6503190994263 - proj 11.40235424041748 | Loss: 3.2230 | Batch R@1: 7.84% | Train: R@1=63.4% R@5=81.1% R@20=91.5% R@100=98.1% | Val: R@1=30.2% R@5=46.8% R@10=53.8% R@20=60.9% R@100=81.3%
+Embeddings norm: 59.74200439453125, Projected concepts norm: 13.032621383666992
+Epoch 16/200 | Norms: bakcbone 3739.660153865814 - proj 11.402347326278687 | Loss: 3.0430 | Batch R@1: 7.11% | Train: R@1=64.4% R@5=81.7% R@20=92.1% R@100=98.3% | Val: R@1=29.2% R@5=43.2% R@10=50.4% R@20=57.5% R@100=76.3%
+Embeddings norm: 59.014129638671875, Projected concepts norm: 13.263672828674316
+Epoch 17/200 | Norms: bakcbone 3739.6711843013763 - proj 11.402375221252441 | Loss: 2.8272 | Batch R@1: 7.47% | Train: R@1=65.5% R@5=82.6% R@20=92.8% R@100=98.6% | Val: R@1=28.7% R@5=42.3% R@10=49.3% R@20=56.3% R@100=76.5%
+Embeddings norm: 63.552696228027344, Projected concepts norm: 13.580366134643555
+Epoch 18/200 | Norms: bakcbone 3739.6812999248505 - proj 11.40238642692566 | Loss: 2.6290 | Batch R@1: 8.02% | Train: R@1=66.6% R@5=83.3% R@20=93.0% R@100=98.8% | Val: R@1=31.2% R@5=45.9% R@10=52.7% R@20=60.3% R@100=79.5%
+Embeddings norm: 59.88717269897461, Projected concepts norm: 13.08851432800293
+Epoch 19/200 | Norms: bakcbone 3739.6907799243927 - proj 11.402397632598877 | Loss: 2.4880 | Batch R@1: 7.46% | Train: R@1=68.0% R@5=84.8% R@20=93.8% R@100=98.9% | Val: R@1=28.9% R@5=41.1% R@10=47.4% R@20=56.3% R@100=75.9%
+Embeddings norm: 63.31803894042969, Projected concepts norm: 12.409032821655273
+Epoch 20/200 | Norms: bakcbone 3739.6985898017883 - proj 11.402400255203247 | Loss: 2.3175 | Batch R@1: 7.41% | Train: R@1=68.8% R@5=85.9% R@20=94.3% R@100=99.1% | Val: R@1=28.0% R@5=40.2% R@10=47.1% R@20=55.1% R@100=76.6%
+Embeddings norm: 61.76344299316406, Projected concepts norm: 12.66717529296875
+Epoch 21/200 | Norms: bakcbone 3739.7075440883636 - proj 11.402465105056763 | Loss: 2.1452 | Batch R@1: 7.32% | Train: R@1=69.3% R@5=86.3% R@20=94.5% R@100=99.1% | Val: R@1=31.7% R@5=46.2% R@10=52.9% R@20=60.9% R@100=81.0%
+Embeddings norm: 62.16476821899414, Projected concepts norm: 12.712263107299805
+Epoch 22/200 | Norms: bakcbone 3739.716816663742 - proj 11.402574062347412 | Loss: 2.0699 | Batch R@1: 7.88% | Train: R@1=70.7% R@5=87.5% R@20=95.4% R@100=99.3% | Val: R@1=29.9% R@5=43.9% R@10=50.4% R@20=57.1% R@100=78.0%
+Embeddings norm: 61.781776428222656, Projected concepts norm: 12.181396484375
+Epoch 23/200 | Norms: bakcbone 3739.726473093033 - proj 11.402647018432617 | Loss: 1.8642 | Batch R@1: 8.67% | Train: R@1=71.6% R@5=88.5% R@20=95.8% R@100=99.4% | Val: R@1=29.1% R@5=43.4% R@10=50.3% R@20=58.1% R@100=78.1%
+Embeddings norm: 61.520484924316406, Projected concepts norm: 12.203575134277344
+Epoch 24/200 | Norms: bakcbone 3739.7350630760193 - proj 11.4028160572052 | Loss: 1.7546 | Batch R@1: 9.64% | Train: R@1=72.6% R@5=89.1% R@20=96.1% R@100=99.5% | Val: R@1=31.6% R@5=45.6% R@10=53.2% R@20=61.8% R@100=80.7%
+Embeddings norm: 60.28491973876953, Projected concepts norm: 12.070869445800781
+Epoch 25/200 | Norms: bakcbone 3739.7437415122986 - proj 11.403037309646606 | Loss: 1.6263 | Batch R@1: 9.29% | Train: R@1=73.7% R@5=90.0% R@20=96.4% R@100=99.4% | Val: R@1=32.7% R@5=45.8% R@10=52.8% R@20=61.6% R@100=80.9%
+Embeddings norm: 61.62932586669922, Projected concepts norm: 11.628705978393555
+Epoch 26/200 | Norms: bakcbone 3739.750308275223 - proj 11.403301239013672 | Loss: 1.5509 | Batch R@1: 8.84% | Train: R@1=74.6% R@5=90.3% R@20=96.6% R@100=99.6% | Val: R@1=29.9% R@5=43.8% R@10=51.6% R@20=59.3% R@100=78.4%
+Embeddings norm: 63.79475784301758, Projected concepts norm: 11.555442810058594
+Epoch 27/200 | Norms: bakcbone 3739.757263660431 - proj 11.403527021408081 | Loss: 1.4156 | Batch R@1: 8.63% | Train: R@1=76.4% R@5=90.8% R@20=97.0% R@100=99.7% | Val: R@1=30.0% R@5=44.8% R@10=51.0% R@20=57.6% R@100=78.0%
+Embeddings norm: 61.80301284790039, Projected concepts norm: 11.657973289489746
+Epoch 28/200 | Norms: bakcbone 3739.7649698257446 - proj 11.403684616088867 | Loss: 1.3162 | Batch R@1: 10.15% | Train: R@1=76.1% R@5=91.5% R@20=97.2% R@100=99.7% | Val: R@1=31.8% R@5=45.5% R@10=51.7% R@20=59.1% R@100=80.0%
+Embeddings norm: 60.3288688659668, Projected concepts norm: 11.384607315063477
+Epoch 29/200 | Norms: bakcbone 3739.773329257965 - proj 11.403950929641724 | Loss: 1.2437 | Batch R@1: 10.35% | Train: R@1=77.3% R@5=92.2% R@20=97.4% R@100=99.8% | Val: R@1=33.8% R@5=46.9% R@10=54.0% R@20=62.1% R@100=81.6%
+Embeddings norm: 61.783912658691406, Projected concepts norm: 11.233890533447266
+Epoch 30/200 | Norms: bakcbone 3739.778469324112 - proj 11.404259443283081 | Loss: 1.1693 | Batch R@1: 9.85% | Train: R@1=78.1% R@5=92.3% R@20=97.7% R@100=99.8% | Val: R@1=29.9% R@5=43.3% R@10=51.3% R@20=58.7% R@100=78.6%
+Embeddings norm: 61.673255920410156, Projected concepts norm: 11.486015319824219
+Epoch 31/200 | Norms: bakcbone 3739.783939599991 - proj 11.40455436706543 | Loss: 1.0624 | Batch R@1: 9.48% | Train: R@1=78.7% R@5=93.1% R@20=97.9% R@100=99.8% | Val: R@1=32.7% R@5=46.1% R@10=53.5% R@20=60.5% R@100=81.3%
+Embeddings norm: 60.468528747558594, Projected concepts norm: 11.115673065185547
+Epoch 32/200 | Norms: bakcbone 3739.7917664051056 - proj 11.404857158660889 | Loss: 1.0144 | Batch R@1: 10.59% | Train: R@1=79.4% R@5=93.4% R@20=97.9% R@100=99.8% | Val: R@1=33.3% R@5=45.5% R@10=53.5% R@20=60.8% R@100=80.1%
+Embeddings norm: 63.30381774902344, Projected concepts norm: 11.082318305969238
+Epoch 33/200 | Norms: bakcbone 3739.798248052597 - proj 11.40519666671753 | Loss: 0.9865 | Batch R@1: 9.91% | Train: R@1=79.5% R@5=93.6% R@20=98.0% R@100=99.8% | Val: R@1=32.1% R@5=44.5% R@10=51.6% R@20=59.0% R@100=79.5%
+Embeddings norm: 62.255706787109375, Projected concepts norm: 10.894000053405762
+Epoch 34/200 | Norms: bakcbone 3739.803396463394 - proj 11.405569314956665 | Loss: 0.9321 | Batch R@1: 11.01% | Train: R@1=80.3% R@5=94.1% R@20=98.4% R@100=99.8% | Val: R@1=31.2% R@5=43.9% R@10=52.0% R@20=60.5% R@100=80.8%
+Embeddings norm: 64.9666748046875, Projected concepts norm: 10.375544548034668
+Epoch 35/200 | Norms: bakcbone 3739.8092460632324 - proj 11.40584421157837 | Loss: 0.8296 | Batch R@1: 9.68% | Train: R@1=81.4% R@5=94.2% R@20=98.5% R@100=99.8% | Val: R@1=31.2% R@5=45.3% R@10=52.9% R@20=60.3% R@100=80.3%
+Embeddings norm: 60.30706787109375, Projected concepts norm: 10.244729042053223
+Epoch 36/200 | Norms: bakcbone 3739.8139114379883 - proj 11.40623664855957 | Loss: 0.8246 | Batch R@1: 11.80% | Train: R@1=81.5% R@5=94.4% R@20=98.8% R@100=99.9% | Val: R@1=30.9% R@5=45.3% R@10=54.0% R@20=60.8% R@100=80.9%
+Embeddings norm: 58.019615173339844, Projected concepts norm: 9.850421905517578
+Epoch 37/200 | Norms: bakcbone 3739.819559812546 - proj 11.406653642654419 | Loss: 0.7656 | Batch R@1: 11.36% | Train: R@1=82.2% R@5=94.7% R@20=98.9% R@100=99.9% | Val: R@1=31.8% R@5=45.5% R@10=52.9% R@20=60.5% R@100=80.1%
+Embeddings norm: 63.292381286621094, Projected concepts norm: 10.505147933959961
+Epoch 38/200 | Norms: bakcbone 3739.8264195919037 - proj 11.407064199447632 | Loss: 0.7673 | Batch R@1: 11.56% | Train: R@1=83.0% R@5=94.9% R@20=99.1% R@100=99.9% | Val: R@1=30.8% R@5=42.9% R@10=51.5% R@20=59.9% R@100=78.8%
+Embeddings norm: 64.04354095458984, Projected concepts norm: 10.427729606628418
+Epoch 39/200 | Norms: bakcbone 3739.8313930034637 - proj 11.407495737075806 | Loss: 0.7329 | Batch R@1: 12.98% | Train: R@1=83.3% R@5=95.4% R@20=99.4% R@100=99.9% | Val: R@1=31.8% R@5=45.5% R@10=52.6% R@20=59.4% R@100=80.0%
+Embeddings norm: 64.22512817382812, Projected concepts norm: 10.35129165649414
+Epoch 40/200 | Norms: bakcbone 3739.836101770401 - proj 11.407953023910522 | Loss: 0.6624 | Batch R@1: 10.45% | Train: R@1=83.9% R@5=95.6% R@20=99.5% R@100=99.9% | Val: R@1=30.8% R@5=45.1% R@10=52.6% R@20=59.7% R@100=79.4%
+Embeddings norm: 61.6628532409668, Projected concepts norm: 9.787215232849121
+Epoch 41/200 | Norms: bakcbone 3739.8401420116425 - proj 11.408404111862183 | Loss: 0.6345 | Batch R@1: 12.06% | Train: R@1=84.5% R@5=95.7% R@20=99.5% R@100=99.9% | Val: R@1=31.0% R@5=43.4% R@10=51.6% R@20=59.1% R@100=78.9%
+Embeddings norm: 60.74370574951172, Projected concepts norm: 10.105085372924805
+Epoch 42/200 | Norms: bakcbone 3739.843790769577 - proj 11.408959865570068 | Loss: 0.6136 | Batch R@1: 9.54% | Train: R@1=84.6% R@5=95.7% R@20=99.5% R@100=99.9% | Val: R@1=31.8% R@5=45.6% R@10=52.8% R@20=59.5% R@100=80.2%
+Embeddings norm: 61.298362731933594, Projected concepts norm: 10.155519485473633
+Epoch 43/200 | Norms: bakcbone 3739.848091363907 - proj 11.409423351287842 | Loss: 0.6017 | Batch R@1: 12.82% | Train: R@1=85.0% R@5=96.1% R@20=99.5% R@100=99.9% | Val: R@1=32.4% R@5=46.5% R@10=53.8% R@20=60.8% R@100=81.6%
+Embeddings norm: 61.08210754394531, Projected concepts norm: 9.663482666015625
+Epoch 44/200 | Norms: bakcbone 3739.8517265319824 - proj 11.409887075424194 | Loss: 0.5768 | Batch R@1: 11.46% | Train: R@1=85.2% R@5=96.2% R@20=99.4% R@100=99.9% | Val: R@1=31.9% R@5=45.9% R@10=54.2% R@20=60.9% R@100=81.1%
+Embeddings norm: 62.148841857910156, Projected concepts norm: 10.132669448852539
+Epoch 45/200 | Norms: bakcbone 3739.85604429245 - proj 11.41032361984253 | Loss: 0.5332 | Batch R@1: 12.16% | Train: R@1=85.4% R@5=96.4% R@20=99.5% R@100=99.9% | Val: R@1=31.8% R@5=44.6% R@10=51.9% R@20=59.3% R@100=79.1%
+Embeddings norm: 61.73664093017578, Projected concepts norm: 9.761484146118164
+Epoch 46/200 | Norms: bakcbone 3739.8587563037872 - proj 11.410819053649902 | Loss: 0.5115 | Batch R@1: 11.61% | Train: R@1=85.8% R@5=96.7% R@20=99.6% R@100=99.9% | Val: R@1=31.8% R@5=45.6% R@10=52.6% R@20=60.0% R@100=79.8%
+Embeddings norm: 61.87671661376953, Projected concepts norm: 9.76749324798584
+Epoch 47/200 | Norms: bakcbone 3739.861809492111 - proj 11.411344766616821 | Loss: 0.5124 | Batch R@1: 10.66% | Train: R@1=86.4% R@5=96.9% R@20=99.6% R@100=99.9% | Val: R@1=31.0% R@5=44.3% R@10=50.8% R@20=58.0% R@100=79.5%
+Embeddings norm: 61.359928131103516, Projected concepts norm: 9.61400032043457
+Epoch 48/200 | Norms: bakcbone 3739.866674423218 - proj 11.411819219589233 | Loss: 0.4721 | Batch R@1: 13.17% | Train: R@1=87.0% R@5=97.1% R@20=99.6% R@100=99.9% | Val: R@1=32.4% R@5=47.0% R@10=53.5% R@20=60.9% R@100=81.5%
+Embeddings norm: 63.323944091796875, Projected concepts norm: 9.427215576171875
+Epoch 49/200 | Norms: bakcbone 3739.8704528808594 - proj 11.412296056747437 | Loss: 0.4587 | Batch R@1: 12.36% | Train: R@1=86.9% R@5=97.3% R@20=99.6% R@100=99.9% | Val: R@1=32.1% R@5=46.1% R@10=51.8% R@20=59.6% R@100=80.7%
+Embeddings norm: 63.818294525146484, Projected concepts norm: 9.294899940490723
+Epoch 50/200 | Norms: bakcbone 3739.872806072235 - proj 11.412850856781006 | Loss: 0.4745 | Batch R@1: 13.17% | Train: R@1=87.5% R@5=97.4% R@20=99.7% R@100=99.9% | Val: R@1=32.1% R@5=45.5% R@10=52.4% R@20=60.7% R@100=80.3%
+Embeddings norm: 62.445335388183594, Projected concepts norm: 9.068696975708008
+Epoch 51/200 | Norms: bakcbone 3739.874998807907 - proj 11.413412094116211 | Loss: 0.4466 | Batch R@1: 12.77% | Train: R@1=87.1% R@5=97.5% R@20=99.6% R@100=99.9% | Val: R@1=31.7% R@5=46.2% R@10=52.9% R@20=60.3% R@100=80.2%
+Embeddings norm: 62.93930435180664, Projected concepts norm: 9.744585037231445
+Epoch 52/200 | Norms: bakcbone 3739.8776450157166 - proj 11.413851737976074 | Loss: 0.3820 | Batch R@1: 13.18% | Train: R@1=87.5% R@5=97.5% R@20=99.6% R@100=99.9% | Val: R@1=32.1% R@5=45.5% R@10=52.5% R@20=58.9% R@100=81.3%
+Embeddings norm: 64.94011688232422, Projected concepts norm: 9.411531448364258
+Epoch 53/200 | Norms: bakcbone 3739.8799591064453 - proj 11.41437029838562 | Loss: 0.4084 | Batch R@1: 11.45% | Train: R@1=88.4% R@5=97.7% R@20=99.7% R@100=99.9% | Val: R@1=31.7% R@5=46.4% R@10=53.6% R@20=60.4% R@100=79.7%
+Embeddings norm: 63.64097595214844, Projected concepts norm: 9.275534629821777
+Epoch 54/200 | Norms: bakcbone 3739.884022951126 - proj 11.414831638336182 | Loss: 0.4101 | Batch R@1: 12.37% | Train: R@1=88.3% R@5=97.7% R@20=99.7% R@100=99.9% | Val: R@1=31.6% R@5=45.5% R@10=52.6% R@20=60.9% R@100=81.2%
+Embeddings norm: 61.19086837768555, Projected concepts norm: 8.998952865600586
+Epoch 55/200 | Norms: bakcbone 3739.8871088027954 - proj 11.41528868675232 | Loss: 0.3980 | Batch R@1: 12.17% | Train: R@1=88.3% R@5=97.8% R@20=99.7% R@100=99.9% | Val: R@1=31.5% R@5=44.8% R@10=52.4% R@20=59.9% R@100=79.2%
+Embeddings norm: 64.21603393554688, Projected concepts norm: 9.407923698425293
+Epoch 56/200 | Norms: bakcbone 3739.890568971634 - proj 11.41578984260559 | Loss: 0.3502 | Batch R@1: 12.76% | Train: R@1=88.8% R@5=97.8% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=46.4% R@10=53.0% R@20=59.6% R@100=80.9%
+Embeddings norm: 62.88389587402344, Projected concepts norm: 8.963252067565918
+Epoch 57/200 | Norms: bakcbone 3739.8931975364685 - proj 11.416260719299316 | Loss: 0.3409 | Batch R@1: 12.83% | Train: R@1=88.9% R@5=97.9% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=47.1% R@10=54.0% R@20=62.1% R@100=81.2%
+Embeddings norm: 63.02239990234375, Projected concepts norm: 9.136795043945312
+Epoch 58/200 | Norms: bakcbone 3739.897522211075 - proj 11.416763544082642 | Loss: 0.3639 | Batch R@1: 12.11% | Train: R@1=89.7% R@5=97.9% R@20=99.8% R@100=99.9% | Val: R@1=31.4% R@5=44.5% R@10=52.2% R@20=60.2% R@100=79.9%
+Embeddings norm: 61.839290618896484, Projected concepts norm: 8.91834831237793
+Epoch 59/200 | Norms: bakcbone 3739.9009222984314 - proj 11.417203426361084 | Loss: 0.3194 | Batch R@1: 13.67% | Train: R@1=89.7% R@5=97.9% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=46.4% R@10=54.1% R@20=61.2% R@100=81.0%
+Embeddings norm: 63.79506301879883, Projected concepts norm: 8.982223510742188
+Epoch 60/200 | Norms: bakcbone 3739.903748035431 - proj 11.417641162872314 | Loss: 0.3151 | Batch R@1: 13.38% | Train: R@1=89.0% R@5=98.1% R@20=99.8% R@100=99.9% | Val: R@1=31.7% R@5=45.0% R@10=52.2% R@20=59.9% R@100=80.4%
+Embeddings norm: 62.07838439941406, Projected concepts norm: 8.422770500183105
+Epoch 61/200 | Norms: bakcbone 3739.9060294628143 - proj 11.418133735656738 | Loss: 0.3252 | Batch R@1: 14.78% | Train: R@1=89.7% R@5=98.2% R@20=99.8% R@100=99.9% | Val: R@1=31.5% R@5=44.9% R@10=52.9% R@20=59.4% R@100=79.5%
+Embeddings norm: 63.68988037109375, Projected concepts norm: 8.91696548461914
+Epoch 62/200 | Norms: bakcbone 3739.909338951111 - proj 11.418660402297974 | Loss: 0.3141 | Batch R@1: 13.07% | Train: R@1=89.7% R@5=98.2% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=46.4% R@10=52.7% R@20=60.5% R@100=80.8%
+Embeddings norm: 62.11444854736328, Projected concepts norm: 8.739673614501953
+Epoch 63/200 | Norms: bakcbone 3739.9110872745514 - proj 11.419212579727173 | Loss: 0.3046 | Batch R@1: 12.01% | Train: R@1=89.7% R@5=98.1% R@20=99.8% R@100=99.9% | Val: R@1=31.0% R@5=45.8% R@10=52.1% R@20=60.3% R@100=81.0%
+Embeddings norm: 62.13152313232422, Projected concepts norm: 8.724568367004395
+Epoch 64/200 | Norms: bakcbone 3739.9144172668457 - proj 11.419733047485352 | Loss: 0.2909 | Batch R@1: 12.21% | Train: R@1=90.2% R@5=98.3% R@20=99.8% R@100=99.9% | Val: R@1=32.9% R@5=47.1% R@10=53.6% R@20=61.0% R@100=79.5%
+Embeddings norm: 61.53331756591797, Projected concepts norm: 8.617677688598633
+Epoch 65/200 | Norms: bakcbone 3739.9177820682526 - proj 11.420233011245728 | Loss: 0.2843 | Batch R@1: 14.68% | Train: R@1=90.4% R@5=98.5% R@20=99.8% R@100=99.9% | Val: R@1=31.3% R@5=46.5% R@10=53.0% R@20=60.8% R@100=80.6%
+Embeddings norm: 60.13774871826172, Projected concepts norm: 8.675712585449219
+Epoch 66/200 | Norms: bakcbone 3739.9201607704163 - proj 11.420636177062988 | Loss: 0.2772 | Batch R@1: 13.43% | Train: R@1=90.6% R@5=98.5% R@20=99.8% R@100=99.9% | Val: R@1=31.2% R@5=46.3% R@10=53.0% R@20=60.4% R@100=81.3%
+Embeddings norm: 62.19211196899414, Projected concepts norm: 8.601999282836914
+Epoch 67/200 | Norms: bakcbone 3739.92445397377 - proj 11.421181917190552 | Loss: 0.2971 | Batch R@1: 11.16% | Train: R@1=90.8% R@5=98.7% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=46.2% R@10=53.1% R@20=61.0% R@100=80.0%
+Embeddings norm: 63.774559020996094, Projected concepts norm: 8.492121696472168
+Epoch 68/200 | Norms: bakcbone 3739.92582654953 - proj 11.421648263931274 | Loss: 0.2632 | Batch R@1: 15.18% | Train: R@1=90.9% R@5=98.5% R@20=99.8% R@100=99.9% | Val: R@1=32.4% R@5=45.7% R@10=53.2% R@20=60.3% R@100=80.7%
+Embeddings norm: 60.319122314453125, Projected concepts norm: 8.133111953735352
+Epoch 69/200 | Norms: bakcbone 3739.9276835918427 - proj 11.422148704528809 | Loss: 0.2587 | Batch R@1: 13.69% | Train: R@1=91.0% R@5=98.6% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=45.6% R@10=52.6% R@20=60.1% R@100=80.4%
+Embeddings norm: 60.400978088378906, Projected concepts norm: 8.42261791229248
+Epoch 70/200 | Norms: bakcbone 3739.929306268692 - proj 11.422648191452026 | Loss: 0.2565 | Batch R@1: 12.66% | Train: R@1=91.5% R@5=98.6% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=46.2% R@10=53.4% R@20=60.1% R@100=80.3%
+Embeddings norm: 63.33845138549805, Projected concepts norm: 8.328027725219727
+Epoch 71/200 | Norms: bakcbone 3739.929849386215 - proj 11.423190116882324 | Loss: 0.2385 | Batch R@1: 11.87% | Train: R@1=91.7% R@5=98.7% R@20=99.8% R@100=99.9% | Val: R@1=31.9% R@5=47.0% R@10=54.8% R@20=61.6% R@100=81.6%
+Embeddings norm: 61.69538116455078, Projected concepts norm: 8.185586929321289
+Epoch 72/200 | Norms: bakcbone 3739.9325227737427 - proj 11.42368769645691 | Loss: 0.2247 | Batch R@1: 14.19% | Train: R@1=92.0% R@5=98.8% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=46.5% R@10=53.2% R@20=60.3% R@100=80.4%
+Embeddings norm: 63.71961975097656, Projected concepts norm: 7.884456634521484
+Epoch 73/200 | Norms: bakcbone 3739.9342756271362 - proj 11.424179792404175 | Loss: 0.2312 | Batch R@1: 13.37% | Train: R@1=92.0% R@5=98.7% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=46.5% R@10=52.2% R@20=60.0% R@100=79.4%
+Embeddings norm: 62.220367431640625, Projected concepts norm: 8.385339736938477
+Epoch 74/200 | Norms: bakcbone 3739.935533285141 - proj 11.424680233001709 | Loss: 0.2368 | Batch R@1: 14.04% | Train: R@1=92.0% R@5=98.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.1% R@10=53.2% R@20=60.9% R@100=80.7%
+Embeddings norm: 62.0266227722168, Projected concepts norm: 7.891726493835449
+Epoch 75/200 | Norms: bakcbone 3739.936110019684 - proj 11.42521858215332 | Loss: 0.2316 | Batch R@1: 13.79% | Train: R@1=92.1% R@5=98.9% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=46.8% R@10=53.1% R@20=60.0% R@100=80.1%
+Embeddings norm: 61.162628173828125, Projected concepts norm: 8.01307201385498
+Epoch 76/200 | Norms: bakcbone 3739.9372997283936 - proj 11.425719976425171 | Loss: 0.2166 | Batch R@1: 13.12% | Train: R@1=92.3% R@5=98.8% R@20=99.8% R@100=99.9% | Val: R@1=31.5% R@5=46.0% R@10=52.4% R@20=60.6% R@100=80.4%
+Embeddings norm: 64.63587951660156, Projected concepts norm: 7.975773811340332
+Epoch 77/200 | Norms: bakcbone 3739.9390573501587 - proj 11.42623519897461 | Loss: 0.2056 | Batch R@1: 13.57% | Train: R@1=92.4% R@5=98.9% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=46.3% R@10=53.8% R@20=60.6% R@100=81.3%
+Embeddings norm: 62.69085693359375, Projected concepts norm: 8.100858688354492
+Epoch 78/200 | Norms: bakcbone 3739.9415698051453 - proj 11.426745176315308 | Loss: 0.2225 | Batch R@1: 12.50% | Train: R@1=92.6% R@5=99.1% R@20=99.8% R@100=99.9% | Val: R@1=31.5% R@5=45.2% R@10=52.3% R@20=58.9% R@100=80.0%
+Embeddings norm: 61.19172668457031, Projected concepts norm: 8.011813163757324
+Epoch 79/200 | Norms: bakcbone 3739.9434814453125 - proj 11.42716908454895 | Loss: 0.1965 | Batch R@1: 13.09% | Train: R@1=92.5% R@5=99.1% R@20=99.8% R@100=99.9% | Val: R@1=32.4% R@5=45.4% R@10=52.6% R@20=60.5% R@100=80.0%
+Embeddings norm: 63.21021270751953, Projected concepts norm: 8.213995933532715
+Epoch 80/200 | Norms: bakcbone 3739.946044921875 - proj 11.427687406539917 | Loss: 0.2005 | Batch R@1: 13.67% | Train: R@1=92.8% R@5=99.1% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.3% R@10=53.2% R@20=59.9% R@100=80.5%
+Embeddings norm: 61.554107666015625, Projected concepts norm: 7.908062934875488
+Epoch 81/200 | Norms: bakcbone 3739.947646856308 - proj 11.428185939788818 | Loss: 0.1886 | Batch R@1: 12.36% | Train: R@1=92.7% R@5=99.1% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=46.4% R@10=53.1% R@20=60.5% R@100=79.8%
+Embeddings norm: 62.162418365478516, Projected concepts norm: 8.07977294921875
+Epoch 82/200 | Norms: bakcbone 3739.9503815174103 - proj 11.428699731826782 | Loss: 0.1952 | Batch R@1: 15.50% | Train: R@1=92.9% R@5=99.1% R@20=99.8% R@100=99.9% | Val: R@1=31.0% R@5=45.8% R@10=52.1% R@20=59.7% R@100=79.6%
+Embeddings norm: 62.517555236816406, Projected concepts norm: 8.051004409790039
+Epoch 83/200 | Norms: bakcbone 3739.9528653621674 - proj 11.42913269996643 | Loss: 0.1772 | Batch R@1: 14.48% | Train: R@1=92.8% R@5=99.2% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=46.2% R@10=54.0% R@20=61.5% R@100=79.5%
+Embeddings norm: 61.96949768066406, Projected concepts norm: 7.606645107269287
+Epoch 84/200 | Norms: bakcbone 3739.954927921295 - proj 11.429624795913696 | Loss: 0.1924 | Batch R@1: 14.19% | Train: R@1=92.6% R@5=99.2% R@20=99.8% R@100=99.9% | Val: R@1=32.4% R@5=46.5% R@10=54.3% R@20=61.3% R@100=80.0%
+Embeddings norm: 64.13572692871094, Projected concepts norm: 7.738157272338867
+Epoch 85/200 | Norms: bakcbone 3739.9571759700775 - proj 11.430076122283936 | Loss: 0.1795 | Batch R@1: 13.84% | Train: R@1=92.8% R@5=99.2% R@20=99.9% R@100=99.9% | Val: R@1=32.2% R@5=45.6% R@10=53.5% R@20=60.8% R@100=79.9%
+Embeddings norm: 63.13273620605469, Projected concepts norm: 7.715992450714111
+Epoch 86/200 | Norms: bakcbone 3739.9599616527557 - proj 11.430588722229004 | Loss: 0.1655 | Batch R@1: 12.91% | Train: R@1=93.1% R@5=99.3% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.4% R@10=53.9% R@20=61.4% R@100=80.5%
+Embeddings norm: 62.789154052734375, Projected concepts norm: 7.7763590812683105
+Epoch 87/200 | Norms: bakcbone 3739.95934510231 - proj 11.431143045425415 | Loss: 0.1574 | Batch R@1: 12.46% | Train: R@1=93.0% R@5=99.3% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=45.4% R@10=52.9% R@20=60.5% R@100=80.1%
+Embeddings norm: 62.8458251953125, Projected concepts norm: 7.898704528808594
+Epoch 88/200 | Norms: bakcbone 3739.9596614837646 - proj 11.431586980819702 | Loss: 0.1677 | Batch R@1: 13.72% | Train: R@1=93.5% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=31.4% R@5=45.9% R@10=52.6% R@20=59.7% R@100=79.8%
+Embeddings norm: 62.02996826171875, Projected concepts norm: 7.552973747253418
+Epoch 89/200 | Norms: bakcbone 3739.961064338684 - proj 11.432130575180054 | Loss: 0.1712 | Batch R@1: 13.87% | Train: R@1=93.3% R@5=99.3% R@20=99.8% R@100=99.9% | Val: R@1=30.8% R@5=44.2% R@10=52.3% R@20=60.3% R@100=79.2%
+Embeddings norm: 62.339988708496094, Projected concepts norm: 7.517770767211914
+Epoch 90/200 | Norms: bakcbone 3739.963184595108 - proj 11.432653427124023 | Loss: 0.1513 | Batch R@1: 15.45% | Train: R@1=93.3% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=31.5% R@5=46.2% R@10=53.0% R@20=60.0% R@100=78.7%
+Embeddings norm: 61.42668151855469, Projected concepts norm: 7.687204837799072
+Epoch 91/200 | Norms: bakcbone 3739.9653825759888 - proj 11.433169603347778 | Loss: 0.1491 | Batch R@1: 14.89% | Train: R@1=93.7% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=31.9% R@5=46.6% R@10=53.5% R@20=61.0% R@100=79.4%
+Embeddings norm: 61.43455505371094, Projected concepts norm: 7.578438758850098
+Epoch 92/200 | Norms: bakcbone 3739.9666056632996 - proj 11.433677196502686 | Loss: 0.1501 | Batch R@1: 14.98% | Train: R@1=93.6% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=46.2% R@10=52.9% R@20=60.6% R@100=79.7%
+Embeddings norm: 60.19208526611328, Projected concepts norm: 7.303962707519531
+Epoch 93/200 | Norms: bakcbone 3739.968819141388 - proj 11.43415641784668 | Loss: 0.1528 | Batch R@1: 13.44% | Train: R@1=93.7% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=45.3% R@10=52.4% R@20=60.3% R@100=80.7%
+Embeddings norm: 61.643150329589844, Projected concepts norm: 7.525586128234863
+Epoch 94/200 | Norms: bakcbone 3739.9693167209625 - proj 11.43461799621582 | Loss: 0.1494 | Batch R@1: 13.27% | Train: R@1=93.6% R@5=99.3% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=44.2% R@10=51.6% R@20=60.5% R@100=78.7%
+Embeddings norm: 62.55256652832031, Projected concepts norm: 7.338818550109863
+Epoch 95/200 | Norms: bakcbone 3739.970442533493 - proj 11.435110807418823 | Loss: 0.1330 | Batch R@1: 12.76% | Train: R@1=93.8% R@5=99.3% R@20=99.8% R@100=99.9% | Val: R@1=32.0% R@5=45.8% R@10=52.2% R@20=59.8% R@100=79.3%
+Embeddings norm: 61.916839599609375, Projected concepts norm: 7.336960792541504
+Epoch 96/200 | Norms: bakcbone 3739.9724473953247 - proj 11.435589075088501 | Loss: 0.1422 | Batch R@1: 15.65% | Train: R@1=93.7% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=32.3% R@5=45.2% R@10=52.1% R@20=60.2% R@100=80.0%
+Embeddings norm: 61.9339485168457, Projected concepts norm: 7.457509994506836
+Epoch 97/200 | Norms: bakcbone 3739.9740874767303 - proj 11.436073541641235 | Loss: 0.1398 | Batch R@1: 14.90% | Train: R@1=93.7% R@5=99.3% R@20=99.8% R@100=99.9% | Val: R@1=32.2% R@5=45.4% R@10=51.9% R@20=59.9% R@100=79.5%
+Embeddings norm: 62.81566619873047, Projected concepts norm: 7.263678550720215
+Epoch 98/200 | Norms: bakcbone 3739.976355791092 - proj 11.43656039237976 | Loss: 0.1382 | Batch R@1: 14.29% | Train: R@1=94.0% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=32.3% R@5=45.9% R@10=52.2% R@20=59.6% R@100=79.3%
+Embeddings norm: 63.45238494873047, Projected concepts norm: 7.38580322265625
+Epoch 99/200 | Norms: bakcbone 3739.976809501648 - proj 11.436974048614502 | Loss: 0.1338 | Batch R@1: 14.70% | Train: R@1=94.4% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=32.1% R@5=47.0% R@10=53.7% R@20=60.8% R@100=80.7%
+Embeddings norm: 62.96924591064453, Projected concepts norm: 7.376130104064941
+Epoch 100/200 | Norms: bakcbone 3739.977520465851 - proj 11.437482118606567 | Loss: 0.1335 | Batch R@1: 13.73% | Train: R@1=94.4% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=31.8% R@5=45.7% R@10=52.6% R@20=59.9% R@100=79.3%
+Embeddings norm: 60.765785217285156, Projected concepts norm: 7.252753257751465
+Epoch 101/200 | Norms: bakcbone 3739.979192495346 - proj 11.43792176246643 | Loss: 0.1298 | Batch R@1: 14.59% | Train: R@1=94.5% R@5=99.4% R@20=99.8% R@100=99.9% | Val: R@1=32.4% R@5=45.8% R@10=51.9% R@20=59.9% R@100=79.4%
+Embeddings norm: 61.44276809692383, Projected concepts norm: 7.292026996612549
+Epoch 102/200 | Norms: bakcbone 3739.9796969890594 - proj 11.438369512557983 | Loss: 0.1390 | Batch R@1: 16.57% | Train: R@1=94.2% R@5=99.4% R@20=99.9% R@100=99.9% | Val: R@1=31.1% R@5=46.7% R@10=52.6% R@20=60.0% R@100=79.3%
+Embeddings norm: 62.32741928100586, Projected concepts norm: 6.810490608215332
+Epoch 103/200 | Norms: bakcbone 3739.9805142879486 - proj 11.438854217529297 | Loss: 0.1188 | Batch R@1: 15.05% | Train: R@1=94.4% R@5=99.5% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=45.6% R@10=52.7% R@20=60.0% R@100=79.2%
+Embeddings norm: 60.69882583618164, Projected concepts norm: 7.11553430557251
+Epoch 104/200 | Norms: bakcbone 3739.983083486557 - proj 11.439278602600098 | Loss: 0.1196 | Batch R@1: 14.96% | Train: R@1=94.3% R@5=99.5% R@20=99.9% R@100=99.9% | Val: R@1=32.9% R@5=45.8% R@10=52.9% R@20=60.1% R@100=79.9%
+Embeddings norm: 63.67547607421875, Projected concepts norm: 7.145673751831055
+Epoch 105/200 | Norms: bakcbone 3739.986095428467 - proj 11.439751148223877 | Loss: 0.1233 | Batch R@1: 15.92% | Train: R@1=94.5% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.1% R@10=53.1% R@20=60.5% R@100=79.4%
+Embeddings norm: 60.189231872558594, Projected concepts norm: 7.2022624015808105
+Epoch 106/200 | Norms: bakcbone 3739.9877412319183 - proj 11.440273761749268 | Loss: 0.1077 | Batch R@1: 15.81% | Train: R@1=94.6% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=44.8% R@10=53.0% R@20=59.6% R@100=80.0%
+Embeddings norm: 60.70497512817383, Projected concepts norm: 7.376363754272461
+Epoch 107/200 | Norms: bakcbone 3739.9890508651733 - proj 11.440766334533691 | Loss: 0.1159 | Batch R@1: 15.50% | Train: R@1=94.7% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.8% R@5=46.2% R@10=53.6% R@20=59.4% R@100=80.2%
+Embeddings norm: 62.931663513183594, Projected concepts norm: 7.216201305389404
+Epoch 108/200 | Norms: bakcbone 3739.9914507865906 - proj 11.441201210021973 | Loss: 0.1053 | Batch R@1: 14.04% | Train: R@1=95.0% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.7% R@5=45.7% R@10=52.6% R@20=60.0% R@100=79.3%
+Embeddings norm: 63.53042221069336, Projected concepts norm: 6.985947608947754
+Epoch 109/200 | Norms: bakcbone 3739.991972923279 - proj 11.441578149795532 | Loss: 0.1075 | Batch R@1: 13.38% | Train: R@1=94.6% R@5=99.5% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=46.2% R@10=53.4% R@20=60.2% R@100=79.8%
+Embeddings norm: 62.34486389160156, Projected concepts norm: 7.196195125579834
+Epoch 110/200 | Norms: bakcbone 3739.993738889694 - proj 11.441976547241211 | Loss: 0.1003 | Batch R@1: 13.09% | Train: R@1=94.7% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=46.6% R@10=52.8% R@20=60.9% R@100=79.1%
+Embeddings norm: 62.612457275390625, Projected concepts norm: 7.194169044494629
+Epoch 111/200 | Norms: bakcbone 3739.9957733154297 - proj 11.442402839660645 | Loss: 0.0933 | Batch R@1: 14.08% | Train: R@1=94.9% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.5% R@10=52.4% R@20=60.1% R@100=79.1%
+Embeddings norm: 64.8294677734375, Projected concepts norm: 7.288705348968506
+Epoch 112/200 | Norms: bakcbone 3739.997386932373 - proj 11.442935943603516 | Loss: 0.1069 | Batch R@1: 15.74% | Train: R@1=95.2% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.2% R@5=46.6% R@10=53.0% R@20=60.2% R@100=79.2%
+Embeddings norm: 60.05479431152344, Projected concepts norm: 7.0942606925964355
+Epoch 113/200 | Norms: bakcbone 3739.9983429908752 - proj 11.443315267562866 | Loss: 0.1001 | Batch R@1: 15.60% | Train: R@1=95.3% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=46.2% R@10=53.1% R@20=60.7% R@100=79.3%
+Embeddings norm: 62.549808502197266, Projected concepts norm: 6.8456525802612305
+Epoch 114/200 | Norms: bakcbone 3739.9990541934967 - proj 11.44370174407959 | Loss: 0.0814 | Batch R@1: 13.83% | Train: R@1=95.4% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=46.9% R@10=52.9% R@20=60.5% R@100=79.2%
+Embeddings norm: 61.98414993286133, Projected concepts norm: 6.885796070098877
+Epoch 115/200 | Norms: bakcbone 3740.0012934207916 - proj 11.444186687469482 | Loss: 0.0878 | Batch R@1: 16.36% | Train: R@1=95.6% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.2% R@10=53.2% R@20=61.1% R@100=79.7%
+Embeddings norm: 63.77597427368164, Projected concepts norm: 7.1191887855529785
+Epoch 116/200 | Norms: bakcbone 3740.002633333206 - proj 11.444609880447388 | Loss: 0.0965 | Batch R@1: 16.11% | Train: R@1=95.5% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.8% R@5=46.2% R@10=53.1% R@20=59.8% R@100=79.7%
+Embeddings norm: 61.45476531982422, Projected concepts norm: 6.864470958709717
+Epoch 117/200 | Norms: bakcbone 3740.0037970542908 - proj 11.44507360458374 | Loss: 0.0872 | Batch R@1: 15.84% | Train: R@1=95.5% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.5% R@5=45.2% R@10=52.7% R@20=59.9% R@100=79.6%
+Embeddings norm: 61.31013488769531, Projected concepts norm: 6.892818450927734
+Epoch 118/200 | Norms: bakcbone 3740.0053017139435 - proj 11.445493936538696 | Loss: 0.0828 | Batch R@1: 14.64% | Train: R@1=95.4% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.1% R@10=53.5% R@20=59.7% R@100=78.8%
+Embeddings norm: 62.70832824707031, Projected concepts norm: 7.199874401092529
+Epoch 119/200 | Norms: bakcbone 3740.007610321045 - proj 11.44596529006958 | Loss: 0.0958 | Batch R@1: 13.54% | Train: R@1=95.4% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.5% R@5=45.5% R@10=53.1% R@20=60.1% R@100=79.9%
+Embeddings norm: 63.2147102355957, Projected concepts norm: 6.883480548858643
+Epoch 120/200 | Norms: bakcbone 3740.0094196796417 - proj 11.446476459503174 | Loss: 0.0867 | Batch R@1: 15.80% | Train: R@1=95.4% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=45.8% R@10=52.8% R@20=60.7% R@100=79.6%
+Embeddings norm: 61.24168395996094, Projected concepts norm: 7.0537519454956055
+Epoch 121/200 | Norms: bakcbone 3740.0097403526306 - proj 11.447027921676636 | Loss: 0.0990 | Batch R@1: 16.75% | Train: R@1=95.5% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.2% R@5=45.2% R@10=52.6% R@20=59.6% R@100=78.0%
+Embeddings norm: 62.060020446777344, Projected concepts norm: 6.758099555969238
+Epoch 122/200 | Norms: bakcbone 3740.0108988285065 - proj 11.447385787963867 | Loss: 0.0805 | Batch R@1: 13.52% | Train: R@1=95.4% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.9% R@5=45.8% R@10=52.2% R@20=59.5% R@100=80.4%
+Embeddings norm: 61.07590866088867, Projected concepts norm: 6.960822105407715
+Epoch 123/200 | Norms: bakcbone 3740.0114970207214 - proj 11.447829008102417 | Loss: 0.0835 | Batch R@1: 14.33% | Train: R@1=95.7% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.0% R@10=53.5% R@20=60.3% R@100=80.0%
+Embeddings norm: 62.307106018066406, Projected concepts norm: 6.8495612144470215
+Epoch 124/200 | Norms: bakcbone 3740.0135328769684 - proj 11.448268413543701 | Loss: 0.0792 | Batch R@1: 16.10% | Train: R@1=95.6% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.0% R@10=52.8% R@20=60.4% R@100=78.6%
+Embeddings norm: 61.780548095703125, Projected concepts norm: 6.966127395629883
+Epoch 125/200 | Norms: bakcbone 3740.0136404037476 - proj 11.448700189590454 | Loss: 0.0866 | Batch R@1: 15.44% | Train: R@1=95.8% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.8% R@10=52.7% R@20=60.5% R@100=79.2%
+Embeddings norm: 62.55841827392578, Projected concepts norm: 6.874794006347656
+Epoch 126/200 | Norms: bakcbone 3740.0160489082336 - proj 11.449143171310425 | Loss: 0.0824 | Batch R@1: 14.02% | Train: R@1=95.6% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.5% R@10=53.3% R@20=61.0% R@100=78.7%
+Embeddings norm: 60.98426818847656, Projected concepts norm: 6.417896270751953
+Epoch 127/200 | Norms: bakcbone 3740.0171205997467 - proj 11.449646472930908 | Loss: 0.0886 | Batch R@1: 14.33% | Train: R@1=96.0% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=32.2% R@5=46.8% R@10=53.7% R@20=60.2% R@100=80.4%
+Embeddings norm: 62.21470260620117, Projected concepts norm: 6.539064884185791
+Epoch 128/200 | Norms: bakcbone 3740.0184218883514 - proj 11.450215578079224 | Loss: 0.0802 | Batch R@1: 14.70% | Train: R@1=95.7% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.2% R@10=52.9% R@20=59.8% R@100=79.6%
+Embeddings norm: 63.198707580566406, Projected concepts norm: 6.79970645904541
+Epoch 129/200 | Norms: bakcbone 3740.018496990204 - proj 11.450641393661499 | Loss: 0.0832 | Batch R@1: 13.18% | Train: R@1=95.9% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.7% R@10=52.3% R@20=60.2% R@100=79.2%
+Embeddings norm: 60.554283142089844, Projected concepts norm: 6.5969085693359375
+Epoch 130/200 | Norms: bakcbone 3740.02144408226 - proj 11.451111078262329 | Loss: 0.0699 | Batch R@1: 16.06% | Train: R@1=95.9% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.3% R@5=45.8% R@10=52.7% R@20=60.1% R@100=79.6%
+Embeddings norm: 60.370399475097656, Projected concepts norm: 6.693490982055664
+Epoch 131/200 | Norms: bakcbone 3740.02379322052 - proj 11.451589107513428 | Loss: 0.0838 | Batch R@1: 14.58% | Train: R@1=95.8% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.1% R@5=45.8% R@10=53.6% R@20=60.2% R@100=78.6%
+Embeddings norm: 60.14655303955078, Projected concepts norm: 6.669490814208984
+Epoch 132/200 | Norms: bakcbone 3740.026042699814 - proj 11.452126741409302 | Loss: 0.0770 | Batch R@1: 15.23% | Train: R@1=96.1% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.7% R@10=53.2% R@20=60.4% R@100=79.4%
+Embeddings norm: 61.76255416870117, Projected concepts norm: 6.557003974914551
+Epoch 133/200 | Norms: bakcbone 3740.0262022018433 - proj 11.45257306098938 | Loss: 0.0741 | Batch R@1: 14.58% | Train: R@1=96.1% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.9% R@5=45.8% R@10=52.2% R@20=59.3% R@100=79.9%
+Embeddings norm: 63.134857177734375, Projected concepts norm: 6.654778003692627
+Epoch 134/200 | Norms: bakcbone 3740.0275707244873 - proj 11.452978372573853 | Loss: 0.0749 | Batch R@1: 15.76% | Train: R@1=95.7% R@5=99.6% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.8% R@10=52.9% R@20=59.6% R@100=80.0%
+Embeddings norm: 63.00425720214844, Projected concepts norm: 6.770016670227051
+Epoch 135/200 | Norms: bakcbone 3740.0294218063354 - proj 11.453343152999878 | Loss: 0.0701 | Batch R@1: 14.00% | Train: R@1=96.0% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.0% R@10=52.6% R@20=60.9% R@100=79.5%
+Embeddings norm: 60.85528564453125, Projected concepts norm: 6.656131744384766
+Epoch 136/200 | Norms: bakcbone 3740.030483007431 - proj 11.453728914260864 | Loss: 0.0731 | Batch R@1: 16.56% | Train: R@1=96.3% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.9% R@5=45.6% R@10=52.4% R@20=59.9% R@100=78.8%
+Embeddings norm: 61.345001220703125, Projected concepts norm: 6.610857963562012
+Epoch 137/200 | Norms: bakcbone 3740.0310909748077 - proj 11.454208135604858 | Loss: 0.0671 | Batch R@1: 15.06% | Train: R@1=96.2% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.5% R@10=53.6% R@20=60.0% R@100=79.7%
+Embeddings norm: 61.26392364501953, Projected concepts norm: 6.689509391784668
+Epoch 138/200 | Norms: bakcbone 3740.0304596424103 - proj 11.454691648483276 | Loss: 0.0783 | Batch R@1: 15.39% | Train: R@1=96.1% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=45.3% R@10=52.6% R@20=59.8% R@100=78.5%
+Embeddings norm: 62.26405334472656, Projected concepts norm: 6.410633087158203
+Epoch 139/200 | Norms: bakcbone 3740.0321645736694 - proj 11.455211877822876 | Loss: 0.0718 | Batch R@1: 17.07% | Train: R@1=96.2% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=46.5% R@10=52.4% R@20=60.7% R@100=79.4%
+Embeddings norm: 61.309993743896484, Projected concepts norm: 6.469876289367676
+Epoch 140/200 | Norms: bakcbone 3740.03373837471 - proj 11.455578565597534 | Loss: 0.0588 | Batch R@1: 14.24% | Train: R@1=96.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=45.5% R@10=52.9% R@20=59.9% R@100=79.9%
+Embeddings norm: 61.170494079589844, Projected concepts norm: 6.5579938888549805
+Epoch 141/200 | Norms: bakcbone 3740.034350156784 - proj 11.456049919128418 | Loss: 0.0717 | Batch R@1: 15.05% | Train: R@1=96.1% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.7% R@10=52.1% R@20=59.3% R@100=78.9%
+Embeddings norm: 62.428462982177734, Projected concepts norm: 6.499314785003662
+Epoch 142/200 | Norms: bakcbone 3740.036408185959 - proj 11.456465005874634 | Loss: 0.0635 | Batch R@1: 13.89% | Train: R@1=96.1% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.4% R@10=53.4% R@20=59.8% R@100=80.0%
+Embeddings norm: 60.03962707519531, Projected concepts norm: 6.529890060424805
+Epoch 143/200 | Norms: bakcbone 3740.038303375244 - proj 11.456964015960693 | Loss: 0.0669 | Batch R@1: 13.48% | Train: R@1=96.4% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.6% R@10=54.0% R@20=61.0% R@100=79.4%
+Embeddings norm: 61.517234802246094, Projected concepts norm: 6.4665913581848145
+Epoch 144/200 | Norms: bakcbone 3740.0393137931824 - proj 11.457419157028198 | Loss: 0.0743 | Batch R@1: 15.15% | Train: R@1=96.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.5% R@10=52.6% R@20=59.6% R@100=79.2%
+Embeddings norm: 62.70391845703125, Projected concepts norm: 6.546249866485596
+Epoch 145/200 | Norms: bakcbone 3740.0407083034515 - proj 11.457857131958008 | Loss: 0.0670 | Batch R@1: 14.99% | Train: R@1=96.2% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.6% R@5=46.4% R@10=52.8% R@20=60.0% R@100=79.1%
+Embeddings norm: 62.19740295410156, Projected concepts norm: 6.401478290557861
+Epoch 146/200 | Norms: bakcbone 3740.0413014888763 - proj 11.458221435546875 | Loss: 0.0651 | Batch R@1: 15.51% | Train: R@1=96.2% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=46.3% R@10=53.1% R@20=60.5% R@100=80.0%
+Embeddings norm: 62.681480407714844, Projected concepts norm: 6.169069290161133
+Epoch 147/200 | Norms: bakcbone 3740.04225730896 - proj 11.458662509918213 | Loss: 0.0571 | Batch R@1: 13.23% | Train: R@1=96.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=46.8% R@10=53.0% R@20=60.8% R@100=79.1%
+Embeddings norm: 62.620121002197266, Projected concepts norm: 6.384598255157471
+Epoch 148/200 | Norms: bakcbone 3740.0436177253723 - proj 11.459094524383545 | Loss: 0.0671 | Batch R@1: 15.90% | Train: R@1=96.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.6% R@5=46.8% R@10=53.5% R@20=61.2% R@100=80.1%
+Embeddings norm: 59.8130989074707, Projected concepts norm: 6.28071403503418
+Epoch 149/200 | Norms: bakcbone 3740.0439851284027 - proj 11.459652423858643 | Loss: 0.0640 | Batch R@1: 14.33% | Train: R@1=96.1% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.7% R@5=46.6% R@10=52.6% R@20=59.9% R@100=78.6%
+Embeddings norm: 61.04240417480469, Projected concepts norm: 6.155821323394775
+Epoch 150/200 | Norms: bakcbone 3740.045509338379 - proj 11.460055351257324 | Loss: 0.0602 | Batch R@1: 14.74% | Train: R@1=96.4% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.7% R@10=52.4% R@20=59.3% R@100=78.1%
+Embeddings norm: 63.871826171875, Projected concepts norm: 6.448382377624512
+Epoch 151/200 | Norms: bakcbone 3740.046592950821 - proj 11.46051549911499 | Loss: 0.0571 | Batch R@1: 14.52% | Train: R@1=96.8% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.7% R@5=46.3% R@10=52.9% R@20=59.2% R@100=78.5%
+Embeddings norm: 63.317832946777344, Projected concepts norm: 6.161005973815918
+Epoch 152/200 | Norms: bakcbone 3740.04753947258 - proj 11.461061477661133 | Loss: 0.0654 | Batch R@1: 16.65% | Train: R@1=96.8% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=46.5% R@10=53.2% R@20=59.9% R@100=79.5%
+Embeddings norm: 61.67317199707031, Projected concepts norm: 6.207571029663086
+Epoch 153/200 | Norms: bakcbone 3740.0483226776123 - proj 11.461471557617188 | Loss: 0.0491 | Batch R@1: 15.20% | Train: R@1=96.7% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=46.2% R@10=53.6% R@20=60.5% R@100=79.0%
+Embeddings norm: 61.432518005371094, Projected concepts norm: 6.207322597503662
+Epoch 154/200 | Norms: bakcbone 3740.0490458011627 - proj 11.461913824081421 | Loss: 0.0556 | Batch R@1: 14.75% | Train: R@1=96.5% R@5=99.7% R@20=99.9% R@100=99.9% | Val: R@1=32.8% R@5=46.2% R@10=52.6% R@20=60.7% R@100=79.1%
+Embeddings norm: 59.99536895751953, Projected concepts norm: 6.356724739074707
+Epoch 155/200 | Norms: bakcbone 3740.051072359085 - proj 11.462348937988281 | Loss: 0.0583 | Batch R@1: 14.88% | Train: R@1=96.6% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=45.5% R@10=52.7% R@20=59.9% R@100=78.9%
+Embeddings norm: 59.14696502685547, Projected concepts norm: 6.139603614807129
+Epoch 156/200 | Norms: bakcbone 3740.052770137787 - proj 11.462778568267822 | Loss: 0.0551 | Batch R@1: 17.72% | Train: R@1=96.7% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=45.7% R@10=53.4% R@20=60.1% R@100=79.1%
+Embeddings norm: 61.900550842285156, Projected concepts norm: 6.111358642578125
+Epoch 157/200 | Norms: bakcbone 3740.053374528885 - proj 11.463313817977905 | Loss: 0.0583 | Batch R@1: 14.33% | Train: R@1=96.8% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.0% R@5=45.8% R@10=52.2% R@20=59.5% R@100=78.1%
+Embeddings norm: 60.87266540527344, Projected concepts norm: 6.067721366882324
+Epoch 158/200 | Norms: bakcbone 3740.0526809692383 - proj 11.463768243789673 | Loss: 0.0657 | Batch R@1: 16.36% | Train: R@1=96.8% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.4% R@10=53.2% R@20=59.6% R@100=79.5%
+Embeddings norm: 60.499629974365234, Projected concepts norm: 6.049219131469727
+Epoch 159/200 | Norms: bakcbone 3740.054197072983 - proj 11.464229106903076 | Loss: 0.0589 | Batch R@1: 14.08% | Train: R@1=96.7% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.4% R@10=52.6% R@20=59.1% R@100=79.1%
+Embeddings norm: 59.708213806152344, Projected concepts norm: 6.2503204345703125
+Epoch 160/200 | Norms: bakcbone 3740.0565209388733 - proj 11.464610576629639 | Loss: 0.0516 | Batch R@1: 16.73% | Train: R@1=97.0% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=45.8% R@10=52.8% R@20=59.9% R@100=79.4%
+Embeddings norm: 60.594200134277344, Projected concepts norm: 6.209927082061768
+Epoch 161/200 | Norms: bakcbone 3740.056848526001 - proj 11.465025186538696 | Loss: 0.0578 | Batch R@1: 15.90% | Train: R@1=96.9% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=45.9% R@10=52.6% R@20=60.5% R@100=79.5%
+Embeddings norm: 61.86578369140625, Projected concepts norm: 6.140817165374756
+Epoch 162/200 | Norms: bakcbone 3740.056720972061 - proj 11.465508460998535 | Loss: 0.0504 | Batch R@1: 14.59% | Train: R@1=96.9% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.2% R@10=52.2% R@20=60.0% R@100=78.8%
+Embeddings norm: 62.66154479980469, Projected concepts norm: 6.146236896514893
+Epoch 163/200 | Norms: bakcbone 3740.0566086769104 - proj 11.465891361236572 | Loss: 0.0515 | Batch R@1: 14.18% | Train: R@1=97.1% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.2% R@5=45.5% R@10=53.0% R@20=60.1% R@100=78.8%
+Embeddings norm: 60.979583740234375, Projected concepts norm: 6.148098945617676
+Epoch 164/200 | Norms: bakcbone 3740.056029319763 - proj 11.466289281845093 | Loss: 0.0521 | Batch R@1: 15.96% | Train: R@1=97.2% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.7% R@5=46.3% R@10=52.9% R@20=60.6% R@100=80.8%
+Embeddings norm: 61.619834899902344, Projected concepts norm: 6.062116622924805
+Epoch 165/200 | Norms: bakcbone 3740.0573501586914 - proj 11.466702699661255 | Loss: 0.0401 | Batch R@1: 13.78% | Train: R@1=97.1% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.8% R@5=46.4% R@10=54.2% R@20=60.3% R@100=80.4%
+Embeddings norm: 60.4009895324707, Projected concepts norm: 6.081618785858154
+Epoch 166/200 | Norms: bakcbone 3740.0592062473297 - proj 11.467146158218384 | Loss: 0.0527 | Batch R@1: 15.64% | Train: R@1=97.2% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.2% R@10=52.9% R@20=60.4% R@100=80.4%
+Embeddings norm: 61.22880935668945, Projected concepts norm: 6.109013557434082
+Epoch 167/200 | Norms: bakcbone 3740.0604197978973 - proj 11.467540979385376 | Loss: 0.0503 | Batch R@1: 14.45% | Train: R@1=97.2% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.3% R@5=46.2% R@10=53.2% R@20=59.9% R@100=78.8%
+Embeddings norm: 62.46265411376953, Projected concepts norm: 6.115558624267578
+Epoch 168/200 | Norms: bakcbone 3740.062448978424 - proj 11.468073606491089 | Loss: 0.0508 | Batch R@1: 15.91% | Train: R@1=97.2% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.4% R@10=53.2% R@20=60.2% R@100=79.1%
+Embeddings norm: 61.20103454589844, Projected concepts norm: 6.105413913726807
+Epoch 169/200 | Norms: bakcbone 3740.0648024082184 - proj 11.468655109405518 | Loss: 0.0429 | Batch R@1: 14.90% | Train: R@1=97.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=46.1% R@10=52.4% R@20=59.6% R@100=79.7%
+Embeddings norm: 59.19902420043945, Projected concepts norm: 5.991486549377441
+Epoch 170/200 | Norms: bakcbone 3740.0657608509064 - proj 11.469088792800903 | Loss: 0.0471 | Batch R@1: 15.33% | Train: R@1=97.2% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=47.2% R@10=53.5% R@20=60.7% R@100=79.4%
+Embeddings norm: 61.385528564453125, Projected concepts norm: 6.062609672546387
+Epoch 171/200 | Norms: bakcbone 3740.0664262771606 - proj 11.469443082809448 | Loss: 0.0397 | Batch R@1: 15.09% | Train: R@1=97.3% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.9% R@5=46.4% R@10=53.5% R@20=60.4% R@100=80.1%
+Embeddings norm: 60.6885986328125, Projected concepts norm: 5.968964576721191
+Epoch 172/200 | Norms: bakcbone 3740.066942691803 - proj 11.469896793365479 | Loss: 0.0406 | Batch R@1: 16.20% | Train: R@1=97.3% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.5% R@10=52.8% R@20=59.7% R@100=79.9%
+Embeddings norm: 61.81797790527344, Projected concepts norm: 5.9116950035095215
+Epoch 173/200 | Norms: bakcbone 3740.066570997238 - proj 11.470304489135742 | Loss: 0.0398 | Batch R@1: 17.51% | Train: R@1=97.3% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.6% R@5=46.5% R@10=53.5% R@20=60.4% R@100=79.7%
+Embeddings norm: 62.1808967590332, Projected concepts norm: 5.807490825653076
+Epoch 174/200 | Norms: bakcbone 3740.0673575401306 - proj 11.470694065093994 | Loss: 0.0385 | Batch R@1: 16.90% | Train: R@1=97.5% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=46.1% R@10=52.2% R@20=59.5% R@100=79.4%
+Embeddings norm: 59.990867614746094, Projected concepts norm: 5.9921674728393555
+Epoch 175/200 | Norms: bakcbone 3740.06823015213 - proj 11.471067190170288 | Loss: 0.0486 | Batch R@1: 17.91% | Train: R@1=97.8% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.6% R@10=52.9% R@20=59.1% R@100=79.4%
+Embeddings norm: 60.45832061767578, Projected concepts norm: 5.936713695526123
+Epoch 176/200 | Norms: bakcbone 3740.068541288376 - proj 11.471407413482666 | Loss: 0.0455 | Batch R@1: 16.79% | Train: R@1=97.6% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.2% R@10=53.7% R@20=59.6% R@100=79.5%
+Embeddings norm: 62.46637725830078, Projected concepts norm: 6.104503631591797
+Epoch 177/200 | Norms: bakcbone 3740.0698606967926 - proj 11.471825361251831 | Loss: 0.0364 | Batch R@1: 16.86% | Train: R@1=97.4% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=45.2% R@10=52.5% R@20=59.5% R@100=79.1%
+Embeddings norm: 60.39750671386719, Projected concepts norm: 5.870854377746582
+Epoch 178/200 | Norms: bakcbone 3740.072804927826 - proj 11.472366094589233 | Loss: 0.0441 | Batch R@1: 16.56% | Train: R@1=97.6% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.3% R@5=46.7% R@10=53.5% R@20=60.2% R@100=79.6%
+Embeddings norm: 61.13841247558594, Projected concepts norm: 5.886877059936523
+Epoch 179/200 | Norms: bakcbone 3740.0733618736267 - proj 11.472809791564941 | Loss: 0.0336 | Batch R@1: 16.44% | Train: R@1=97.7% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=45.5% R@10=53.2% R@20=59.9% R@100=78.4%
+Embeddings norm: 60.82345962524414, Projected concepts norm: 5.95230770111084
+Epoch 180/200 | Norms: bakcbone 3740.073304414749 - proj 11.47324252128601 | Loss: 0.0360 | Batch R@1: 15.35% | Train: R@1=97.6% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.9% R@5=46.3% R@10=53.7% R@20=60.7% R@100=79.2%
+Embeddings norm: 60.689762115478516, Projected concepts norm: 5.91414737701416
+Epoch 181/200 | Norms: bakcbone 3740.0724976062775 - proj 11.473555326461792 | Loss: 0.0399 | Batch R@1: 15.33% | Train: R@1=97.5% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=44.9% R@10=52.6% R@20=60.4% R@100=77.8%
+Embeddings norm: 60.823421478271484, Projected concepts norm: 5.933129787445068
+Epoch 182/200 | Norms: bakcbone 3740.074951171875 - proj 11.474035739898682 | Loss: 0.0456 | Batch R@1: 15.86% | Train: R@1=97.7% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=44.9% R@10=52.0% R@20=59.8% R@100=78.6%
+Embeddings norm: 59.49913787841797, Projected concepts norm: 5.954998016357422
+Epoch 183/200 | Norms: bakcbone 3740.076385974884 - proj 11.474510431289673 | Loss: 0.0363 | Batch R@1: 15.35% | Train: R@1=97.6% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.9% R@10=53.0% R@20=60.1% R@100=79.4%
+Embeddings norm: 59.77361297607422, Projected concepts norm: 5.838244438171387
+Epoch 184/200 | Norms: bakcbone 3740.0764939785004 - proj 11.474950313568115 | Loss: 0.0404 | Batch R@1: 15.70% | Train: R@1=97.2% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=45.3% R@10=52.5% R@20=60.2% R@100=79.7%
+Embeddings norm: 61.66413879394531, Projected concepts norm: 5.739443778991699
+Epoch 185/200 | Norms: bakcbone 3740.0779359340668 - proj 11.475359201431274 | Loss: 0.0386 | Batch R@1: 14.83% | Train: R@1=97.7% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.2% R@5=45.4% R@10=52.9% R@20=60.2% R@100=79.1%
+Embeddings norm: 61.00375747680664, Projected concepts norm: 5.86972713470459
+Epoch 186/200 | Norms: bakcbone 3740.0786283016205 - proj 11.475638389587402 | Loss: 0.0440 | Batch R@1: 14.45% | Train: R@1=97.6% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.2% R@5=45.5% R@10=53.1% R@20=59.8% R@100=78.7%
+Embeddings norm: 61.563682556152344, Projected concepts norm: 5.9846415519714355
+Epoch 187/200 | Norms: bakcbone 3740.0798366069794 - proj 11.475839853286743 | Loss: 0.0310 | Batch R@1: 15.51% | Train: R@1=97.8% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=45.8% R@10=53.2% R@20=60.4% R@100=78.8%
+Embeddings norm: 60.82673645019531, Projected concepts norm: 5.79655647277832
+Epoch 188/200 | Norms: bakcbone 3740.080670118332 - proj 11.476283073425293 | Loss: 0.0364 | Batch R@1: 15.54% | Train: R@1=97.7% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.7% R@5=46.1% R@10=52.5% R@20=60.2% R@100=79.1%
+Embeddings norm: 62.35602569580078, Projected concepts norm: 5.982099533081055
+Epoch 189/200 | Norms: bakcbone 3740.0821900367737 - proj 11.476678848266602 | Loss: 0.0359 | Batch R@1: 16.16% | Train: R@1=97.8% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.7% R@10=53.5% R@20=60.5% R@100=79.0%
+Embeddings norm: 60.192352294921875, Projected concepts norm: 5.939837455749512
+Epoch 190/200 | Norms: bakcbone 3740.0834679603577 - proj 11.477039813995361 | Loss: 0.0465 | Batch R@1: 16.20% | Train: R@1=98.0% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=45.7% R@10=52.8% R@20=59.4% R@100=78.9%
+Embeddings norm: 62.652305603027344, Projected concepts norm: 5.8177876472473145
+Epoch 191/200 | Norms: bakcbone 3740.084523677826 - proj 11.47752070426941 | Loss: 0.0329 | Batch R@1: 15.03% | Train: R@1=98.1% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.9% R@10=53.8% R@20=60.5% R@100=78.3%
+Embeddings norm: 59.900020599365234, Projected concepts norm: 5.8239336013793945
+Epoch 192/200 | Norms: bakcbone 3740.086168050766 - proj 11.47796368598938 | Loss: 0.0375 | Batch R@1: 16.14% | Train: R@1=97.8% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=31.4% R@5=46.5% R@10=52.6% R@20=59.8% R@100=78.8%
+Embeddings norm: 61.82603454589844, Projected concepts norm: 5.797764778137207
+Epoch 193/200 | Norms: bakcbone 3740.0876309871674 - proj 11.47835898399353 | Loss: 0.0409 | Batch R@1: 16.39% | Train: R@1=97.7% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.4% R@5=45.7% R@10=53.0% R@20=60.1% R@100=78.9%
+Embeddings norm: 62.37580108642578, Projected concepts norm: 5.971005439758301
+Epoch 194/200 | Norms: bakcbone 3740.088867664337 - proj 11.478710889816284 | Loss: 0.0361 | Batch R@1: 15.29% | Train: R@1=97.9% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.1% R@5=45.8% R@10=53.3% R@20=60.4% R@100=77.9%
+Embeddings norm: 60.23102569580078, Projected concepts norm: 5.792043685913086
+Epoch 195/200 | Norms: bakcbone 3740.08904337883 - proj 11.479209423065186 | Loss: 0.0428 | Batch R@1: 16.46% | Train: R@1=97.9% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.8% R@10=52.6% R@20=59.7% R@100=78.5%
+Embeddings norm: 62.05540466308594, Projected concepts norm: 5.829885482788086
+Epoch 196/200 | Norms: bakcbone 3740.0891602039337 - proj 11.47971224784851 | Loss: 0.0357 | Batch R@1: 16.12% | Train: R@1=97.9% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.3% R@5=46.7% R@10=54.4% R@20=59.5% R@100=80.1%
+Embeddings norm: 60.20304870605469, Projected concepts norm: 5.665704727172852
+Epoch 197/200 | Norms: bakcbone 3740.091203689575 - proj 11.480112552642822 | Loss: 0.0393 | Batch R@1: 14.80% | Train: R@1=98.0% R@5=99.9% R@20=99.9% R@100=99.9% | Val: R@1=32.7% R@5=46.4% R@10=53.6% R@20=60.0% R@100=79.1%
+Embeddings norm: 61.55323791503906, Projected concepts norm: 5.9278764724731445
+Epoch 198/200 | Norms: bakcbone 3740.0934751033783 - proj 11.48055386543274 | Loss: 0.0399 | Batch R@1: 15.91% | Train: R@1=98.2% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=32.0% R@5=46.1% R@10=53.2% R@20=60.1% R@100=79.1%
+Embeddings norm: 60.652099609375, Projected concepts norm: 5.783209800720215
+Epoch 199/200 | Norms: bakcbone 3740.0933532714844 - proj 11.480934619903564 | Loss: 0.0427 | Batch R@1: 14.23% | Train: R@1=98.0% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.8% R@5=45.8% R@10=53.5% R@20=61.3% R@100=79.7%
+Embeddings norm: 61.26367950439453, Projected concepts norm: 5.6959333419799805
+Epoch 200/200 | Norms: bakcbone 3740.093667984009 - proj 11.481371402740479 | Loss: 0.0361 | Batch R@1: 17.06% | Train: R@1=97.9% R@5=99.8% R@20=99.9% R@100=99.9% | Val: R@1=31.5% R@5=45.7% R@10=53.0% R@20=60.0% R@100=79.3%
+Retrieval with 100% Correction correction-------------------------------------
+100% Correction - Recall@1: 32.44%, Recall@5: 47.68%, Recall@10: 55.45%, Recall@20: 61.77%, Recall@100: 80.96%
+Retrieval with 50% Correction + soft correction-------------------------------------
+50% Correction + soft - Recall@1: 31.91%, Recall@5: 46.76%, Recall@10: 53.08%, Recall@20: 59.86%, Recall@100: 79.13%
+Retrieval with 0% Correction correction-------------------------------------
+0% Correction - Recall@1: 31.76%, Recall@5: 45.93%, Recall@10: 52.93%, Recall@20: 59.10%, Recall@100: 77.23%
+Retrieval with 0% Correction Hard correction-------------------------------------
+0% Correction Hard - Recall@1: 30.62%, Recall@5: 44.25%, Recall@10: 52.09%, Recall@20: 58.57%, Recall@100: 76.69%

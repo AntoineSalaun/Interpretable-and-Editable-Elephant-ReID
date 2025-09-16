@@ -354,6 +354,25 @@ class SEEK:
             else:
                 return concept_logits
 
+    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK):
+        # Randomly choose between oracle correction and perfect correction
+        if torch.rand(1) < 0.5:
+            return elephant_SEEK
+        else:
+            return concept_logits
+
+    def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
+            # Randomly choose between oracle correction and perfect correction
+            if torch.rand(1) < 0.5:
+                return elephant_SEEK
+            else:
+                return SEEK.closest_valid_one_hot(concept_logits)
+
+    def hard(concept_logits, subject_SEEK, elephant_SEEK):
+        return SEEK.closest_valid_one_hot(concept_logits)
+
+    def perfect(concept_logits, subject_SEEK, elephant_SEEK):
+        return elephant_SEEK
 
 # Updated test function
 def test_seek():

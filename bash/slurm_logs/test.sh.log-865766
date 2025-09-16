@@ -1,0 +1,14 @@
+cpu-bind=MASK - beery-a100-2, task  0  0 [2659337]: mask 0x10000000000000000 set
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:33: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+wandb: W&B API key is configured. Use `wandb login --relogin` to force relogin
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.6
+wandb: Run data is saved locally in /data/vision/beery/scratch/antoine/wandb/run-20250311_142903-mrgsy1dp
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run proj+ba-alpha=0.75-lr=5e-6-correct-or-sosft
+wandb: ⭐️ View project at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training
+wandb: 🚀 View run at https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/projector_training/runs/mrgsy1dp
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:388: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+slurmstepd: error: *** JOB 865766 ON beery-a100-2 CANCELLED AT 2025-03-11T14:29:14 ***

@@ -128,9 +128,10 @@ class Backbone(nn.Module):
             
             # train one epoch on train_loader
             train_loss, batch_recall = self.epoch_pass(train_loader, training=True)
-            epoch_train_recall = ret.one_out_retrieval(self, val_loader)
+            epoch_train_recall = ret.one_out_retrieval(self, train_loader)
+            epoch_val_recall = ret.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader)
 
-            print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, BATCH-Recall@1: {batch_recall*100:.2f}%, --- EPOCH - Recall@1: {epoch_train_recall[1]*100:.2f}%, Recall@5: {epoch_train_recall[5]*100:.2f}%, Recall@20: {epoch_train_recall[20]*100:.2f}%, Recall@100: {epoch_train_recall[100]*100:.2f}%")
+            print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
             history.append({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall*100, **{f"Recall@{k}": v*100 for k, v in epoch_train_recall.items()}})            
 
             # Save best model weights
@@ -146,7 +147,7 @@ class Backbone(nn.Module):
         history_df.to_csv(self.experiment_dir / 'backbone_training_history.csv', index=False)
 
     
-    def collect_embeddings(self, loader, ba = None, ch = None, intervention_fn = None):
+    def collect_embeddings(self, loader,    ba = None, ch = None, backbone_for_concepts=None, backbone=None, concept_head= None, intervention_fn = None):
         
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
@@ -158,7 +159,6 @@ class Backbone(nn.Module):
             
             with torch.no_grad():
                 embeddings = self.forward(images, left_ears, right_ears)   
-                # Compute the concepts from the backbone embeddings
 
                 collected_embeddings = torch.cat((collected_embeddings, embeddings))
                 collected_labels = torch.cat((collected_labels, ele_id_label))
