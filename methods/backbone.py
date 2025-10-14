@@ -12,7 +12,8 @@ import timm
 
 
 class Backbone(nn.Module):
-    def __init__(self, model_name="MegaDescriptor", with_ears=True, pretraining="savannah_elephants", lr=1e-4, experiment_code=None):
+    def __init__(self, model_name="MegaDescriptor", with_ears=True, pretraining="savannah_elephants", lr=5e-6, experiment_code=None, print_every=5):
+            
             self.device = 'cuda' if torch.cuda.is_available() else "cpu"
             super().__init__()
 
@@ -51,8 +52,23 @@ class Backbone(nn.Module):
             self.experiment_dir = Path(__file__).parent.parent / 'experiments' / f'exp_{self.exp_code}'
             self.experiment_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(self.experiment_dir / 'note.txt', 'w') as f:
-                f.write(f'---Backbone: {model_name}---\n')
+            with open(self.experiment_dir / 'backbone_log.txt', 'w') as f:
+                f.write(f'--------Backbone: {model_name} pretrained with {pretraining}---\n')
+                f.write(f'Learning Rate: {lr}\n')
+                f.write(f'Print Every: {print_every}\n')
+                f.write(f'With Ears: {self.with_ears}\n')
+                f.write(f'Loading weights from: {weight_path}   \n')
+                f.write(f'Optimizer Parameters: {self.optimizer} \n')
+                f.write(f'Loss Optimizer Parameters: {self.loss_optimizer} \n')
+                f.write(f'Loss Function: {self.loss_fn} \n')
+                # Save experiment parameters
+                f.write(f'Device: {self.device}\n')
+                #f.write(f'Architecture: {self.layer}\n')
+                f.write(f'Total Parameters: {sum(p.numel() for p in self.layer.parameters()):,}\n')
+                f.write(f'Trainable Parameters: {sum(p.numel() for p in self.layer.parameters() if p.requires_grad):,}\n')
+                f.write(f'Experiment Code: {self.exp_code}\n')    
+
+            self.print_every = print_every
 
 
     def freeze(self):
@@ -92,7 +108,7 @@ class Backbone(nn.Module):
             images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[6].to('cuda'), batch[7].to('cuda')
 
             embeddings = self.forward(images, left_ears, right_ears)
-
+            print('embeddings' , embeddings.shape, 'labels', ele_id_label.shape)
             loss = self.loss_fn(embeddings, ele_id_label)
             
             mat = r.cosine_similarity_matrix(embeddings)
@@ -119,9 +135,9 @@ class Backbone(nn.Module):
     def train(self, train_loader, val_loader, num_epochs=10):
         self.unfreeze()
         print('Backbone parameters require gradients:', any(param.requires_grad for param in self.layer.parameters()))
+        with open(self.experiment_dir / 'backbone_log.txt', 'a') as f: f.write(f'============ STRATING TRAINING for {num_epochs} epochs - Backbone parameters require gradients: {any(param.requires_grad for param in self.layer.parameters())}\n')
 
-        history = []
-        best_train_recall = 0
+        best_val_recall = 0
         ret = Retrieval(experiment_code='temp')
 
         for epoch in range(num_epochs):
@@ -129,24 +145,34 @@ class Backbone(nn.Module):
             # train one epoch on train_loader
             train_loss, batch_recall = self.epoch_pass(train_loader, training=True)
             epoch_train_recall = ret.one_out_retrieval(self, train_loader)
-            epoch_val_recall = ret.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader)
-
+            
+            #if epoch % self.print_every == 0 :
+            epoch_val_recall = ret.evaluate_model(model=self, model_to_evaluate= 'backbone', train_loader=train_loader, test_loader=val_loader, print_results = False)
             print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
-            history.append({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall*100, **{f"Recall@{k}": v*100 for k, v in epoch_train_recall.items()}})            
+            with open(self.experiment_dir / 'backbone_log.txt', 'a') as f: f.write(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]) + "\n")
+
 
             # Save best model weights
-            if epoch_train_recall[1] > best_train_recall:
-                best_train_recall = epoch_train_recall[1]
+            if epoch_val_recall[1] > best_val_recall:
+                best_val_recall = epoch_val_recall[1]
                 best_weights = self.layer.state_dict()
 
         # Save best weights
         torch.save(best_weights, self.experiment_dir / 'backbone_w.pt')
+        self.layer.load_state_dict(best_weights)
+        with open(self.experiment_dir / 'backbone_log.txt', 'a') as f: f.write(f'========= FINISHED TRAINING - Best val Recall@1: {best_val_recall*100:.2f}%\n -> best_weights were loaded and saved to backbone_w.pt\n')
 
-        # Convert history to a DataFrame and save as CSV
-        history_df = pd.DataFrame(history)
-        history_df.to_csv(self.experiment_dir / 'backbone_training_history.csv', index=False)
 
-    
+    def test(self, train_loader, test_loader):
+        
+        r = Retrieval(experiment_code = self.exp_code)
+        recalls = r.evaluate_model(model = self, model_to_evaluate= 'backbone', train_loader=train_loader, test_loader=test_loader)
+
+        with open(self.experiment_dir / 'backbone_test_results.txt', 'w') as f:
+            for ks in recalls:
+                f.write(f"Test - Recall@{ks}: {recalls[ks]}\n")
+        
+
     def collect_embeddings(self, loader,    ba = None, ch = None, backbone_for_concepts=None, backbone=None, concept_head= None, intervention_fn = None):
         
         collected_embeddings = torch.tensor([]).to('cuda')

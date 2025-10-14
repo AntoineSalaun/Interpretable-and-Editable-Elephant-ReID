@@ -222,7 +222,7 @@ class EleHandler(data.Dataset):
             
             # Extracting the indices of the current elephant
             ele_id_indices = dictonary_copy[dictonary_copy['ele_id'] == ele_id].index.tolist()
-
+            
             # Create a small specific to this elephant with the required columns
             ele_id_df = dictonary_copy.loc[ele_id_indices, ['ele_id', 'group']].reset_index()
 
@@ -244,7 +244,12 @@ class EleHandler(data.Dataset):
                 # extract its group
                 group = ele_id_df_sorted.loc[idx, 'group']
                 
-                
+                if train_count == 0:
+                    test_contribution_df = pd.concat([test_contribution_df, ele_id_df_sorted.loc[[idx]]])
+                    continue
+                if test_count == 0:
+                    train_contribution_df = pd.concat([train_contribution_df, ele_id_df_sorted.loc[[idx]]])
+                    continue
                 # if the number of images in the training set is less than the required number of images, we start by filling the train (otherwis we start with the test) 
                 if len(train_contribution_df) / train_count <= len(test_contribution_df) / test_count:
                     # if this group shows up less in train than test AND we did not fill the train set yet, we add it to the train set, otherwise we add it to the test set
@@ -261,6 +266,10 @@ class EleHandler(data.Dataset):
 
             train_indices += train_contribution_df['index'].tolist()
             test_indices += test_contribution_df['index'].tolist()
+
+        # perform a test to ensure that indices are disjoint and that all indices are present
+        assert len(set(train_indices).intersection(set(test_indices))) == 0, "Train and test indices are not disjoint"
+        assert len(train_indices) + len(test_indices) == len(dictonary_copy), "Some indices are missing"
 
 
         return train_indices, test_indices

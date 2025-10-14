@@ -329,14 +329,23 @@ class SEEK:
             # Generate the SEEK code for each row
             merged_df["SEEK_code"] = merged_df.apply(generate_seek_code, axis=1)
 
-
-            #print([SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]])
-            ele_seek_list = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
+            # One-hots
+            ele_seek_list     = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
             subject_seek_list = [SEEK(seek).one_hot_encode() for seek in df["subj_seek_str"]]
-            ele_id = merged_df["ele_id"].tolist()
 
-            ele_seek = torch.stack(ele_seek_list)
-            subject_seek = torch.stack(subject_seek_list)
+            # Keep everything on the same device/dtype as the input ele_ids
+            _device = ele_ids.device
+            _dtype  = ele_ids.dtype  # usually torch.long
+
+            subject_seek = torch.stack(subject_seek_list).to(_device)
+            ele_seek     = torch.stack(ele_seek_list).to(_device)
+
+            # Return ele_id as a tensor with same dtype/device as input
+            ele_id = torch.as_tensor(
+                merged_df["ele_id"].to_numpy(),
+                dtype=_dtype,
+                device=_device
+            )
 
             return subject_seek, ele_seek, ele_id
         return aggregate_elephant_seek_codes(df_mapped)
@@ -346,20 +355,21 @@ class SEEK:
 
     def oracle_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
         return elephant_SEEK
-    
-    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK):
+
+    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
             # Randomly choose between oracle correction and perfect correction
-            if torch.rand(1) < 0.5:
+            if torch.rand(1) < p:
                 return elephant_SEEK
             else:
                 return concept_logits
 
-    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK):
-        # Randomly choose between oracle correction and perfect correction
-        if torch.rand(1) < 0.5:
-            return elephant_SEEK
-        else:
-            return concept_logits
+    def correct_or_hard_at_prob(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
+            # Randomly choose between oracle correction and perfect correction
+            if torch.rand(1) < p:
+                return elephant_SEEK
+            else:
+                return SEEK.closest_valid_one_hot(concept_logits)
+            
 
     def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
             # Randomly choose between oracle correction and perfect correction
@@ -373,6 +383,103 @@ class SEEK:
 
     def perfect(concept_logits, subject_SEEK, elephant_SEEK):
         return elephant_SEEK
+    
+    def distance(query_elephant,galery_elephant):
+        #print('query_elephant', query_elephant)
+        #print('galery_elephant', galery_elephant)
+
+        distance = 0
+        for i in range(len(SEEK.attribute_names)):
+            attr_name = SEEK.attribute_names[i]
+            q_attr = getattr(query_elephant, attr_name)
+            g_attr = getattr(galery_elephant, attr_name)
+            
+            if q_attr == g_attr:
+                #print(f"Attribute {attr_name} is correct: query {q_attr}, galery {g_attr} -> +0 distance")
+                distance += 0
+            else: # There is an error !
+                if q_attr == '_' or g_attr == '_': # One of the SEEK attribute is unknown, small error
+                    #print(f"Attribute {attr_name} is a unknown in one of the elephants: query {q_attr}, galery {g_attr} -> +0.5 distance")
+                    distance += 0.5
+                else: # Both attributes are known but different, real error !
+                    if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
+                        #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")
+                        distance += abs(float(q_attr) - float(g_attr)) / 2
+                    elif (attr_name in ['age', 'sex', 'right_tusk','left_tusk']): # We should be confident on these attributes, big error counted twice
+                        #print(f"Attribute {attr_name} is an error on an easy attribute : query {q_attr}, galery {g_attr} -> +2 distance")
+                        distance += 2
+                    else: # Other errors count for 1
+                        #print(f"Attribute {attr_name} is an error: query {q_attr}, galery {g_attr} -> +1 distance")
+                        distance += 1
+        #print('===========Total distance', distance)
+        return distance
+    
+    def distance_2(query_elephant,galery_elephant):
+        #print('query_elephant', query_elephant)
+        #print('galery_elephant', galery_elephant)
+
+        distance = 0
+        for i in range(len(SEEK.attribute_names)):
+            attr_name = SEEK.attribute_names[i]
+            q_attr = getattr(query_elephant, attr_name)
+            g_attr = getattr(galery_elephant, attr_name)
+            
+            if q_attr == g_attr:
+                #print(f"Attribute {attr_name} is correct: query {q_attr}, galery {g_attr} -> +0 distance")
+                distance += 0
+            else: # There is an error !
+                if q_attr == '_' or g_attr == '_': # One of the SEEK attribute is unknown, small error
+                    #print(f"Attribute {attr_name} is a unknown in one of the elephants: query {q_attr}, galery {g_attr} -> +0.5 distance")
+                    distance += 0
+                else: # Both attributes are known but different, real error !
+                    if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
+                        #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")
+                        if q_attr == '0' or g_attr == '0':
+                            distance += 1
+                        else:
+                            distance += abs(float(q_attr) - float(g_attr)) / 2
+                    elif (attr_name in ['age', 'sex', 'right_tusk','left_tusk']): # We should be confident on these attributes, big error counted twice
+                        #print(f"Attribute {attr_name} is an error on an easy attribute : query {q_attr}, galery {g_attr} -> +2 distance")
+                        distance += 1
+                    else: # Other errors count for 1
+                        #print(f"Attribute {attr_name} is an error: query {q_attr}, galery {g_attr} -> +1 distance")
+                        distance += 1
+        #print('===========Total distance', distance)
+        return distance
+
+    def distance_3(query_elephant,galery_elephant):
+        #print('query_elephant', query_elephant)
+        #print('galery_elephant', galery_elephant)
+
+        distance = 0
+        for i in range(len(SEEK.attribute_names)):
+            attr_name = SEEK.attribute_names[i]
+            q_attr = getattr(query_elephant, attr_name)
+            g_attr = getattr(galery_elephant, attr_name)
+            
+            if q_attr == g_attr:
+                #print(f"Attribute {attr_name} is correct: query {q_attr}, galery {g_attr} -> +0 distance")
+                distance += 0
+            else: # There is an error !
+                if q_attr == '_' and g_attr == '_': # Both attributes are unknown, no penalty
+                    distance += 0
+                elif q_attr == '_' or g_attr == '_': # One attribute is unknown, small penalty
+                    distance += 0.2
+                else: # Both attributes are known but different, real error !
+                    if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
+                        #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")
+                        if q_attr == '0' or g_attr == '0':
+                            distance += 1
+                        else:
+                            distance += abs(float(q_attr) - float(g_attr))
+                    elif (attr_name in ['age', 'sex', 'right_tusk','left_tusk']): # We should be confident on these attributes, big error counted twice
+                        #print(f"Attribute {attr_name} is an error on an easy attribute : query {q_attr}, galery {g_attr} -> +2 distance")
+                        distance += 1
+                    else: # Other errors count for 1
+                        #print(f"Attribute {attr_name} is an error: query {q_attr}, galery {g_attr} -> +1 distance")
+                        distance += 1
+        #print('===========Total distance', distance)
+        return distance
 
 # Updated test function
 def test_seek():
@@ -398,10 +505,17 @@ def test_seek():
 
 
 
-
+def test_distance():
+    elephant_a = SEEK("B00T__E6700-0000X0_S00")
+    elephant_b = SEEK("B20T__E8000-0000X1_S01")
     
+    distance = SEEK.distance(elephant_a, elephant_b)
+    print("Distance between elephant_a and elephant_b:", distance)
+
+    return 0
 
 # Run the test function if the script is executed directly
 if __name__ == "__main__":
     #test_seek()
-    test_separate_and_reconstruct()
+    #test_separate_and_reconstruct()
+    test_distance()

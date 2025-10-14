@@ -1,0 +1,131 @@
+from seek_code import SEEK
+from backbone import Backbone
+from retrieval import Retrieval
+from projector import Projector
+from data_handler import EleHandler
+from concept_head_tunneled import ConceptHeadTunneled, categorical_CE_loss, CrossedHeadNN, MultiHeadNN
+
+from pathlib import Path
+from torch.utils.data import DataLoader, Subset
+import argparse
+
+dataset = EleHandler(subset='IDI_6')
+train_indices, test_indices = dataset.split_perpendicular_to_elephants_and_encounters(split_sizes=[0.5,0.5], hour_delta = 0.2)
+
+train_subset = Subset(dataset, train_indices)
+test_subset = Subset(dataset, test_indices)
+
+train_loader = DataLoader(train_subset, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_subset, batch_size=64, shuffle=True)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--experiment', type=str, required=True, help='Experiment type')
+parser.add_argument('--epochs', type=int, default=800, help='Number of training epochs')
+args = parser.parse_args()
+
+
+if args.experiment == 'baseline_1': # Testing MegaDescriptor out of the box
+    code = '[SEP-EXP]baseline_1'
+    MD_out_of_the_box = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code, lr=5e-6)
+    MD_out_of_the_box.test(train_loader, test_loader)
+
+elif args.experiment == 'baseline_2_1': # Finetuning MegaDescriptor on the whole dataset
+
+    #TODO
+    x=0
+
+elif args.experiment == 'baseline_2_2': # Finetuning MegaDescriptor on the subset
+
+    code = '[SEP-EXP]baseline_2_2_for_' + args.epochs.__str__() +'epochs'
+
+    MD_finetuned_IDI6 = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code, lr=5e-6)
+    MD_finetuned_IDI6.train(train_loader, test_loader, num_epochs=args.epochs)
+    MD_finetuned_IDI6.test(train_loader, test_loader)
+
+elif args.experiment == 'baseline_2_3': # Finetuning MegaDescriptor through the projector architecture
+
+    code = '[SEP-EXP]baseline_2_3_for_' + args.epochs.__str__() +'epochs_(sanity_check)'
+
+    MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
+    MD_savannah = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
+    pr = Projector(loss_type ='ArcFace', lr=5e-6, scale=64, margin=0.5, experiment_code=code, intervention_fn=None, alpha = 0)
+    concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
+
+    # Freeze other models and unfreeze the projector
+    MD_for_concepts.freeze()
+    MD_savannah.unfreeze()
+    concept_head.freeze()
+    pr.unfreeze()
+
+    # Train the model
+    pr.train(
+        train_loader, 
+        test_loader, 
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_savannah, 
+        concept_head=concept_head, 
+        num_epochs=args.epochs)
+
+    test_intervention_fns = {
+    "0% Correction": None,
+    "0% Correction Hard": SEEK.hard
+    }   
+
+    # Run the structured test method
+    pr.test(
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_savannah, 
+        concept_head=concept_head, 
+        train_loader=train_loader, 
+        test_loader=test_loader, 
+        intervention_fns=test_intervention_fns
+    )
+
+elif args.experiment == 'exp_1_1': # First training of CHAIR, no correction at training time
+
+    code = '[SEP-EXP]exp_1_1'
+
+    MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
+    MD_finedtuned = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
+    pr = Projector(loss_type ='ArcFace', lr=5e-6, scale=64, margin=0.5, experiment_code=code, intervention_fn=None, alpha = 0.5)
+    concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
+
+    # Freeze other models and unfreeze the projector
+    MD_for_concepts.freeze()
+    MD_finedtuned.unfreeze()
+    concept_head.freeze()
+    pr.unfreeze()
+
+    # Train the model
+    pr.train(
+        train_loader, 
+        test_loader, 
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_finedtuned, 
+        concept_head=concept_head, 
+        num_epochs=800)
+
+    # Define intervention functions for testing
+    test_intervention_fns = {
+        "100% Correction": SEEK.oracle_correction,
+        "50% Correction + soft": SEEK.correct_or_soft,
+        "50% Correction + hard": SEEK.correct_or_hard,
+        "0% Correction": None,
+        "0% Correction Hard": SEEK.hard
+    }
+
+    # Run the structured test method
+    pr.test(
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_finedtuned, 
+        concept_head=concept_head, 
+        train_loader=train_loader, 
+        test_loader=test_loader, 
+        intervention_fns=test_intervention_fns)
+    
+
+else:
+    raise ValueError('Experiment not recognized')
+
+
+

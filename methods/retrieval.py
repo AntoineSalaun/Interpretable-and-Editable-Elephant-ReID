@@ -17,48 +17,124 @@ class Retrieval:
         exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.experiment_dir = pathlib.Path.cwd().parent / 'experiments' / f'exp_{exp_code}'
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.experiment_dir / 'note.txt', 'a') as f: 
-            f.write('---projector---')
 
 
-    def cosine_similarity_matrix(self, query_embeddings, gallery_embeddings = None):
+    def similarity_matrix(self, query_embeddings, gallery_embeddings = None, distance = 'cosine_sim'):
         """
         Compute the cosine similarity matrix between query and gallery embeddings.
         """
-        square = False
+        #print(f"Computing similarity matrix using {distance}...")
 
-        if gallery_embeddings is None: 
-            square = True
-            gallery_embeddings = query_embeddings
-        # Normalize embeddings for cosine similarity
-        query_embeddings = F.normalize(query_embeddings, dim=1)
-        gallery_embeddings = F.normalize(gallery_embeddings, dim=1)
+        square = gallery_embeddings is None
+        if square: gallery_embeddings = query_embeddings
+
+        if query_embeddings.dim() != 2 or gallery_embeddings.dim() != 2:
+            raise ValueError(f"Expected (N,D) and (M,D) tensors, got {query_embeddings.shape} and {gallery_embeddings.shape}")
         
-        # Compute cosine similarity
-        similarity_matrix = torch.matmul(query_embeddings, gallery_embeddings.T)
+        if distance == 'cosine_sim':
+            # Normalize embeddings for cosine similarity
+            query_embeddings = F.normalize(query_embeddings, dim=1)
+            gallery_embeddings = F.normalize(gallery_embeddings, dim=1)
+            
+            # Compute cosine similarity
+            similarity_matrix = torch.matmul(query_embeddings, gallery_embeddings.T)
+        elif distance in ['seek_homemade', 'seek_homemade_2', 'seek_homemade_3']:
+            # Precompute SEEK codes instances once
+            q_codes = [SEEK(qi) for qi in query_embeddings]
+            g_codes = q_codes if square else [SEEK(gi) for gi in gallery_embeddings]
 
-        if square:
-            # Exclude self-similarity if only one set of embeddings is provided
-            similarity_matrix.fill_diagonal_(0)
+            rows = []
+            for qc in q_codes:
+                row_vals = []
+                for gc in g_codes:
+                    if distance == 'seek_homemade':
+                        d = - SEEK.distance(qc, gc) #Taking a negative value because its a similarity matrix (= high value means very similar)
+                    elif distance == 'seek_homemade_2':
+                        d = - SEEK.distance_2(qc, gc) #Taking a negative value because its a similarity matrix (= high value means very similar)
+                    elif distance == 'seek_homemade_3':
+                        d = - SEEK.distance_3(qc, gc) #Taking a negative value because its a similarity matrix (= high value means very similar)
+                    row_vals.append(torch.tensor(d, device=query_embeddings.device, dtype=torch.float32))
+                rows.append(torch.stack(row_vals, dim=0))
+
+            similarity_matrix = torch.stack(rows, dim=0).to(dtype=query_embeddings.dtype)
+
+        if square:  similarity_matrix.fill_diagonal_(0)             # Exclude self-similarity if only one set of embeddings is provided
+
 
         return similarity_matrix
 
-    def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k=1):
-        # Get the indices of the top-k gallery items for each query
-        top_k_indices = torch.topk(similarity_matrix, k=k, dim=1, largest=True).indices
+    def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k):
+        top_k_vals, top_k_indices = torch.topk(similarity_matrix, k=k, dim=1)
 
-        # Count the number of relevant items in the top-k results for each query
         total_relevant = 0
-        for i, query_label in enumerate(query_labels):
-            top_k_labels = gallery_labels[top_k_indices[i]]
-            # Count if the query_label appears in the top-k labels
-            if query_label in top_k_labels:
+        for i in range(similarity_matrix.size(0)):
+            tk = gallery_labels[top_k_indices[i]]              # (k,)
+            if (tk == query_labels[i]).any().item():           # device-safe check
                 total_relevant += 1
-        
-        # Calculate Recall@k
-        recall_at_k = total_relevant / len(query_labels)
-        return recall_at_k
 
+        return total_relevant / similarity_matrix.size(0)
+
+    def one_out_retrieval(self, model, loader,  backbone_for_concepts=None, backbone=None, print = False, ba = None, ch = None, intervention_fn = None):
+        embeddings, labels = model.collect_embeddings(loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone, intervention_fn = intervention_fn, concept_head=ch)
+        similarity_matrix = self.similarity_matrix(embeddings, distance = 'cosine_sim')
+        recalls = {k: self.compute_recall_at_k(similarity_matrix, labels, labels, k=k) for k in [1, 5, 20, 100]}
+        if print: print(f"One-out Recall@1: {recalls[1]*100:.2f}% - Recall@5: {recalls[5]*100:.2f}% - Recall@20: {recalls[20]*100:.2f}% - Recall@100: {recalls[100]*100:.2f}%")
+        return recalls
+
+    def evaluate_model(self, model, train_loader, test_loader, model_to_evaluate = None, ba = None, ch = None, backbone_for_concepts = None, show_tsne = False, show_plot = False, show_matches = False, intervention_fn = None, aggregate_seeks=False, print_results = True, distance = 'cosine_sim'):
+
+        ks = [1, 5, 10, 20, 100]
+
+        #model.freeze()
+
+        with torch.no_grad():
+            # Train
+            if model_to_evaluate=='backbone': # evaluating backbone
+                if print_results: print('evaluating backbone')
+                
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader)
+
+
+            elif model_to_evaluate=='concept_head': # evaluating concept head
+                if print_results:  print('evaluating concept head ', 'with intervention' if intervention_fn is not None else '')
+
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, backbone=backbone_for_concepts, intervention_fn=intervention_fn, aggregate_seeks=aggregate_seeks)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader, backbone=backbone_for_concepts, intervention_fn=intervention_fn, aggregate_seeks=aggregate_seeks)
+
+            elif model_to_evaluate=='projector': # evaluating projector
+                if print_results: print('evaluating projector ', 'with intervention' if intervention_fn is not None else '')
+                
+                gallery_embeddings, gallery_labels = model.collect_embeddings(loader=train_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(loader=test_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
+
+            else:
+                raise ValueError("Couldnt fin the model to evaluate. Choose from 'backbone', 'concept_head' or 'projector'")
+        
+            gallery_sim_matrix = self.similarity_matrix(gallery_embeddings, distance = distance)
+            test_similarity_matrix = self.similarity_matrix(query_embeddings, gallery_embeddings, distance = distance)
+
+            # Compute Recall@k
+            train_recalls = {k: self.compute_recall_at_k(gallery_sim_matrix, gallery_labels, gallery_labels, k=k) for k in ks}
+            test_recalls = {k: self.compute_recall_at_k(test_similarity_matrix, query_labels, gallery_labels, k=k) for k in ks}
+            
+            if print_results:
+                print("Train Recalls:")
+                for k in ks:
+                    print(f"Recall@{k}: {train_recalls[k]*100:.2f}%")
+                
+                print("Test Recalls:")
+                for k in ks:
+                    print(f"Recall@{k}: {test_recalls[k]*100:.2f}%")
+                        
+            if show_tsne: self.make_tsne(gallery_embeddings, gallery_labels)
+            if show_plot: self.plot_accuracy_vs_samples(test_similarity_matrix, query_labels, gallery_labels, ks)
+            if show_matches: self.visualize_matches(test_similarity_matrix, query_labels, gallery_labels, train_loader.dataset.dataset, train_loader.dataset.dataset, train_loader.dataset.dataset)
+
+            return test_recalls
+
+
+    ### === Visualization Methods === ###
     def plot_accuracy_vs_samples(self, similarity_matrix, query_labels, gallery_labels, ks):
 
         """Compute per-individual accuracy for different ks and prepare graph data."""
@@ -101,54 +177,6 @@ class Retrieval:
 
         plt.savefig(self.experiment_dir / 'accuracy_vs_samples.png')
         plt.show() 
-
-    def evaluate_model(self, model, train_loader, test_loader, ba = None, ch = None, backbone_for_concepts = None, show_tsne = False, show_plot = False, show_matches = False, intervention_fn = None, aggregate_seeks=False, print_results = True):
-
-        ks = [1, 5, 10, 20, 100]
-
-        #model.freeze()
-
-        with torch.no_grad():
-            # Train
-            if ba is None and ch is None: # evaluating backbone
-                if print_results: print('evaluating backbone')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader)
-            elif ba is not None and ch is None: # evaluating concept head
-                if print_results:  print('evaluating concept head ', 'with intervention' if intervention_fn is not None else '')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, ba, intervention_fn = intervention_fn, aggregate_seeks=aggregate_seeks)
-            else: # evaluating projector
-                if print_results: print('evaluating projector ', 'with intervention' if intervention_fn is not None else '')
-                gallery_embeddings, gallery_labels = model.collect_embeddings(loader=train_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
-                query_embeddings, query_labels = model.collect_embeddings(loader=test_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn)
-
-            gallery_sim_matrix = self.cosine_similarity_matrix(gallery_embeddings)
-            train_recalls = {k: self.compute_recall_at_k(gallery_sim_matrix, gallery_labels, gallery_labels, k=k) for k in ks}
-
-            # Test with new queries
-            test_similarity_matrix = self.cosine_similarity_matrix(query_embeddings, gallery_embeddings)
-
-            # Compute Recall@k
-            test_recalls = {k: self.compute_recall_at_k(test_similarity_matrix, query_labels, gallery_labels, k=k) for k in ks}
-            
-            if print_results:
-                print("Train Recalls:")
-                for k in ks:
-                    print(f"Recall@{k}: {train_recalls[k]*100:.2f}%")
-                
-                print("Test Recalls:")
-                for k in ks:
-                    print(f"Recall@{k}: {test_recalls[k]*100:.2f}%")
-
-            with open(self.experiment_dir / 'recalls.txt', 'w') as f: f.write(f"Train - Recall@{ks}: {train_recalls}\nTest - Recall@{ks}: {test_recalls}\n")
-                        
-            if show_tsne: self.make_tsne(gallery_embeddings, gallery_labels)
-            if show_plot: self.plot_accuracy_vs_samples(test_similarity_matrix, query_labels, gallery_labels, ks)
-            if show_matches: self.visualize_matches(test_similarity_matrix, query_labels, gallery_labels, train_loader.dataset.dataset, train_loader.dataset.dataset, train_loader.dataset.dataset)
-
-            return test_recalls
-
 
     def visualize_matches(self, similarity_matrix, query_labels, gallery_labels, retrieval_dataset, query_subset, gallery_subset, n_vis=4, k=600):
         """
@@ -296,9 +324,4 @@ class Retrieval:
         plt.show()
         plt.savefig(self.experiment_dir / 'tsne.png')
 
-    def one_out_retrieval(self, model, loader,  backbone_for_concepts=None, backbone=None, print = False, ba = None, ch = None, intervention_fn = None):
-        embeddings, labels = model.collect_embeddings(loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone, intervention_fn = intervention_fn, concept_head=ch)
-        similarity_matrix = self.cosine_similarity_matrix(embeddings)
-        recalls = {k: self.compute_recall_at_k(similarity_matrix, labels, labels, k=k) for k in [1, 5, 20, 100]}
-        if print: print(f"One-out Recall@1: {recalls[1]*100:.2f}% - Recall@5: {recalls[5]*100:.2f}% - Recall@20: {recalls[20]*100:.2f}% - Recall@100: {recalls[100]*100:.2f}%")
-        return recalls
+

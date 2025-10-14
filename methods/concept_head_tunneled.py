@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
+from retrieval import Retrieval
 from seek_code import SEEK
 from datetime import datetime
 from pathlib import Path
@@ -27,15 +28,14 @@ def categorical_CE_loss(output,labels):
 
 
 class ConceptHeadTunneled:
-    def __init__(self, lr=1e-5, loss=categorical_CE_loss,  experiment_code = None, reset_weights = True, layer = None):
+    def __init__(self, lr=1e-5, loss=categorical_CE_loss,  experiment_code = None, reset_weights = True, layer = None, pretraining = 'concept_w'):
 
         self.device = 'cuda' if torch.cuda.is_available() else "cpu"
         self.input_dim = 768 * 3  # Handle concatenated embeddings
         self.layer = layer
 
-        if (Path(__file__).parent.parent / "weights/concept_w.pt").exists() and reset_weights == False:
-            self.layer.load_model(Path(__file__).parent.parent / "weights/concept_w.pt")
-            print("loading weights for the concept head")
+        if (Path(__file__).parent.parent / f"weights/{pretraining}.pt").exists() and reset_weights == False:
+            self.layer.load_model(Path(__file__).parent.parent / f"weights/{pretraining}.pt")
         
         #self.optimizer = Adam(self.layer.parameters(), lr)
 
@@ -46,6 +46,7 @@ class ConceptHeadTunneled:
         exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.experiment_dir = Path(__file__).parent.parent / 'experiments' / f'exp_{exp_code}'
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
+        self.exp_code = exp_code
 
 
     def accuracy_fn(self, predicted, labels):
@@ -162,6 +163,41 @@ class ConceptHeadTunneled:
 
         return test_loss, test_acc
 
+    def retrieval_test(self, backbone_for_concepts, train_loader, test_loader, intervention_fns):
+        """
+        Test the model with different intervention functions and store results as summaries.
+        """
+
+        with open(self.experiment_dir / 'SEEK_retrieval_results.txt', 'w') as f:
+            f.write(f'Testing with intervention functions: {", ".join(intervention_fns.keys())}\n')
+
+        results = {}
+
+        retrieval = Retrieval(experiment_code=self.exp_code)
+    
+        distances = ['cosine_sim', 'seek_homemade', 'seek_homemade_2', 'seek_homemade_3']
+        for distance in distances:
+            print(f"\nTesting with {distance} distance:")
+            for name, fn in intervention_fns.items():
+                print(f'Retrieval with {name} correction-------------------------------------')
+                metrics = retrieval.evaluate_model(
+                    model=self,
+                    train_loader=train_loader,
+                    test_loader=test_loader, model_to_evaluate='concept_head',
+                    ba=None,
+                    ch=None,
+                    backbone_for_concepts=backbone_for_concepts,
+                    intervention_fn=fn,
+                    show_matches=False, show_plot=True, show_tsne=True, print_results=False, aggregate_seeks=False,
+                    distance=distance
+                )
+                
+                results[f"{name}_{distance}"] = metrics
+            
+                print(f"{name} - " + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
+
+        return results
+
     def freeze(self):
         """Freezes all layers in the ConceptHead by disabling gradients."""
         self.layer.eval()
@@ -184,8 +220,7 @@ class ConceptHeadTunneled:
 
         self.freeze()
 
-        print('collecting concepts from concept head')
-        for batch in tqdm(loader):
+        for batch in loader:
             #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK, idx
             images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device)
 
@@ -387,4 +422,4 @@ class CrossedHeadNN(nn.Module):
         """Load model state dict."""
         self.load_state_dict(torch.load(path, map_location='cuda'))
         self.to('cuda')
-        print(f"Model loaded from {path}")
+        print(f"Concept head loaded from {path}")

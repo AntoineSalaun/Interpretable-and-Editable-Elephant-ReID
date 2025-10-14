@@ -10,8 +10,8 @@ from seek_code import SEEK
 from pytorch_metric_learning import losses, miners
 from retrieval import Retrieval
 from pathlib import Path
-import wandb
-
+import pandas as pd
+import logging, sys
 
 
 class Projector(nn.Module):
@@ -61,19 +61,36 @@ class Projector(nn.Module):
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         self.alpha = alpha
 
-        # Initialize wandb with intervention function used in training
-        wandb.init(
-            project="projector_training",
-            name=self.exp_code,
-            config={
-                "learning_rate": self.lr,
-                "margin": self.loss_fn.margin,
-                #"scale": self.loss_fn.scale,
-                "training_intervention_fn": self.intervention_fn.__name__ if self.intervention_fn else "None",
-                'alpha':self.alpha
-            }
-        )
-        wandb.define_metric("val-Recall@1", summary="max")
+        def make_logger(log_path: Path, level=logging.INFO, overwrite=False):
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            logger = logging.getLogger(f"projector.{log_path}")
+            logger.setLevel(level)
+            logger.propagate = False
+            if logger.handlers:     # already created once: reuse
+                return logger
+            mode = 'w' if overwrite else 'a'   # set overwrite=True to start fresh
+            fh = logging.FileHandler(log_path, mode=mode, encoding="utf-8")
+            sh = logging.StreamHandler(sys.stdout)
+            fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+            fh.setFormatter(fmt); sh.setFormatter(fmt)
+            logger.addHandler(fh); logger.addHandler(sh)
+            return logger
+
+        self.logger = make_logger(self.experiment_dir / 'projector_log.txt')
+        self.logger.info(f'-------- Initializing Projector: {network_type}---')
+        self.logger.info(f'Learning Rate: {lr}')
+        self.logger.info(f'Print Every: {print_every}')
+        self.logger.info(f'Loss Type: {loss_type}')
+        if loss_type == 'ArcFace':
+            self.logger.info(f'Margin: {margin}, Scale: {scale}')
+        elif loss_type == 'TripletLoss':
+            self.logger.info(f'Margin: {margin}')
+        self.logger.info(f'Weights reset: {reset_weights}')
+        self.logger.info(f'Intervention function used during training: {self.intervention_fn.__name__ if self.intervention_fn else "None"}')
+        self.logger.info(f'Alpha (weight of the projector in the final embeddings): {self.alpha}')
+        if reset_weights is False:
+            self.logger.info(f'Loading weights from: {Path(__file__).parent.parent / "weights/projector_w.pt"}')
+        self.logger.info(f'Saving results to: {self.experiment_dir}\n')
 
 
     def compute_recall_at_k(self, embeddings, labels, k=1):
@@ -114,7 +131,7 @@ class Projector(nn.Module):
             # Projecting the concepts back to the embeddings space
             projected_concepts = self.layer(edited_concepts.to('cuda'))
 
-            if batch_idx == 1 and self.alpha!=1: print(f"Embeddings norm: {torch.norm(embeddings, dim=1).mean()}, Projected concepts norm: {torch.norm(projected_concepts, dim=1).mean()}")
+            #if batch_idx == 1 and self.alpha!=1: print(f"Embeddings norm: {torch.norm(embeddings, dim=1).mean()}, Projected concepts norm: {torch.norm(projected_concepts, dim=1).mean()}")
 
             if self.alpha!=1:
                 edited_embeddings = (1-self.alpha) * embeddings + self.alpha * projected_concepts 
@@ -181,10 +198,11 @@ class Projector(nn.Module):
     
         
     def train(self, train_loader, val_loader, backbone_for_concepts, backbone, concept_head, num_epochs=10):
-        history = []
-        best_train_recall = 0
+        self.logger.info(f'============ STARTING TRAINING for {num_epochs} epochs - Projector parameters require gradients: {any(param.requires_grad for param in self.layer.parameters())}')
+        self.logger.info(f'Parameters requiring gradients - Projector: {any(p.requires_grad for p in self.layer.parameters())}, Backbone_for_concepts: {any(p.requires_grad for p in backbone_for_concepts.layer.parameters())}, Backbone: {any(p.requires_grad for p in backbone.layer.parameters())}, Concept_head: {any(p.requires_grad for p in concept_head.layer.parameters())}')
+        best_val_recall = 0
         retrieval = Retrieval(experiment_code=self.exp_code)
-        print(f'Parameters requiring gradients - Projector: {any(p.requires_grad for p in self.layer.parameters())}, Backbone_for_concepts: {any(p.requires_grad for p in backbone_for_concepts.layer.parameters())}, Backbone: {any(p.requires_grad for p in backbone.layer.parameters())}, Concept_head: {any(p.requires_grad for p in concept_head.layer.parameters())}')
+
         trainable_params = list(p for p in self.layer.parameters() if p.requires_grad) + list(p for p in backbone.layer.parameters() if p.requires_grad)
         self.optimizer = optim.Adam(trainable_params, lr=self.lr)
 
@@ -192,51 +210,55 @@ class Projector(nn.Module):
             train_loss, batch_recall = self.epoch_pass(train_loader, backbone_for_concepts, backbone, concept_head, training=True)
             epoch_train_recall = retrieval.one_out_retrieval(model=self, loader=train_loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone,  ch=concept_head)
             
-            if epoch % self.print_every == 0 :
-                epoch_val_recall = retrieval.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader, ba=backbone, ch=concept_head, backbone_for_concepts=backbone_for_concepts, print_results=False, intervention_fn=self.intervention_fn)
-                print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
-            
-                history.append({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}, **{f"val-Recall@{k}": v * 100 for k, v in epoch_val_recall.items()}})
-                wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}, **{f"val-Recall@{k}": v * 100 for k, v in epoch_val_recall.items()}})
-            else:
-                history.append({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}})
-                wandb.log({"epoch": epoch + 1, "train_loss": train_loss, "BATCH-Recall@1": batch_recall * 100, **{f"train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()}})
-                
-            if epoch_train_recall[1] > best_train_recall:
-                best_train_recall = epoch_train_recall[1]
+            epoch_val_recall = retrieval.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader, model_to_evaluate= 'projector', ba=backbone, ch=concept_head, backbone_for_concepts=backbone_for_concepts, print_results=False, intervention_fn=self.intervention_fn)
+            self.logger.info(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
+               
+            if epoch_val_recall[1] > best_val_recall:
+                self.logger.info('new best weights')
+                best_val_recall = epoch_val_recall[1]
                 best_weights = self.layer.state_dict()
+                best_backbone_weights = backbone.layer.state_dict()
         
+        # Save best weights
         torch.save(best_weights, self.experiment_dir / 'projector_w.pt')
-        pd.DataFrame(history).to_csv(self.experiment_dir / 'projector_training_history.csv', index=False)
-        wandb.summary.update({f"Final-Train-Recall@{k}": v * 100 for k, v in epoch_train_recall.items()})
+        self.layer.load_state_dict(best_weights)
+        torch.save(best_backbone_weights, self.experiment_dir / 'backbone_w.pt')
+        backbone.layer.load_state_dict(best_backbone_weights)
+        
+        self.logger.info('============ TRAINING COMPLETE ============')
+        self.logger.info(f'Best Val Recall@1: {best_val_recall*100:.2f}%')
+        self.logger.info(f'Weights saved to: {self.experiment_dir / "projector_w.pt"} and {self.experiment_dir / "backbone_w.pt"}')
+        
 
     def test(self, backbone_for_concepts, backbone, concept_head, train_loader, test_loader, intervention_fns):
         """
         Test the model with different intervention functions and store results as summaries.
         """
+
+        self.logger.info(f'Testing with intervention functions: {", ".join(intervention_fns.keys())}')
+        results_log= self.make_logger(self.experiment_dir / 'projector_test_results.txt', overwrite=True)
+
         results = {}
         retrieval = Retrieval(experiment_code=self.exp_code)
 
         for name, fn in intervention_fns.items():
-            print(f'Retrieval with {name} correction-------------------------------------')
+            self.logger.info(f'Retrieval with {name} correction-------------------------------------')
+            results_log.info(f'Testing with {name} correction\n')
             metrics = retrieval.evaluate_model(
                 model=self,
                 train_loader=train_loader,
-                test_loader=test_loader,
+                test_loader=test_loader, model_to_evaluate= 'projector',
                 ba=backbone,
                 ch=concept_head,
                 backbone_for_concepts=backbone_for_concepts,
                 intervention_fn=fn,
-                show_matches=False, show_plot=False, show_tsne=False, print_results=True
+                show_matches=False, show_plot=False, show_tsne=False, print_results=False
             )
-            
             results[name] = metrics
             
-            print(f"{name} - " + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
-        
-        # Store results as summaries within the existing wandb run
-        #wandb.summary.update({f"{name}-Recall@{k}": v * 100 for name, metrics in results.items() for k, v in metrics.items()})
-        #wandb.finish()
+            self.logger.info(f'Results with {name} correction: ' + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
+            results_log.info("\n".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]) + "\n")
+    
         return results
 
 

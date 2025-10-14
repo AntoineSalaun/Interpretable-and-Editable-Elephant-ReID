@@ -4,7 +4,8 @@
 #SBATCH --partition=vision-beery
 #SBATCH --mem=64GB
 #SBATCH --gres=gpu:1
+#SBATCH --account=vision-beery
 #SBATCH --qos=vision-beery-main
 
 # Train baseline
-python CBM_reid/methods/background_experiments.py
+python CBM_reid/methods/exp_baselines.py --experiment exp_1_1 --epochs 5
