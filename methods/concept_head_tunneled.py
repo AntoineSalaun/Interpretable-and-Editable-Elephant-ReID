@@ -213,7 +213,7 @@ class ConceptHeadTunneled:
                 param.requires_grad = True
 
 
-    def collect_embeddings(self, loader, backbone, intervention_fn = None, aggregate_seeks = False):
+    def collect_embeddings(self, loader, backbone, intervention_fn = None, aggregate_seeks = False, aggregate_rules = None):
         
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
@@ -238,7 +238,7 @@ class ConceptHeadTunneled:
                 collected_labels = torch.cat((collected_labels, ele_id_label))
         
         if aggregate_seeks:
-            subject_seek, collected_embeddings, collected_labels = SEEK.aggregate_seek(collected_embeddings, collected_labels)
+            subject_seek, collected_embeddings, collected_labels = SEEK.aggregate_seek(collected_embeddings, collected_labels, rules = aggregate_rules)
         collected_embeddings = collected_embeddings.cpu()
         collected_labels = collected_labels
 

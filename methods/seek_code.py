@@ -213,7 +213,17 @@ class SEEK:
         assert str(seek_instance) == str(SEEK(reconstructed_one_hot)), "Reconstructed instance does not match original"
         print("Test passed: Reconstructed instance matches the original")
     
-    def aggregate_seek(SEEK_codes, ele_ids):
+    def aggregate_seek(SEEK_codes, ele_ids, rules = None):
+
+        if rules is None: rules = {
+                    'sex': {'cutoff': 0.8, 'fraction': 2},
+                    'age': {'cutoff': 0.8, 'fraction': 1},
+                    'tusks': {'cutoff': 0.8, 'fraction': 1},
+                    'ear_most_prominent': {'cutoff': 0.9, 'fraction': 2},
+                    'ear_least_prominent': {'cutoff': 0.95, 'fraction': 2.5},
+                    'extremes': {'cutoff': 0.8, 'fraction': 1.5}
+                    }
+
         def make_seek_df(SEEK_codes, ele_ids):
             data = []
             seeks = []
@@ -464,7 +474,7 @@ class SEEK:
                 if q_attr == '_' and g_attr == '_': # Both attributes are unknown, no penalty
                     distance += 0
                 elif q_attr == '_' or g_attr == '_': # One attribute is unknown, small penalty
-                    distance += 0.2
+                    distance += 0.05
                 else: # Both attributes are known but different, real error !
                     if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
                         #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")

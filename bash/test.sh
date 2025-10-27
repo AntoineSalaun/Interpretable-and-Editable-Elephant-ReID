@@ -1,11 +1,25 @@
 #!/bin/bash
-#SBATCH -o CBM_reid/bash/slurm_logs/test.sh.log-%j
-#SBATCH --time=1-12:00:00
+#SBATCH --job-name=cbm-reid-test
 #SBATCH --partition=vision-beery
-#SBATCH --mem=64GB
-#SBATCH --gres=gpu:1
-#SBATCH --account=vision-beery
 #SBATCH --qos=vision-beery-main
+#SBATCH --account=vision-beery
 
-# Train baseline
-python CBM_reid/methods/exp_baselines.py --experiment exp_1_1 --epochs 5
+#SBATCH --time=1-12:00:00
+#SBATCH --mem=64G
+#SBATCH --gres=gpu:1
+
+# Use absolute paths for logs
+#SBATCH --output=/data/vision/beery/scratch/antoine/CBM_reid/bash/slurm_logs/test.%j.out
+
+# Set the working directory explicitly (adjust to your repo root)
+#SBATCH --chdir=/data/vision/beery/scratch/antoine/CBM_reid
+
+set -euo pipefail
+
+# Ensure log directory exists (harmless if it already does)
+mkdir -p /data/vision/beery/scratch/antoine/CBM_reid/bash/slurm_logs
+
+echo "== SLURM ENV =="
+date
+
+python /data/vision/beery/scratch/antoine/CBM_reid/methods/aggregation_vote_parm_search.py
