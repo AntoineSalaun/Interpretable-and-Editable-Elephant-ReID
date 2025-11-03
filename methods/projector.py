@@ -61,22 +61,7 @@ class Projector(nn.Module):
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         self.alpha = alpha
 
-        def make_logger(log_path: Path, level=logging.INFO, overwrite=False):
-            log_path.parent.mkdir(parents=True, exist_ok=True)
-            logger = logging.getLogger(f"projector.{log_path}")
-            logger.setLevel(level)
-            logger.propagate = False
-            if logger.handlers:     # already created once: reuse
-                return logger
-            mode = 'w' if overwrite else 'a'   # set overwrite=True to start fresh
-            fh = logging.FileHandler(log_path, mode=mode, encoding="utf-8")
-            sh = logging.StreamHandler(sys.stdout)
-            fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
-            fh.setFormatter(fmt); sh.setFormatter(fmt)
-            logger.addHandler(fh); logger.addHandler(sh)
-            return logger
-
-        self.logger = make_logger(self.experiment_dir / 'projector_log.txt')
+        self.logger = self.make_logger(self.experiment_dir / 'projector_log.txt')
         self.logger.info(f'-------- Initializing Projector: {network_type}---')
         self.logger.info(f'Learning Rate: {lr}')
         self.logger.info(f'Print Every: {print_every}')
@@ -95,7 +80,7 @@ class Projector(nn.Module):
 
     def compute_recall_at_k(self, embeddings, labels, k=1):
         r = Retrieval(self.exp_code)
-        mat = r.cosine_similarity_matrix(embeddings)
+        mat = r.similarity_matrix(embeddings)
         return r.compute_recall_at_k(mat, labels, labels, k)
         
     
@@ -163,8 +148,8 @@ class Projector(nn.Module):
 
         return epoch_loss, epoch_accuracy
 
-    def collect_embeddings(self, loader,  backbone, backbone_for_concepts,  concept_head, intervention_fn = None):
-        collected_embeddings = torch.tensor([]).to('cuda')
+    def collect_embeddings(self, loader,  backbone, backbone_for_concepts,  concept_head, intervention_fn = None, aggregate_seeks=False, aggregate_rules = None):
+        collected_edited_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
         
         self.layer.eval()
@@ -172,33 +157,73 @@ class Projector(nn.Module):
         backbone_for_concepts.layer.eval()
         concept_head.layer.eval()
         
-        for batch in loader:
-            images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[5], batch[6].to('cuda'), batch[7].to('cuda')
+        if aggregate_seeks is False:
+            for batch in loader:
+                images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[5], batch[6].to('cuda'), batch[7].to('cuda')
 
-            with torch.no_grad():
-                embeddings = backbone.forward(images, left_ears, right_ears)   
-                embeddings_for_concepts = backbone_for_concepts.forward(images, left_ears, right_ears)  
+                with torch.no_grad():
+                    embeddings = backbone.forward(images, left_ears, right_ears)   
+                    embeddings_for_concepts = backbone_for_concepts.forward(images, left_ears, right_ears)  
+                    
+                    concept_logits = concept_head.layer(embeddings_for_concepts)
+                    
+                    edited_concepts = intervention_fn(concept_logits, subject_SEEK, ele_SEEK) if intervention_fn is not None else concept_logits
+                    # editied concepts are always hard 
+
+                    projected_concepts = self.layer(edited_concepts.to('cuda'))
+                    
+                    if self.alpha !=1:
+                        edited_embeddings = (1-self.alpha) * embeddings + self.alpha * projected_concepts 
+                    else:
+                        edited_embeddings = projected_concepts
+
+                collected_edited_embeddings = torch.cat((collected_edited_embeddings, edited_embeddings))
+                collected_labels = torch.cat((collected_labels, ele_id_label))
+        else:
+            collected_concepts = torch.tensor([]).to('cuda')
+            collected_embeddings = torch.tensor([]).to('cuda')
+
+            # First, collect all edited concepts 
+            for batch in loader:
+                images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[5], batch[6].to('cuda'), batch[7].to('cuda')
+
+                with torch.no_grad():
+                    embeddings = backbone.forward(images, left_ears, right_ears)   
+                    embeddings_for_concepts = backbone_for_concepts.forward(images, left_ears, right_ears)  
+                    
+                    concept_logits = concept_head.layer(embeddings_for_concepts)
+                    
+                    edited_concepts = intervention_fn(concept_logits, subject_SEEK, ele_SEEK) if intervention_fn is not None else concept_logits
+                    # editied concepts are always hard 
+
+                collected_embeddings = torch.cat((collected_embeddings, embeddings))
+                collected_labels = torch.cat((collected_labels, ele_id_label))
+                collected_concepts = torch.cat((collected_concepts, edited_concepts.to('cuda')))
+            
+            # Now, aggregate the concepts according to the provided rules
+            subject_seek, aggregated_concepts, collected_labels = SEEK.aggregate_seek(collected_concepts, collected_labels, rules = aggregate_rules)
+            
+            # Create a DataLoader for the aggregated concepts
+            aggregated_concepts_loader = DataLoader(list(zip(collected_embeddings, aggregated_concepts, collected_labels)), batch_size=loader.batch_size, shuffle=False)
+            
+            # Now, project the aggregated concepts back to the embeddings space
+            for batch in aggregated_concepts_loader:
+                embeddings, aggregated_concepts, ele_id_label = batch[0].to('cuda'),  batch[1].to('cuda'), batch[2].to('cuda')
                 
-                concept_logits = concept_head.layer(embeddings_for_concepts)
-                
-                edited_concepts = intervention_fn(concept_logits, subject_SEEK, ele_SEEK) if intervention_fn is not None else concept_logits
-                #print('concept logits : ', concept_logits[0], ' edited_concepts : ', edited_concepts[0])
+                with torch.no_grad():
+                    projected_concepts = self.layer(aggregated_concepts.to('cuda'))
 
-                projected_concepts = self.layer(edited_concepts.to('cuda'))
-                
-                if self.alpha !=1:
-                    edited_embeddings = (1-self.alpha) * embeddings + self.alpha * projected_concepts 
-                else:
-                    edited_embeddings = projected_concepts
+                    if self.alpha !=1:
+                        edited_embeddings = (1-self.alpha) * embeddings + self.alpha * projected_concepts 
+                    else:
+                        edited_embeddings = projected_concepts
+                    collected_edited_embeddings = torch.cat((collected_edited_embeddings, edited_embeddings))
 
-            collected_embeddings = torch.cat((collected_embeddings, edited_embeddings))
-            collected_labels = torch.cat((collected_labels, ele_id_label))
-
-        return collected_embeddings, collected_labels
+        return collected_edited_embeddings, collected_labels
     
         
     def train(self, train_loader, val_loader, backbone_for_concepts, backbone, concept_head, num_epochs=10):
-        self.logger.info(f'============ STARTING TRAINING for {num_epochs} epochs - Projector parameters require gradients: {any(param.requires_grad for param in self.layer.parameters())}')
+        self.logger.info(f'============ STARTING TRAINING for {num_epochs} epochs - Projector parameters require gradients: {any(param.requires_grad for param in self.layer.parameters())} with intervention function: {self.intervention_fn.__name__ if self.intervention_fn else "None"} ')
         self.logger.info(f'Parameters requiring gradients - Projector: {any(p.requires_grad for p in self.layer.parameters())}, Backbone_for_concepts: {any(p.requires_grad for p in backbone_for_concepts.layer.parameters())}, Backbone: {any(p.requires_grad for p in backbone.layer.parameters())}, Concept_head: {any(p.requires_grad for p in concept_head.layer.parameters())}')
         best_val_recall = 0
         retrieval = Retrieval(experiment_code=self.exp_code)
@@ -207,7 +232,7 @@ class Projector(nn.Module):
         self.optimizer = optim.Adam(trainable_params, lr=self.lr)
 
         for epoch in range(num_epochs):
-            train_loss, batch_recall = self.epoch_pass(train_loader, backbone_for_concepts, backbone, concept_head, training=True)
+            train_loss, batch_recall = self.epoch_pass(train_loader, backbone_for_concepts, backbone, concept_head, training=True, intervention_fn=self.intervention_fn)
             epoch_train_recall = retrieval.one_out_retrieval(model=self, loader=train_loader, backbone_for_concepts=backbone_for_concepts, backbone=backbone,  ch=concept_head)
             
             epoch_val_recall = retrieval.evaluate_model(model=self, train_loader=train_loader, test_loader=val_loader, model_to_evaluate= 'projector', ba=backbone, ch=concept_head, backbone_for_concepts=backbone_for_concepts, print_results=False, intervention_fn=self.intervention_fn)
@@ -230,34 +255,64 @@ class Projector(nn.Module):
         self.logger.info(f'Weights saved to: {self.experiment_dir / "projector_w.pt"} and {self.experiment_dir / "backbone_w.pt"}')
         
 
+    def make_logger(self, log_path: Path, level=logging.INFO, overwrite=False):
+        log_path = Path(log_path)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        logger_name = f"projector.{log_path}"
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level)
+        logger.propagate = False
+
+        if logger.handlers:
+            if overwrite:
+                for handler in list(logger.handlers):
+                    logger.removeHandler(handler)
+                    handler.close()
+            else:
+                return logger
+
+        mode = 'w' if overwrite else 'a'
+        file_handler = logging.FileHandler(log_path, mode=mode, encoding="utf-8")
+        stream_handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+        file_handler.setFormatter(formatter)
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        logger.addHandler(stream_handler)
+        return logger
+
     def test(self, backbone_for_concepts, backbone, concept_head, train_loader, test_loader, intervention_fns):
         """
         Test the model with different intervention functions and store results as summaries.
         """
 
         self.logger.info(f'Testing with intervention functions: {", ".join(intervention_fns.keys())}')
-        results_log= self.make_logger(self.experiment_dir / 'projector_test_results.txt', overwrite=True)
+        results_log = self.make_logger(self.experiment_dir / 'projector_test_results.txt', overwrite=True)
 
         results = {}
         retrieval = Retrieval(experiment_code=self.exp_code)
 
-        for name, fn in intervention_fns.items():
-            self.logger.info(f'Retrieval with {name} correction-------------------------------------')
-            results_log.info(f'Testing with {name} correction\n')
-            metrics = retrieval.evaluate_model(
-                model=self,
-                train_loader=train_loader,
-                test_loader=test_loader, model_to_evaluate= 'projector',
-                ba=backbone,
-                ch=concept_head,
-                backbone_for_concepts=backbone_for_concepts,
-                intervention_fn=fn,
-                show_matches=False, show_plot=False, show_tsne=False, print_results=False
-            )
-            results[name] = metrics
-            
-            self.logger.info(f'Results with {name} correction: ' + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
-            results_log.info("\n".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]) + "\n")
+        for aggregate_gallery_seeks in [True,False]:
+            for name, fn in intervention_fns.items():
+                self.logger.info(f'Retrieval with {name} correction and aggregate_gallery_seeks={aggregate_gallery_seeks}-------------------------------------')
+                metrics = retrieval.evaluate_model(
+                    model=self,
+                    train_loader=train_loader,
+                    test_loader=test_loader, model_to_evaluate= 'projector',
+                    ba=backbone,
+                    ch=concept_head,
+                    backbone_for_concepts=backbone_for_concepts,
+                    intervention_fn=fn,
+                    aggregate_gallery_seeks=aggregate_gallery_seeks,
+                    show_matches=False, 
+                    show_plot=False, 
+                    show_tsne=False, 
+                    print_results=False
+                )
+                results[name] = metrics
+                
+                self.logger.info(f'Results with {name} correction: ' + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
+                results_log.info("\n".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]) + "\n")
     
         return results
 

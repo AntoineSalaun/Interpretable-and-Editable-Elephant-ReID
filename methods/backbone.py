@@ -108,10 +108,9 @@ class Backbone(nn.Module):
             images, ele_id_label, subject_SEEK, left_ears, right_ears = batch[0].to('cuda'),  batch[2].to('cuda'), batch[4], batch[6].to('cuda'), batch[7].to('cuda')
 
             embeddings = self.forward(images, left_ears, right_ears)
-            print('embeddings' , embeddings.shape, 'labels', ele_id_label.shape)
             loss = self.loss_fn(embeddings, ele_id_label)
             
-            mat = r.cosine_similarity_matrix(embeddings)
+            mat = r.similarity_matrix(embeddings)
             total_accuracy += r.compute_recall_at_k(mat, ele_id_label, ele_id_label, 1)
 
 

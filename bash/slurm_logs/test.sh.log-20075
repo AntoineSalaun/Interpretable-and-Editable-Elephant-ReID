@@ -1,9 +1,0 @@
-cpu-bind=MASK - beery-l40s-1, task  0  0 [2800323]: mask 0x400 set
-Traceback (most recent call last):
-  File "/data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py", line 36, in <module>
-    train_indices, test_indices = dataset.split_perpendicular_to_elephants_and_encounters(split_sizes=[0.5,0.5], hour_delta = 0.2)
-                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/data/vision/beery/scratch/antoine/CBM_reid/methods/data_handler.py", line 249, in split_perpendicular_to_elephants_and_encounters
-    if len(train_contribution_df) / train_count <= len(test_contribution_df) / test_count:
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
-ZeroDivisionError: division by zero

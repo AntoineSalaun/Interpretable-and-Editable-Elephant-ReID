@@ -216,82 +216,45 @@ class SEEK:
     def aggregate_seek(SEEK_codes, ele_ids, rules = None):
 
         if rules is None: rules = {
-                    'sex': {'cutoff': 0.8, 'fraction': 2},
-                    'age': {'cutoff': 0.8, 'fraction': 1},
-                    'tusks': {'cutoff': 0.8, 'fraction': 1},
-                    'ear_most_prominent': {'cutoff': 0.9, 'fraction': 2},
-                    'ear_least_prominent': {'cutoff': 0.95, 'fraction': 2.5},
-                    'extremes': {'cutoff': 0.8, 'fraction': 1.5}
-                    }
+            'sex': {'cutoff': 0.9334337305774126, 'fraction': 0.7151849388533961},
+            'age': {'cutoff': 0.9514760451994138, 'fraction': 0.5510405823660589},
+            'tusks': {'cutoff': 0.4369025581005079, 'fraction': 1.8715870244928936},
+            'ear_most_prominent':{'cutoff': 0.8346892883784236, 'fraction': 2.432201122842605},
+            'ear_least_prominent': {'cutoff': 0.3902627093863492, 'fraction': 2.0680981200569604},
+            'extremes': {'cutoff': 0.46972912427893604, 'fraction': 0.8622955318459603}
+            }
+        import pandas as pd
 
         def make_seek_df(SEEK_codes, ele_ids):
-            data = []
-            seeks = []
-
+            data, seeks = [], []
             for i in range(SEEK_codes.shape[0]):
                 row = SEEK(SEEK_codes[i]).categorical_tensor()[0].tolist()
                 data.append(row)
                 seeks.append(SEEK(SEEK_codes[i]).__str__())
-            import pandas as pd
+
             df = pd.DataFrame(data, columns=SEEK.attribute_names)
-
             df['subj_seek_str'] = seeks
-            if isinstance(ele_ids, torch.Tensor):
-                df['ele_id'] = ele_ids.cpu()
-            else: 
-                df['ele_id'] = ele_ids
-                
+            df['ele_id'] = ele_ids.cpu() if isinstance(ele_ids, torch.Tensor) else ele_ids
             df['encounter_id'] = 1
-
             return df
 
-        # Collect SEEK codes
         df = make_seek_df(SEEK_codes, ele_ids)
-
-        # Copy DataFrame for mapped values
         df_mapped = df.copy()
-
-        # Get mapping dictionary
         mapping = SEEK.mappings
-
-        # Apply mapping correctly (avoiding index shift)
         for col in df.columns:
-            if col in mapping:  # Ensure column exists in mapping
+            if col in mapping:
                 max_idx = len(mapping[col]) - 1
                 df_mapped[col] = df[col].apply(lambda x: mapping[col][x] if 0 <= x <= max_idx else None)
 
+        unknown_tokens = {'age': '__'}
 
-        ### HEURISTIC RULES (copied from the original code)
-        def get_val(p_counts, u, most_likely, other, cutoff=.8, fraction=1):
-            if u in p_counts and p_counts[u] > cutoff:
-                return u
-            if other in p_counts and most_likely in p_counts:
-                if p_counts[other] > (p_counts[most_likely] * fraction):
-                    return other
-                else:
-                    return most_likely
-            if other in p_counts:
-                return other
-            if most_likely in p_counts:
-                return most_likely
-            return None
+        def _normalized_counts(series, attr):
+            unknown = unknown_tokens.get(attr, '_')
+            cleaned = series.fillna(unknown).replace({None: unknown})
+            counts = cleaned.value_counts(normalize=True, dropna=False)
+            return {str(key): round(float(value), 3) for key, value in counts.items()}
 
-        def get_sex_val(p): return get_val(p, u='_', most_likely='B', other='C', fraction=2)
-        def get_age_val(p): return get_val(p, u='_', most_likely='00', other='20')
-        def get_tusk_val(p): return get_val(p, u='_', most_likely='1', other='0')
-
-        def get_tear_hole_val(p, cutoff=.9, frac=2):
-            u, z = '_', '0'
-            if u in p and p[u] > cutoff: return u
-            other_sum = sum(value for key, value in p.items() if key != z and key != u)
-            if z in p and p[z] > (other_sum * frac): return z
-            return max((k for k in p if k not in {u, z}), key=lambda k: p[k], default=None)
-
-        def get_feature_val(p): return get_val(p, u='1', most_likely='0', other='_', fraction=1.5)
-
-        ### FUNCTION TO GENERATE SEEK CODE STRING
         def generate_seek_code(row):
-            """Generates a SEEK code string from DataFrame attributes for each row."""
             return (
                 f"{row['sex']}{row['age']}T{row['right_tusk']}{row['left_tusk']}"
                 f"E{row['R_tear_1']}{row['R_hole_1']}{row['R_tear_2']}{row['R_hole_2']}-"
@@ -299,66 +262,177 @@ class SEEK:
                 f"{row['right_extreme']}{row['left_extreme']}S{row['ear_special']}{row['body_special']}"
             )
 
-        ### FUNCTION TO AGGREGATE SEEK CODES AT ELEPHANT LEVEL
         def aggregate_elephant_seek_codes(df):
-            """Aggregates subject-level SEEK codes into elephant-level SEEK codes while keeping image order."""
-            
-            ### FUNCTION TO GENERATE SEEK CODE STRING
-        
             elephant_seek_dict = {}
-
             for ele_id, group in df.groupby('ele_id'):
-                if ele_id not in elephant_seek_dict:
-                    elephant_seek_dict[ele_id] = {}
+                elephant_seek_dict[ele_id] = {}
+                for attr in SEEK.attribute_names:
+                    counts = _normalized_counts(group[attr], attr)
+                    elephant_seek_dict[ele_id][attr] = SEEK.aggregation_heuristic(attr, counts, rules)
 
-                for col in df.columns:
-                    if col not in ['ele_id', 'encounter_id']:
-                        counts = group[col].value_counts(normalize=True).to_dict()
-
-                        if col == 'sex':
-                            elephant_seek_dict[ele_id][col] = get_sex_val(counts)
-                        elif col == 'age':
-                            elephant_seek_dict[ele_id][col] = get_age_val(counts)
-                        elif col in ['right_tusk', 'left_tusk']:
-                            elephant_seek_dict[ele_id][col] = get_tusk_val(counts)
-                        elif col in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1']:
-                            elephant_seek_dict[ele_id][col] = get_tear_hole_val(counts, cutoff=.9, frac=2)
-                        elif col in ['R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']:
-                            elephant_seek_dict[ele_id][col] = get_tear_hole_val(counts, cutoff=.95, frac=2.5)
-                        elif col in ['right_extreme', 'left_extreme', 'ear_special', 'body_special']:
-                            elephant_seek_dict[ele_id][col] = get_feature_val(counts)
-            import pandas as pd
             elephant_seek_df = pd.DataFrame.from_dict(elephant_seek_dict, orient='index')
             elephant_seek_df.index.name = 'ele_id'
 
-            # Merge back the aggregated SEEK codes into the original DataFrame (keeping original order)
             merged_df = df.copy()
-            for col in elephant_seek_df.columns:
-                merged_df[col] = merged_df['ele_id'].map(elephant_seek_df[col])
-
-            # Generate the SEEK code for each row
+            for attr in SEEK.attribute_names:
+                merged_df[attr] = merged_df['ele_id'].map(elephant_seek_df[attr])
             merged_df["SEEK_code"] = merged_df.apply(generate_seek_code, axis=1)
 
-            # One-hots
             ele_seek_list     = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
             subject_seek_list = [SEEK(seek).one_hot_encode() for seek in df["subj_seek_str"]]
 
-            # Keep everything on the same device/dtype as the input ele_ids
             _device = ele_ids.device
             _dtype  = ele_ids.dtype  # usually torch.long
-
             subject_seek = torch.stack(subject_seek_list).to(_device)
             ele_seek     = torch.stack(ele_seek_list).to(_device)
-
-            # Return ele_id as a tensor with same dtype/device as input
-            ele_id = torch.as_tensor(
-                merged_df["ele_id"].to_numpy(),
-                dtype=_dtype,
-                device=_device
-            )
-
+            ele_id = torch.as_tensor(merged_df["ele_id"].to_numpy(), dtype=_dtype, device=_device)
             return subject_seek, ele_seek, ele_id
         return aggregate_elephant_seek_codes(df_mapped)
+
+    @staticmethod
+    def aggregation_heuristic(attr, counts, rules):
+        attr_key = attr.lower()
+        default = '__' if attr_key == 'age' else '_'
+        if not counts:
+            return default
+
+        def get_val(u, most, other, cfg):
+            cutoff, fraction = cfg.get('cutoff', 0.8), cfg.get('fraction', 1)
+            if counts.get(u, 0) > cutoff:
+                return u
+            if counts.get(other, 0) and counts.get(most, 0):
+                if counts[other] > counts[most] * fraction:
+                    return other
+                return most
+            if counts.get(other, 0):
+                return other
+            if counts.get(most, 0):
+                return most
+            return u
+
+        def get_tear(cfg):
+            u, z = '_', '0'
+            cutoff, fraction = cfg.get('cutoff', 0.9), cfg.get('fraction', 2)
+            if counts.get(u, 0) > cutoff:
+                return u
+            other_sum = sum(val for key, val in counts.items() if key not in {u, z})
+            if counts.get(z, 0) > other_sum * fraction:
+                return z
+            best = max((key for key in counts if key not in {u, z}), key=lambda k: counts[k], default=None)
+            return best if best is not None else u
+
+        if attr_key == 'sex':
+            return get_val('_', 'B', 'C', rules['sex'])
+        if attr_key == 'age':
+            pick = get_val('__', '00', '20', rules['age'])
+            return pick if pick in {'00', '20'} else '00'
+        if attr_key in {'right_tusk', 'left_tusk', 'r_tusk', 'l_tusk'}:
+            return get_val('_', '1', '0', rules['tusks'])
+        if 'tear_1' in attr_key or 'hole_1' in attr_key:
+            return get_tear(rules['ear_most_prominent'])
+        if 'tear_2' in attr_key or 'hole_2' in attr_key:
+            return get_tear(rules['ear_least_prominent'])
+        if 'extreme' in attr_key:
+            return get_val('1', '0', '_', rules['extremes'])
+        if 'special' in attr_key:
+            return get_val('1', '0', '_', {'cutoff': 0.8, 'fraction': 1.5})
+
+        best = max(counts.items(), key=lambda item: item[1])[0]
+        return best if best is not None else default
+
+    @staticmethod
+    def aggregate_from_vote_to_SEEK(
+        seek_counts_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/SEEK_dict.json',
+        rules=None,
+        sub_ele_pairs_path='/archive/vision/beery/animal_reid/datasets/elephants_zooniverse/ele_id_project/data/out_apr2/sub_ele_pairs.json',
+        orinal_image_dict_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_original.csv',
+        export_path=None,
+        drop_missing_ears=True
+    ):
+        import json
+        import os
+        import pandas as pd
+
+        if rules is None:
+                {
+                'sex': {'cutoff': 0.7238117020284947, 'fraction': 3.2846153859098934},
+                'age': {'cutoff': 0.6080374539126856, 'fraction': 3.030614746927617},
+                'tusks': {'cutoff': 0.7864963346562002, 'fraction': 1.3312930166044628},
+                'ear_most_prominent':{'cutoff': 0.2133936013358265, 'fraction': 1.788490949619698},
+                'ear_least_prominent': {'cutoff': 0.1001741505264265, 'fraction': 1.6865733430829595},
+                'extremes': {'cutoff': 0.9641272649686263, 'fraction': 0.9361114173246684}
+                }
+
+        with open(seek_counts_path, 'r', encoding='utf-8') as handle:
+            seek_counts = json.load(handle)
+        with open(sub_ele_pairs_path, 'r', encoding='utf-8') as handle:
+            sub_ele_pairs = json.load(handle)
+
+        aggregated = {}
+        for subject_id, features in seek_counts.items():
+            aggregated[subject_id] = {}
+            for feature, counts in features.items():
+                total = sum(counts.values())
+                if not total:
+                    aggregated[subject_id][feature] = None
+                    continue
+                percentages = {val: round(count / total, 3) for val, count in counts.items()}
+                aggregated[subject_id][feature] = SEEK.aggregation_heuristic(feature, percentages, rules)
+
+        image_seek_df = pd.DataFrame(aggregated).T
+        image_seek_df.index.name = 'subject_id'
+
+        def build_seek(row):
+            return f"{row['Sex']}{row['Age']}T{row['R_tusk']}{row['L_tusk']}E{row['R_tear_1']}{row['R_hole_1']}{row['R_tear_2']}{row['R_hole_2']}-{row['L_tear_1']}{row['L_hole_1']}{row['L_tear_2']}{row['L_hole_2']}X{row['R_extreme']}{row['L_extreme']}S{row['Special_ear']}{row['Special_body']}"
+
+        image_seek_df['SEEK'] = image_seek_df.apply(build_seek, axis=1).drop(image_seek_df.index[:3])
+
+        image_seek_df['ele_id'] = image_seek_df.index.map(lambda idx: sub_ele_pairs.get(str(idx)))
+
+        merged_df = pd.read_csv(orinal_image_dict_path)
+
+        if 'subject-SEEK' in merged_df.columns and 'old-subject-SEEK' not in merged_df.columns:
+            merged_df = merged_df.rename(columns={'subject-SEEK': 'old-subject-SEEK'})
+        else:
+            raise ValueError("Input DataFrame must contain 'subject-SEEK' column but contains 'old-subject-SEEK' column.")
+
+        image_seek_df = image_seek_df.copy()
+        image_seek_df.index = image_seek_df.index.astype(int)
+        merged_df = merged_df.merge(image_seek_df[['SEEK']], left_on='subject_id', right_index=True, how='left')
+        merged_df = merged_df.rename(columns={'SEEK': 'subject-SEEK'})
+
+        if 'old-subject-SEEK' in merged_df.columns and 'subject-SEEK' in merged_df.columns:
+            cols = list(merged_df.columns)
+            old_idx, new_idx = cols.index('old-subject-SEEK'), cols.index('subject-SEEK')
+            if old_idx > new_idx:
+                cols[new_idx], cols[old_idx] = cols[old_idx], cols[new_idx]
+                merged_df = merged_df[cols]
+
+        if drop_missing_ears and {'right_ear_path', 'left_ear_path'}.issubset(merged_df.columns):
+            def remove_ears(df):
+                df = df.copy()
+                right_missing = df['right_ear_path'].isna() | df['right_ear_path'].astype(str).str.lower().eq('nan')
+                left_missing = df['left_ear_path'].isna() | df['left_ear_path'].astype(str).str.lower().eq('nan')
+                valid_right = right_missing & df['subject-SEEK'].notna()
+                valid_left = left_missing & df['subject-SEEK'].notna()
+                df.loc[valid_right, 'subject-SEEK'] = (
+                    df.loc[valid_right, 'subject-SEEK'].astype(str).str.slice_replace(7, 11, '____')
+                )
+                df.loc[valid_left, 'subject-SEEK'] = (
+                    df.loc[valid_left, 'subject-SEEK'].astype(str).str.slice_replace(12, 16, '____')
+                )
+                return df
+
+            merged_df = remove_ears(merged_df)
+
+        if export_path:
+            export_dir = os.path.dirname(export_path)
+            if export_dir:
+                os.makedirs(export_dir, exist_ok=True)
+            target_df = merged_df if merged_df is not None else image_seek_df
+            target_df.to_csv(export_path, index=False if merged_df is not None else True)
+
+        return merged_df, image_seek_df
     
     def perfect_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
         return subject_SEEK
@@ -369,14 +443,14 @@ class SEEK:
     def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
             # Randomly choose between oracle correction and perfect correction
             if torch.rand(1) < p:
-                return elephant_SEEK
+                return subject_SEEK
             else:
                 return concept_logits
 
     def correct_or_hard_at_prob(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
             # Randomly choose between oracle correction and perfect correction
             if torch.rand(1) < p:
-                return elephant_SEEK
+                return subject_SEEK
             else:
                 return SEEK.closest_valid_one_hot(concept_logits)
             
@@ -384,7 +458,7 @@ class SEEK:
     def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
             # Randomly choose between oracle correction and perfect correction
             if torch.rand(1) < 0.5:
-                return elephant_SEEK
+                return subject_SEEK
             else:
                 return SEEK.closest_valid_one_hot(concept_logits)
 

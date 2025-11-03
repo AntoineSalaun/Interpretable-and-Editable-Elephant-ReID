@@ -1,0 +1,111 @@
+cpu-bind=MASK - beery-l40s-3, task  0  0 [3397129]: mask 0x20000 set
+== exp_1_1 ==
+Tue Oct 28 05:32:22 PM EDT 2025
+/data/vision/beery/scratch/antoine/CBM_reid/methods/backbone.py:34: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(weight_path, map_location=self.device)
+2025-10-28 17:32:33,200 | INFO | -------- Initializing Projector: small---
+2025-10-28 17:32:33,200 | INFO | Learning Rate: 5e-06
+2025-10-28 17:32:33,200 | INFO | Print Every: 5
+2025-10-28 17:32:33,200 | INFO | Loss Type: ArcFace
+2025-10-28 17:32:33,200 | INFO | Margin: 0.5, Scale: 64
+2025-10-28 17:32:33,200 | INFO | Weights reset: True
+2025-10-28 17:32:33,200 | INFO | Intervention function used during training: correct_or_hard
+2025-10-28 17:32:33,200 | INFO | Alpha (weight of the projector in the final embeddings): 0.5
+2025-10-28 17:32:33,200 | INFO | Saving results to: /data/vision/beery/scratch/antoine/experiments/exp_[800epochs]exp_2.1
+
+/data/vision/beery/scratch/antoine/CBM_reid/methods/concept_head_tunneled.py:424: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  self.load_state_dict(torch.load(path, map_location='cuda'))
+Concept head loaded from /data/vision/beery/scratch/antoine/CBM_reid/weights/concept_w.pt
+2025-10-28 17:32:33,217 | INFO | ============ STARTING TRAINING for 5 epochs - Projector parameters require gradients: True with intervention function: correct_or_hard 
+2025-10-28 17:32:33,217 | INFO | Parameters requiring gradients - Projector: True, Backbone_for_concepts: False, Backbone: True, Concept_head: False
+2025-10-28 17:33:49,548 | INFO | Epoch 1/5 | Loss: 7.0270 | Batch R@1: 1.16% | Train: R@1=17.1% R@5=32.9% R@20=50.5% R@100=72.2% | Val: R@1=22.7% R@5=32.4% R@10=38.8% R@20=45.1% R@100=66.3%
+2025-10-28 17:33:49,549 | INFO | new best weights
+2025-10-28 17:35:02,743 | INFO | Epoch 2/5 | Loss: 6.8458 | Batch R@1: 0.60% | Train: R@1=17.6% R@5=34.5% R@20=52.0% R@100=73.2% | Val: R@1=22.5% R@5=32.4% R@10=38.2% R@20=44.5% R@100=65.5%
+2025-10-28 17:36:14,810 | INFO | Epoch 3/5 | Loss: 6.7446 | Batch R@1: 0.50% | Train: R@1=17.6% R@5=34.1% R@20=51.1% R@100=72.7% | Val: R@1=23.8% R@5=34.0% R@10=39.5% R@20=46.4% R@100=65.9%
+2025-10-28 17:36:14,811 | INFO | new best weights
+2025-10-28 17:37:27,026 | INFO | Epoch 4/5 | Loss: 6.5801 | Batch R@1: 0.71% | Train: R@1=17.9% R@5=33.7% R@20=51.1% R@100=72.7% | Val: R@1=23.7% R@5=33.1% R@10=39.2% R@20=46.6% R@100=66.3%
+2025-10-28 17:38:39,134 | INFO | Epoch 5/5 | Loss: 6.4767 | Batch R@1: 0.40% | Train: R@1=17.3% R@5=33.3% R@20=50.8% R@100=72.7% | Val: R@1=23.2% R@5=33.5% R@10=39.1% R@20=46.3% R@100=66.0%
+2025-10-28 17:38:39,438 | INFO | ============ TRAINING COMPLETE ============
+2025-10-28 17:38:39,438 | INFO | Best Val Recall@1: 23.76%
+2025-10-28 17:38:39,438 | INFO | Weights saved to: /data/vision/beery/scratch/antoine/experiments/exp_[800epochs]exp_2.1/projector_w.pt and /data/vision/beery/scratch/antoine/experiments/exp_[800epochs]exp_2.1/backbone_w.pt
+2025-10-28 17:38:39,438 | INFO | Testing with intervention functions: ORACLE, 100% Correction, 50% Correction + hard, 0% Correction, 0% Correction Hard
+2025-10-28 17:38:39,440 | INFO | Retrieval with ORACLE correction and aggregate_gallery_seeks=True-------------------------------------
+2025-10-28 17:39:09,727 | INFO | Results with ORACLE correction: Recall@1: 30.16%, Recall@5: 42.12%, Recall@10: 47.75%, Recall@20: 54.00%, Recall@100: 72.58%
+2025-10-28 17:39:09,727 | INFO | Recall@1: 30.16%
+Recall@5: 42.12%
+Recall@10: 47.75%
+Recall@20: 54.00%
+Recall@100: 72.58%
+
+2025-10-28 17:39:09,727 | INFO | Retrieval with 100% Correction correction and aggregate_gallery_seeks=True-------------------------------------
+2025-10-28 17:39:39,410 | INFO | Results with 100% Correction correction: Recall@1: 24.14%, Recall@5: 34.96%, Recall@10: 39.91%, Recall@20: 46.00%, Recall@100: 66.72%
+2025-10-28 17:39:39,411 | INFO | Recall@1: 24.14%
+Recall@5: 34.96%
+Recall@10: 39.91%
+Recall@20: 46.00%
+Recall@100: 66.72%
+
+2025-10-28 17:39:39,411 | INFO | Retrieval with 50% Correction + hard correction and aggregate_gallery_seeks=True-------------------------------------
+2025-10-28 17:40:09,223 | INFO | Results with 50% Correction + hard correction: Recall@1: 23.69%, Recall@5: 33.43%, Recall@10: 39.30%, Recall@20: 45.70%, Recall@100: 66.49%
+2025-10-28 17:40:09,223 | INFO | Recall@1: 23.69%
+Recall@5: 33.43%
+Recall@10: 39.30%
+Recall@20: 45.70%
+Recall@100: 66.49%
+
+2025-10-28 17:40:09,223 | INFO | Retrieval with 0% Correction correction and aggregate_gallery_seeks=True-------------------------------------
+2025-10-28 17:40:38,627 | INFO | Results with 0% Correction correction: Recall@1: 20.18%, Recall@5: 30.46%, Recall@10: 35.80%, Recall@20: 41.66%, Recall@100: 63.37%
+2025-10-28 17:40:38,627 | INFO | Recall@1: 20.18%
+Recall@5: 30.46%
+Recall@10: 35.80%
+Recall@20: 41.66%
+Recall@100: 63.37%
+
+2025-10-28 17:40:38,627 | INFO | Retrieval with 0% Correction Hard correction and aggregate_gallery_seeks=True-------------------------------------
+2025-10-28 17:41:08,915 | INFO | Results with 0% Correction Hard correction: Recall@1: 23.38%, Recall@5: 33.89%, Recall@10: 39.15%, Recall@20: 46.08%, Recall@100: 66.34%
+2025-10-28 17:41:08,915 | INFO | Recall@1: 23.38%
+Recall@5: 33.89%
+Recall@10: 39.15%
+Recall@20: 46.08%
+Recall@100: 66.34%
+
+2025-10-28 17:41:08,915 | INFO | Retrieval with ORACLE correction and aggregate_gallery_seeks=False-------------------------------------
+2025-10-28 17:41:36,850 | INFO | Results with ORACLE correction: Recall@1: 30.16%, Recall@5: 42.12%, Recall@10: 47.75%, Recall@20: 54.00%, Recall@100: 72.58%
+2025-10-28 17:41:36,850 | INFO | Recall@1: 30.16%
+Recall@5: 42.12%
+Recall@10: 47.75%
+Recall@20: 54.00%
+Recall@100: 72.58%
+
+2025-10-28 17:41:36,850 | INFO | Retrieval with 100% Correction correction and aggregate_gallery_seeks=False-------------------------------------
+2025-10-28 17:42:04,794 | INFO | Results with 100% Correction correction: Recall@1: 24.68%, Recall@5: 35.03%, Recall@10: 40.29%, Recall@20: 46.69%, Recall@100: 66.95%
+2025-10-28 17:42:04,794 | INFO | Recall@1: 24.68%
+Recall@5: 35.03%
+Recall@10: 40.29%
+Recall@20: 46.69%
+Recall@100: 66.95%
+
+2025-10-28 17:42:04,794 | INFO | Retrieval with 50% Correction + hard correction and aggregate_gallery_seeks=False-------------------------------------
+2025-10-28 17:42:31,852 | INFO | Results with 50% Correction + hard correction: Recall@1: 22.62%, Recall@5: 33.05%, Recall@10: 38.39%, Recall@20: 44.86%, Recall@100: 66.11%
+2025-10-28 17:42:31,852 | INFO | Recall@1: 22.62%
+Recall@5: 33.05%
+Recall@10: 38.39%
+Recall@20: 44.86%
+Recall@100: 66.11%
+
+2025-10-28 17:42:31,852 | INFO | Retrieval with 0% Correction correction and aggregate_gallery_seeks=False-------------------------------------
+2025-10-28 17:42:58,923 | INFO | Results with 0% Correction correction: Recall@1: 16.83%, Recall@5: 24.83%, Recall@10: 30.08%, Recall@20: 36.25%, Recall@100: 55.83%
+2025-10-28 17:42:58,923 | INFO | Recall@1: 16.83%
+Recall@5: 24.83%
+Recall@10: 30.08%
+Recall@20: 36.25%
+Recall@100: 55.83%
+
+2025-10-28 17:42:58,923 | INFO | Retrieval with 0% Correction Hard correction and aggregate_gallery_seeks=False-------------------------------------
+2025-10-28 17:43:26,459 | INFO | Results with 0% Correction Hard correction: Recall@1: 23.15%, Recall@5: 33.82%, Recall@10: 39.38%, Recall@20: 46.00%, Recall@100: 66.03%
+2025-10-28 17:43:26,459 | INFO | Recall@1: 23.15%
+Recall@5: 33.82%
+Recall@10: 39.38%
+Recall@20: 46.00%
+Recall@100: 66.03%
+

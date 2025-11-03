@@ -18,7 +18,7 @@ from seek_code import SEEK
 
 class EleHandler(data.Dataset):
     def __init__(self, dataset_dir=Path(os.environ["IMAGE_DIR"]), 
-                 dictonary_path=Path(__file__).parent.parent / 'data_processing/data/out_apr2/image_dictonary.csv', 
+                 dictonary_path=Path(__file__).parent.parent / 'data_processing/data/out_apr2/image_dictonary_optimized.csv', 
                  num_elephants=None,
                  transform=None,
                  subset=None):

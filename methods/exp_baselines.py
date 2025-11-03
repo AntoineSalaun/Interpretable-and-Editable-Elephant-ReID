@@ -21,6 +21,7 @@ test_loader = DataLoader(test_subset, batch_size=64, shuffle=True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--experiment', type=str, required=True, help='Experiment type')
 parser.add_argument('--epochs', type=int, default=800, help='Number of training epochs')
+parser.add_argument('--network_size', type=str, default='small', help='Size of the projector network: small or large')
 args = parser.parse_args()
 
 
@@ -83,7 +84,7 @@ elif args.experiment == 'baseline_2_3': # Finetuning MegaDescriptor through the 
 
 elif args.experiment == 'exp_1_1': # First training of CHAIR, no correction at training time
 
-    code = '[SEP-EXP]exp_1_1'
+    code = '[800epochs]exp_1.1' #python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --epochs 800 --experiment exp_1_1
 
     MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
     MD_finedtuned = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
@@ -103,12 +104,12 @@ elif args.experiment == 'exp_1_1': # First training of CHAIR, no correction at t
         backbone_for_concepts=MD_for_concepts, 
         backbone=MD_finedtuned, 
         concept_head=concept_head, 
-        num_epochs=800)
+        num_epochs=args.epochs)
 
     # Define intervention functions for testing
     test_intervention_fns = {
-        "100% Correction": SEEK.oracle_correction,
-        "50% Correction + soft": SEEK.correct_or_soft,
+        "ORACLE": SEEK.oracle_correction,
+        "100% Correction": SEEK.perfect_correction,
         "50% Correction + hard": SEEK.correct_or_hard,
         "0% Correction": None,
         "0% Correction Hard": SEEK.hard
@@ -121,8 +122,50 @@ elif args.experiment == 'exp_1_1': # First training of CHAIR, no correction at t
         concept_head=concept_head, 
         train_loader=train_loader, 
         test_loader=test_loader, 
-        intervention_fns=test_intervention_fns)
+        intervention_fns=test_intervention_fns
+    )
     
+elif args.experiment == 'exp_2_1': #python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --epochs 800 --experiment exp_2_1
+    code = '[800epochs]exp_2.1'
+
+    MD_for_concepts = Backbone(model_name="MegaDescriptor", pretraining="backbone_for_concepts_w", experiment_code=code)
+    MD_finedtuned = Backbone(model_name="MegaDescriptor", pretraining="savannah_elephants", experiment_code=code)
+    pr = Projector(loss_type ='ArcFace', lr=5e-6, scale=64, margin=0.5, experiment_code=code, intervention_fn=SEEK.perfect_correction, alpha = 0.5, network_type=args.network_size)
+    concept_head = ConceptHeadTunneled(loss=categorical_CE_loss, experiment_code = code, layer = CrossedHeadNN(), reset_weights=False)
+
+    # Freeze other models and unfreeze the projector
+    MD_for_concepts.freeze()
+    MD_finedtuned.unfreeze()
+    concept_head.freeze()
+    pr.unfreeze()
+
+    # Train the model
+    pr.train(
+        train_loader, 
+        test_loader, 
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_finedtuned, 
+        concept_head=concept_head, 
+        num_epochs=args.epochs)
+
+    # Define intervention functions for testing
+    test_intervention_fns = {
+        "ORACLE": SEEK.oracle_correction,
+        "100% Correction": SEEK.perfect_correction,
+        "50% Correction + hard": SEEK.correct_or_hard,
+        "0% Correction": None,
+        "0% Correction Hard": SEEK.hard
+    }
+
+    # Run the structured test method
+    pr.test(
+        backbone_for_concepts=MD_for_concepts, 
+        backbone=MD_finedtuned, 
+        concept_head=concept_head, 
+        train_loader=train_loader, 
+        test_loader=test_loader, 
+        intervention_fns=test_intervention_fns
+    )
 
 else:
     raise ValueError('Experiment not recognized')

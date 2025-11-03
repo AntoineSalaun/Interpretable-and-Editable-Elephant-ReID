@@ -188,7 +188,7 @@ class ConceptHeadTunneled:
                     ch=None,
                     backbone_for_concepts=backbone_for_concepts,
                     intervention_fn=fn,
-                    show_matches=False, show_plot=True, show_tsne=True, print_results=False, aggregate_seeks=False,
+                    show_matches=False, show_plot=False, show_tsne=False, print_results=False, aggregate_seeks=False,
                     distance=distance
                 )
                 
@@ -239,6 +239,7 @@ class ConceptHeadTunneled:
         
         if aggregate_seeks:
             subject_seek, collected_embeddings, collected_labels = SEEK.aggregate_seek(collected_embeddings, collected_labels, rules = aggregate_rules)
+            
         collected_embeddings = collected_embeddings.cpu()
         collected_labels = collected_labels
 

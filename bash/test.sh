@@ -19,7 +19,7 @@ set -euo pipefail
 # Ensure log directory exists (harmless if it already does)
 mkdir -p /data/vision/beery/scratch/antoine/CBM_reid/bash/slurm_logs
 
-echo "== SLURM ENV =="
+echo "== exp_2_1 with full correction and medium network size =="
 date
 
-python /data/vision/beery/scratch/antoine/CBM_reid/methods/aggregation_vote_parm_search.py
+python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --epochs 800 --experiment exp_2_1 --network_size medium
