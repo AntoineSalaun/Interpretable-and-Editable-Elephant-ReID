@@ -1,2 +1,0 @@
-cpu-bind=MASK - beery-l40s-3, task  0  0 [3900838]: mask 0x10000000000000000 set
-python: can't open file '/data/vision/beery/scratch/antoine/CBM_reid/BM_reid/methods/aggregation_vote_parm_search.py': [Errno 2] No such file or directory

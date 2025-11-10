@@ -3,7 +3,7 @@ from PIL import Image
 import pandas as pd
 import random
 import torch
-import os
+import os, math
 from dotenv import load_dotenv
 load_dotenv() 
 
@@ -14,65 +14,79 @@ import torchvision.transforms as transforms
 
 from seek_code import SEEK
 
+from sklearn.model_selection import train_test_split
+
+
 
 
 class EleHandler(data.Dataset):
-    def __init__(self, dataset_dir=Path(os.environ["IMAGE_DIR"]), 
-                 dictonary_path=Path(__file__).parent.parent / 'data_processing/data/out_apr2/image_dictonary_optimized.csv', 
-                 num_elephants=None,
-                 transform=None,
+    def __init__(self, 
+                 dictonary_path=None, 
+                 dataset_type= 'zooniverse',
                  subset=None):
         
+        if dataset_type =='mara':
+            dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_new/')
+            if dictonary_path is None: dictonary_path = Path("/data/vision/beery/scratch/antoine/CBM_reid/data_processing/mara/image_dictionary_optimized.csv")
+            preprocessed_dir = Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/mara')
+        elif dataset_type == 'zooniverse':
+            dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse')
+            if dictonary_path is None: dictonary_path = Path("/data/vision/beery/scratch/antoine/CBM_reid/data_processing/zooniverse/image_dictionary_optimized.csv")
+            preprocessed_dir = Path('/data/vision/beery/scratch/antoine/CBM_reid/')
+        
         self.dataset_dir = dataset_dir
-        self.num_elephants = num_elephants
         self.image_dir = Path(dataset_dir) / 'images'
-        self.transform = transform
+        self.dataset_dir = dataset_dir
+        self.preprocessed_dir = preprocessed_dir
 
-        # Preprocessing transformation
-        if transform == 'MegaDescriptor-elephant':
-            import torchvision.transforms as transforms
-            self.transform = transforms.Compose([
-                transforms.Resize([224, 224]),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
-            ])
         
         # Load the dictionary and create ele_id mapping
+        print("trying to load dictonary from: ", dictonary_path)
         self.dictonary = pd.read_csv(dictonary_path)
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
+        if subset is not None:
+            if subset == 'IDI_6':
+                # Filter the dictionary to include only EFA_IDI season and elephants that appear at least 6 times
+                self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+                valid_ele_ids = self.dictonary['ele_id'].value_counts()[lambda x: x >= 6].index
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
 
-        if subset == 'IDI_6':
-            # Filter the dictionary to include only EFA_IDI season and elephants that appear at least 6 times
-            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
-            valid_ele_ids = self.dictonary['ele_id'].value_counts()[lambda x: x >= 6].index
-            self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
+            elif subset == 'IDI':
+                self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
+                self.dictonary = self.dictonary.reset_index(drop=True)
 
+            elif subset == '2+encounters':
+                # Keep only elephants with 2 or more encounters
+                encounter_counts = self.dictonary.groupby('ele_id')['encounter_id'].nunique()
+                valid_ele_ids = encounter_counts[encounter_counts >= 2].index
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
+            elif subset == '6_to_12_encounters':
+                # Keep only elephants with between 6 and 12 encounters
+                encounter_counts = self.dictonary.groupby('ele_id')['encounter_id'].nunique()
+                valid_ele_ids = encounter_counts[(encounter_counts >= 6) & (encounter_counts <= 12)].index
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
+            elif subset == '10_encounters_exactly':
+                # Keep only elephants with exactly 10 encounters
+                encounter_counts = self.dictonary.groupby('ele_id')['encounter_id'].nunique()
+                valid_ele_ids = encounter_counts[encounter_counts == 10].index
+                self.dictonary = self.dictonary[self.dictonary['ele_id'].isin(valid_ele_ids)].reset_index(drop=True)
+            else:
+                raise ValueError(f"Unknown subset: {subset}")
+            
             # Remap `ele_id` for the current subset
             self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
             self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if subset == 'IDI':
-            self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
-            self.dictonary = self.dictonary.reset_index(drop=True)
-
-            # Remap `ele_id` for the current subset
-            self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
-            self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
-
-                
 
     def __len__(self):
         return len(self.dictonary)
     
     def __getitem__(self, idx):
-        preprocessed_image_path = self.image_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
+        preprocessed_image_path = self.preprocessed_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
         preprocessed_image = Image.open(preprocessed_image_path).convert('RGB')
-        if self.transform:
-            preprocessed_image = self.transform(preprocessed_image)
-        else:
-            preprocessed_image = transforms.ToTensor()(preprocessed_image)
+        preprocessed_image = transforms.ToTensor()(preprocessed_image)
 
         # Load left and right ear images
         left_ear = self._load_ear(self.dictonary.iloc[idx]['left_ear_path'])
@@ -97,7 +111,7 @@ class EleHandler(data.Dataset):
     def _load_ear(self, ear_path):
         """Helper function to load ear images, returning zeros if path is NaN."""
         if pd.notna(ear_path):
-            ear_image_path = self.image_dir / ear_path
+            ear_image_path = self.preprocessed_dir / ear_path
             ear_image = Image.open(ear_image_path).convert('RGB')
             return transforms.ToTensor()(ear_image)
         return torch.zeros(3, 224, 224)
@@ -116,40 +130,38 @@ class EleHandler(data.Dataset):
 
     def print_image(self, idx, print_with_transform=True):
         # Create a figure with subplots for main image and ears
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
         
         # Main image
         image_path = self.image_dir / self.dictonary.iloc[idx]['image']
         print(f"Main image: {image_path}")
         image = Image.open(image_path).convert('RGB')
         
-        if self.transform is not None and print_with_transform:
-            image = self.transform(image)
-            ax1.imshow(image.permute(1, 2, 0))
-        else:
-            ax1.imshow(image)
+
+        #ax1.imshow(image.permute(1, 2, 0))
+        ax1.imshow(image)
         ax1.axis('off')
         ax1.set_title('Main Image')
         
-        # Left ear
-        left_ear_path = self.dictonary.iloc[idx]['left_ear_path']
-        if pd.notna(left_ear_path):
-            left_ear_image_path = self.image_dir / left_ear_path
-            print(f"Left ear: {left_ear_image_path}")
-            left_ear = Image.open(left_ear_image_path).convert('RGB')
-            ax2.imshow(left_ear)
+        ax2.imshow(Image.open( self.preprocessed_dir / self.dictonary.iloc[idx]['preprocessed_image_path']).convert('RGB'))
         ax2.axis('off')
-        ax2.set_title('Left Ear')
+        ax2.set_title('Preprocessed Image')
+
+        # Left ear
+        if pd.notna(self.dictonary.iloc[idx]['left_ear_path']):
+            left_ear_path = self.preprocessed_dir / self.dictonary.iloc[idx]['left_ear_path']
+            left_ear = Image.open(left_ear_path).convert('RGB')
+            ax3.imshow(left_ear)
+        ax3.axis('off')
+        ax3.set_title('Left Ear')
         
         # Right ear
-        right_ear_path = self.dictonary.iloc[idx]['right_ear_path']
-        if pd.notna(right_ear_path):
-            right_ear_image_path = self.image_dir / right_ear_path
-            print(f"Right ear: {right_ear_image_path}")
-            right_ear = Image.open(right_ear_image_path).convert('RGB')
+        if pd.notna(self.dictonary.iloc[idx]['right_ear_path']):
+            right_ear_path = self.preprocessed_dir / self.dictonary.iloc[idx]['right_ear_path']
+            right_ear = Image.open(right_ear_path).convert('RGB')
             ax3.imshow(right_ear)
-        ax3.axis('off')
-        ax3.set_title('Right Ear')
+        ax4.axis('off')
+        ax4.set_title('Right Ear')
         
         plt.show()
         
@@ -171,7 +183,6 @@ class EleHandler(data.Dataset):
         return self.dictonary[self.dictonary['#season'] == 'EFA_IDU'].index.tolist()
     
     def split_along_encounters(self, split_sizes=[0.7, 0.15, 0.15], hour_delta=1, identification=None):
-        from sklearn.model_selection import train_test_split
 
         # Ensure split sizes sum to 1
         if sum(split_sizes) != 1:
@@ -201,6 +212,35 @@ class EleHandler(data.Dataset):
         print(f"Train indices: {len(train_indices)}, Validation indices: {len(val_indices)}, Test indices: {len(test_indices)}")
 
         return train_indices, val_indices, test_indices
+    
+    def split_parallel_to_encounters(self, split_sizes=[0.5, 0.5]):
+        # Work on a copy of the dictionary to avoid modifying the original
+        dictonary_copy = self.dictonary.copy()
+
+        #put all the elephants that are present in only one encounter in the train set
+        encounter_counts = dictonary_copy.groupby('ele_id')['encounter_id'].nunique()
+        single_encounter_elephants = encounter_counts[encounter_counts == 1].index
+        train_indices, test_indices = dictonary_copy[dictonary_copy['ele_id'].isin(single_encounter_elephants)].index.tolist() , []
+        print(f"Single encounter elephants: {len(single_encounter_elephants)}, indices: {len(train_indices)}")
+
+        # Remove these elephants from the copy to process the others
+        dictonary_copy = dictonary_copy[~dictonary_copy['ele_id'].isin(single_encounter_elephants)].reset_index(drop=True)
+
+        # split by the encounters for each of the remaining elephants
+        for ele_id in dictonary_copy['ele_id'].unique():
+            unique_encounters = dictonary_copy[dictonary_copy['ele_id'] == ele_id]['encounter_id'].unique()
+
+            train_encounters, test_encounters = train_test_split(unique_encounters, test_size=math.floor(split_sizes[1]*len(unique_encounters)),  shuffle=True)
+
+            train_indices += dictonary_copy[(dictonary_copy['ele_id'] == ele_id) & (dictonary_copy['encounter_id'].isin(train_encounters))].index.tolist()
+            test_indices += dictonary_copy[(dictonary_copy['ele_id'] == ele_id) & (dictonary_copy['encounter_id'].isin(test_encounters))].index.tolist()
+
+            #print(f"Train encounters: {len(train_encounters)}, Test encounters: {len(test_encounters)}")
+            #print(f"Elephant {ele_id} - Train indices: {len(dictonary_copy[(dictonary_copy['ele_id'] == ele_id) & (dictonary_copy['encounter_id'].isin(train_encounters))].index.tolist())}, Test indices: {len(dictonary_copy[(dictonary_copy['ele_id'] == ele_id) & (dictonary_copy['encounter_id'].isin(test_encounters))].index.tolist())}")
+
+        print(f"TOTAL - Train indices: {len(train_indices)}, Test indices: {len(test_indices)}")
+
+        return train_indices,  test_indices
 
     def split_perpendicular_to_elephants_and_encounters(self, split_sizes=[0.5, 0.5], hour_delta=0.2):
         # Ensure split sizes sum to 1

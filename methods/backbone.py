@@ -12,7 +12,7 @@ import timm
 
 
 class Backbone(nn.Module):
-    def __init__(self, model_name="MegaDescriptor", with_ears=True, pretraining="savannah_elephants", lr=5e-6, experiment_code=None, print_every=5):
+    def __init__(self, model_name="MegaDescriptor", with_ears=True, pretraining="savannah_elephants", lr=5e-6, experiment_code=None, print_every=5, num_classes=310):
             
             self.device = 'cuda' if torch.cuda.is_available() else "cpu"
             super().__init__()
@@ -44,7 +44,7 @@ class Backbone(nn.Module):
 
             # Optimizer & Loss Function
             self.optimizer = optim.Adam(self.layer.parameters(), lr=lr)
-            self.loss_fn = losses.ArcFaceLoss(num_classes=310, embedding_size=2304, margin=0.5, scale=64)
+            self.loss_fn = losses.ArcFaceLoss(num_classes=int(num_classes), embedding_size=2304, margin=0.5, scale=64)
             self.loss_optimizer = optim.Adam(self.loss_fn.parameters(), lr=1e-5)
 
             # Create experiment directory
@@ -143,18 +143,18 @@ class Backbone(nn.Module):
             
             # train one epoch on train_loader
             train_loss, batch_recall = self.epoch_pass(train_loader, training=True)
-            epoch_train_recall = ret.one_out_retrieval(self, train_loader)
             
-            #if epoch % self.print_every == 0 :
-            epoch_val_recall = ret.evaluate_model(model=self, model_to_evaluate= 'backbone', train_loader=train_loader, test_loader=val_loader, print_results = False)
-            print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
-            with open(self.experiment_dir / 'backbone_log.txt', 'a') as f: f.write(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]) + "\n")
+            if epoch % self.print_every == 0 :
+                epoch_train_recall = ret.one_out_retrieval(self, train_loader)
+                epoch_val_recall = ret.evaluate_model(model=self, model_to_evaluate= 'backbone', train_loader=train_loader, test_loader=val_loader, print_results = False)
+                print(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]))
+                with open(self.experiment_dir / 'backbone_log.txt', 'a') as f: f.write(f"Epoch {epoch+1}/{num_epochs} | Loss: {train_loss:.4f} | Batch R@1: {batch_recall*100:.2f}% | Train: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_train_recall.items()]) + " | Val: " + " ".join([f"R@{k}={v*100:.1f}%" for k,v in epoch_val_recall.items()]) + "\n")
 
 
-            # Save best model weights
-            if epoch_val_recall[1] > best_val_recall:
-                best_val_recall = epoch_val_recall[1]
-                best_weights = self.layer.state_dict()
+                # Save best model weights
+                if epoch_val_recall[1] > best_val_recall:
+                    best_val_recall = epoch_val_recall[1]
+                    best_weights = self.layer.state_dict()
 
         # Save best weights
         torch.save(best_weights, self.experiment_dir / 'backbone_w.pt')

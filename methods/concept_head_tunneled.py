@@ -220,16 +220,20 @@ class ConceptHeadTunneled:
 
         self.freeze()
 
-        for batch in loader:
+        for batch in tqdm(loader):
             #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK, idx
             images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device)
 
             with torch.no_grad():
-                embeddings = backbone.forward(images, left_ears, right_ears)
                 
-                outputs = self.layer(embeddings)
-
-                predicted_SEEK = SEEK.closest_valid_one_hot(outputs)
+                if intervention_fn is SEEK.perfect_correction or intervention_fn is SEEK.oracle_correction: # If we will correct either perfectly or with oracle, no need to compute initial prediction
+                    embeddings = None
+                    outputs = None
+                    predicted_SEEK = None
+                else: # Regular scenario, compute embeddings and predictions
+                    embeddings = backbone.forward(images, left_ears, right_ears)
+                    outputs = self.layer(embeddings)
+                    predicted_SEEK = SEEK.closest_valid_one_hot(outputs)
 
                 if intervention_fn is not None:
                     predicted_SEEK = intervention_fn(predicted_SEEK, subject_SEEK, ele_SEEK)

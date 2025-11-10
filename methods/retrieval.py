@@ -58,6 +58,8 @@ class Retrieval:
 
             similarity_matrix = torch.stack(rows, dim=0).to(dtype=query_embeddings.dtype)
 
+            #print('similarity matrix has size ', similarity_matrix.size())
+
         if square:  similarity_matrix.fill_diagonal_(0)             # Exclude self-similarity if only one set of embeddings is provided
 
 
@@ -65,7 +67,7 @@ class Retrieval:
 
     def compute_recall_at_k(self, similarity_matrix, query_labels, gallery_labels, k):
         top_k_vals, top_k_indices = torch.topk(similarity_matrix, k=k, dim=1)
-
+        #print('compute recall at k ', k)
         total_relevant = 0
         for i in range(similarity_matrix.size(0)):
             tk = gallery_labels[top_k_indices[i]]              # (k,)

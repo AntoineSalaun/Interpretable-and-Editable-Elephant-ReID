@@ -167,6 +167,22 @@ elif args.experiment == 'exp_2_1': #python /data/vision/beery/scratch/antoine/CB
         intervention_fns=test_intervention_fns
     )
 
+    if args.experiment == 'mara2+_MD_finetuning': #python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --epochs 200 --experiment mara2+_MD_finetuning
+        code ='mara2+_MD_finetuning'
+
+        mara_dataset = EleHandler(subset='2+encounters', dictonary_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/mara/image_dictionary_optimized.csv', dataset_type='mara')
+        train_indices, test_indices = mara_dataset.split_parallel_to_encounters()
+
+        train_subset = Subset(mara_dataset, train_indices)
+        test_subset = Subset(mara_dataset, test_indices)
+
+        train_loader = DataLoader(train_subset, batch_size=64, shuffle=True)
+        test_loader = DataLoader(test_subset, batch_size=64, shuffle=True)
+
+        MD_finetuned = Backbone(model_name="MegaDescriptor", experiment_code=code, lr=5e-6, num_classes=len(mara_dataset.ele_id_to_label))
+        MD_finetuned.train(train_loader, test_loader, num_epochs=args.epochs)
+        MD_finetuned.test(train_loader, test_loader)
+
 else:
     raise ValueError('Experiment not recognized')
 
