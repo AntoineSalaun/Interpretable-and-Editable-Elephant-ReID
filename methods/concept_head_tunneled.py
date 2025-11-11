@@ -130,7 +130,7 @@ class ConceptHeadTunneled:
     def train(self, train_loader, val_loader, backbone, num_epochs=10, predict_ele_SEEK = False):
         
         self.optimizer = Adam(list(self.layer.parameters()) + list(backbone.layer.parameters()), lr=self.lr, weight_decay=0.1*self.lr)
-        print(f"Training ConceptHead for {num_epochs} epochs, reseting weights, and the backbone parameters are,", any(param.requires_grad for param in backbone.layer.parameters()), ' concept head parameters are ', any(param.requires_grad for param in self.layer.parameters()))
+        print(f"Training ConceptHead for {num_epochs} epochs, and the backbone parameters are,", any(param.requires_grad for param in backbone.layer.parameters()), ' concept head parameters are ', any(param.requires_grad for param in self.layer.parameters()))
 
         history = []
         for epoch in range(num_epochs):

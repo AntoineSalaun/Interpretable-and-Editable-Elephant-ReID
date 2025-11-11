@@ -19,7 +19,8 @@ set -euo pipefail
 # Ensure log directory exists (harmless if it already does)
 mkdir -p /data/vision/beery/scratch/antoine/CBM_reid/bash/slurm_logs
 
-echo "== mara2+_MD_finetuning 400 EPOCHS BACKBONE FINETUNING =="
+echo "== TRAINING CONCEPT HEAD ON FULL MARA WITH NO PRETRAINING(200 EPOCHS) =="
 date
 
-python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --epochs 400 --experiment mara2+_MD_finetuning
+#python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py --experiment baseline_2_2 --epochs 50 --dataset mara --code MARA2+_50ep_MDfinetuning
+python /data/vision/beery/scratch/antoine/CBM_reid/methods/exp_baselines.py  --epochs 200 --experiment train_concept_head_on_full_mara

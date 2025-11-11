@@ -19,6 +19,10 @@ class Backbone(nn.Module):
 
             self.model_name = model_name
             self.with_ears = with_ears
+            exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            self.experiment_dir = Path.cwd().parent / 'experiments' / f'exp_{exp_code}'
+            self.experiment_dir.mkdir(parents=True, exist_ok=True)
+
 
             # Load the selected model
             if model_name == "MegaDescriptor":
@@ -27,6 +31,9 @@ class Backbone(nn.Module):
                 self.layer = AutoModel.from_pretrained("conservationxlabs/miewid-msv3", trust_remote_code=True)
             else:
                 raise ValueError(f"Unsupported model: {model_name}")
+
+            # Ensure weight_path is defined even if no pretraining is provided
+            weight_path = None
 
             # Load pretraining weights if provided (only for MegaDescriptor)
             if model_name == "MegaDescriptor" and pretraining is not None:
@@ -49,21 +56,24 @@ class Backbone(nn.Module):
 
             # Create experiment directory
             self.exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            self.experiment_dir = Path(__file__).parent.parent / 'experiments' / f'exp_{self.exp_code}'
-            self.experiment_dir.mkdir(parents=True, exist_ok=True)
-
             with open(self.experiment_dir / 'backbone_log.txt', 'w') as f:
                 f.write(f'--------Backbone: {model_name} pretrained with {pretraining}---\n')
                 f.write(f'Learning Rate: {lr}\n')
                 f.write(f'Print Every: {print_every}\n')
                 f.write(f'With Ears: {self.with_ears}\n')
-                f.write(f'Loading weights from: {weight_path}   \n')
+                if weight_path is not None:
+                    f.write(f'Loading weights from: {weight_path}   \n')
+                else:
+                    f.write('No pretraining weights loaded\n')
                 f.write(f'Optimizer Parameters: {self.optimizer} \n')
                 f.write(f'Loss Optimizer Parameters: {self.loss_optimizer} \n')
                 f.write(f'Loss Function: {self.loss_fn} \n')
                 # Save experiment parameters
                 f.write(f'Device: {self.device}\n')
                 #f.write(f'Architecture: {self.layer}\n')
+                f.write(f'Total Parameters: {sum(p.numel() for p in self.layer.parameters()):,}\n')
+                f.write(f'Trainable Parameters: {sum(p.numel() for p in self.layer.parameters() if p.requires_grad):,}\n')
+                f.write(f'Experiment Code: {self.exp_code}\n')    
                 f.write(f'Total Parameters: {sum(p.numel() for p in self.layer.parameters()):,}\n')
                 f.write(f'Trainable Parameters: {sum(p.numel() for p in self.layer.parameters() if p.requires_grad):,}\n')
                 f.write(f'Experiment Code: {self.exp_code}\n')    
