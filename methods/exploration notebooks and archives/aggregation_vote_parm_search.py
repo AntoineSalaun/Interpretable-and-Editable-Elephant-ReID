@@ -14,10 +14,10 @@ import pandas as pd
 
 
 def aggregate_from_vote_to_SEEK(
-    seek_counts_path = '/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/SEEK_dict.json',
+    seek_counts_path = '/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/SEEK_dict.json',
     rules=None,
     sub_ele_pairs_path= '/archive/vision/beery/animal_reid/datasets/elephants_zooniverse/ele_id_project/data/out_apr2/sub_ele_pairs.json',
-    orinal_image_dict_path  ='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_original.csv',
+    orinal_image_dict_path  ='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_original.csv',
     export_path=None,
     drop_missing_ears=True
 ):
@@ -182,7 +182,7 @@ def test_compute_traditional_seek_codes_basic():
 
     merged_df_mv,image_seek_df_mv = aggregate_from_vote_to_SEEK(
         rules=traditional_rules,
-        export_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_traditional_rules.csv',
+        export_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_traditional_rules.csv',
         drop_missing_ears=False
     )
 
@@ -198,7 +198,7 @@ def test_compute_traditional_seek_codes_basic():
 
     merged_df_mv,image_seek_df_mv = aggregate_from_vote_to_SEEK(
     rules=traditional_rules,
-    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_traditional_rules_without_ears.csv',
+    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_traditional_rules_without_ears.csv',
     drop_missing_ears=True
     )
 
@@ -223,7 +223,7 @@ def test_compute_traditional_seek_codes_basic():
 
     merged_df_mv,image_seek_df_mv = aggregate_from_vote_to_SEEK(
     rules=majority_vote_rules,
-    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_traditional_rules.csv',
+    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_traditional_rules.csv',
     drop_missing_ears=True
     )
 
@@ -254,12 +254,12 @@ traditional_rules = {
 def retrieval_vs_rule(rules):
     _, _ = aggregate_from_vote_to_SEEK(
     rules=traditional_rules,
-    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_temp.csv',
+    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_temp.csv',
     drop_missing_ears=True
     )
 
 
-    dataset = EleHandler(subset='IDI_6', dictonary_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_temp.csv')
+    dataset = EleHandler(subset='IDI_6', dictonary_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_temp.csv')
     train_indices, test_indices = dataset.split_perpendicular_to_elephants_and_encounters(split_sizes=[0.5,0.5], hour_delta = 0.2)
 
     train_subset = Subset(dataset, train_indices)
@@ -287,7 +287,7 @@ def retrieval_vs_rule(rules):
 def distant_from_agg_to_orcale(rules):
     merged_df_mv,image_seek_df_mv = aggregate_from_vote_to_SEEK(
     rules=rules,
-    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_temp.csv',
+    export_path='/data/vision/beery/scratch/antoine/CBM_reid/data/Elephant4Africa/out_apr2/image_dictonary_temp.csv',
     drop_missing_ears=True
     )
 

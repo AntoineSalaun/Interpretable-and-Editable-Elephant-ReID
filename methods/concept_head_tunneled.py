@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
+import wandb
 
 def categorical_CE_loss(output,labels):
 
@@ -23,30 +24,60 @@ def categorical_CE_loss(output,labels):
         tot_loss += att_loss[key]
         idx += value
 
-
     return tot_loss
 
 
 class ConceptHeadTunneled:
-    def __init__(self, lr=1e-5, loss=categorical_CE_loss,  experiment_code = None, reset_weights = True, layer = None, pretraining = 'concept_w'):
+    def __init__(self, lr=1e-5, wd=None, loss=categorical_CE_loss,  experiment_code = None, reset_weights = True, layer = None, pretraining = None):
 
         self.device = 'cuda' if torch.cuda.is_available() else "cpu"
         self.input_dim = 768 * 3  # Handle concatenated embeddings
         self.layer = layer
+        self.weights_dir = Path(__file__).parent.parent / "weights"
 
-        if (Path(__file__).parent.parent / f"weights/{pretraining}.pt").exists() and reset_weights == False:
-            self.layer.load_model(Path(__file__).parent.parent / f"weights/{pretraining}.pt")
+        if pretraining is not None and str(pretraining).lower() != 'none' and reset_weights == False:
+            state_dict, weight_path = self.load_pretraining(pretraining)
+            self.layer.load_state_dict(state_dict["model"] if "optimizer" in state_dict else state_dict, strict=False)
+            wandb.summary.update({'ConceptHead/loaded_pretrained_weights': str(weight_path)})
         
         #self.optimizer = Adam(self.layer.parameters(), lr)
-
         self.loss_fn = loss
         self.lr = lr
+        self.wd = 0.1 * lr if wd is None else wd
 
         # Create experiment directory
         exp_code = experiment_code or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.experiment_dir = Path(__file__).parent.parent / 'experiments' / f'exp_{exp_code}'
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         self.exp_code = exp_code
+
+        wandb.summary.update({"ConceptHead/experiment_dir": str(self.experiment_dir),
+                              "ConceptHead/lr": lr,
+                              "ConceptHead/wd": self.wd,
+                             "ConceptHead/loss": loss,
+                             "ConceptHead/layer": layer,
+                             "ConceptHead/pretraining": pretraining,
+                             "ConceptHead/reset_weights": reset_weights})
+
+
+    def load_pretraining(self, pretraining):
+        candidate = Path(str(pretraining)).expanduser()
+        if candidate.is_absolute() and candidate.exists():
+            weight_path = candidate
+        else:
+            repo_candidate = Path(__file__).parent.parent / candidate
+            if repo_candidate.exists():
+                weight_path = repo_candidate
+            elif candidate.suffix:
+                weight_path = self.weights_dir / candidate.name
+            else:
+                weight_path = self.weights_dir / f"{candidate.name}.pt"
+
+        if not weight_path.exists():
+            raise FileNotFoundError(f"Could not find concept head pretraining weights for '{pretraining}'")
+
+        state_dict = torch.load(weight_path, map_location=self.device)
+        return state_dict, weight_path
 
 
     def accuracy_fn(self, predicted, labels):
@@ -126,33 +157,61 @@ class ConceptHeadTunneled:
         epoch_accuracies = {name: accuracy / images_seen for name, accuracy in epoch_accuracies.items()}
         return epoch_loss, epoch_accuracies
 
-
-    def train(self, train_loader, val_loader, backbone, num_epochs=10, predict_ele_SEEK = False):
+    def save_weights(self, backbone, epoch, val_acc):
+        wandb.summary.update({"ConceptHead/saved_weights": f"Saving ConceptHead weights at epoch {epoch} with val_acc={val_acc}, in {self.experiment_dir}"})
+        weights = self.layer.state_dict()
+        torch.save(weights, self.experiment_dir / f'concept_w.pt')
+        wandb.save(str(self.experiment_dir / f'concept_w.pt'), base_path=str(self.experiment_dir))
         
-        self.optimizer = Adam(list(self.layer.parameters()) + list(backbone.layer.parameters()), lr=self.lr, weight_decay=0.1*self.lr)
-        print(f"Training ConceptHead for {num_epochs} epochs, and the backbone parameters are,", any(param.requires_grad for param in backbone.layer.parameters()), ' concept head parameters are ', any(param.requires_grad for param in self.layer.parameters()))
+        backbone_weights = backbone.layer.state_dict()
+        torch.save(backbone_weights, self.experiment_dir / f'backbone_for_concepts.pt')
+        wandb.save(str(self.experiment_dir / f'backbone_for_concepts.pt'), base_path=str(self.experiment_dir))
+        
+        return weights, backbone_weights
+    
+    def train(self, train_loader, val_loader, backbone, num_epochs=10, predict_ele_SEEK = False, save_best = False):
+        self.optimizer = Adam(list(self.layer.parameters()) + list(backbone.layer.parameters()), lr=self.lr, weight_decay=self.wd)
+        wandb.summary.update({'status': f'Training ConceptHead for {num_epochs} epochs', 'backbone_parameters_trainable': any(param.requires_grad for param in backbone.layer.parameters()), 'concept_head_parameters_trainable': any(param.requires_grad for param in self.layer.parameters()), 'training_target': 'ele_SEEK' if predict_ele_SEEK else 'subject_SEEK'})
+        concept_weights_path = self.experiment_dir / 'concept_w.pt'
+        backbone_weights_path = self.experiment_dir / 'backbone_for_concepts.pt'
+        best_val_acc = float('-inf')
+        best_epoch = None
 
-        history = []
         for epoch in range(num_epochs):
             # Perform a training and validation pass
             train_loss, train_acc = self.epoch_pass(train_loader, backbone, training=True, predict_ele_SEEK = predict_ele_SEEK)
             val_loss, val_acc = self.epoch_pass(val_loader, backbone, training=False, predict_ele_SEEK = predict_ele_SEEK)
 
-            history.append({"epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc["average"], "val_acc_avg": val_acc["average"], "train_acc_whole_code": train_acc["whole_code"], "val_acc_whole_code": val_acc["whole_code"]})
-            print(f"Epoch {epoch + 1}/{num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f} - Train Acc: {train_acc['average'] * 100:.2f}%, Val Acc: {val_acc['average'] * 100:.2f}% - Train whole-code: {train_acc['whole_code'] * 100:.2f}%, Val whole-code: {val_acc['whole_code'] * 100:.2f}% - Train left ear: {train_acc['left_ear'] * 100:.2f}%, Val left ear: {val_acc['left_ear'] * 100:.2f}% - Train right ear: {train_acc['right_ear'] * 100:.2f}%, Val right ear: {val_acc['right_ear'] * 100:.2f}%")
+            wandb.log({"Epoch": epoch + 1, "train_loss": train_loss, "val_loss": val_loss, "train_acc_avg": train_acc["average"], "val_acc_avg": val_acc["average"], "train_acc_whole_code": train_acc["whole_code"], "val_acc_whole_code": val_acc["whole_code"]})
+        
+            # Save current model
+            if save_best:
+                if val_acc['average'] > best_val_acc:
+                    best_val_acc = val_acc['average']
+                    best_epoch = epoch + 1
+                    self.save_weights(backbone, epoch + 1, val_acc['average'])
+            else:
+                best_val_acc = val_acc['average']
+                best_epoch = epoch + 1
+                self.save_weights(backbone, epoch + 1, val_acc['average'])
 
-        # Save best weights
-        self.layer.save_model(self.experiment_dir / 'concept_w.pt')
-        torch.save(backbone.layer.state_dict(), self.experiment_dir / 'backbone_for_concepts_w.pt')
+        if best_epoch is None or not concept_weights_path.exists() or not backbone_weights_path.exists():
+            raise FileNotFoundError(
+                "Concept head training finished without a saved checkpoint. "
+                f"Expected files:\n  - {concept_weights_path}\n  - {backbone_weights_path}"
+            )
 
-        # Convert history to a DataFrame and save as CSV
-        history_df = pd.DataFrame(history)
-        history_df.to_csv(self.experiment_dir / 'concept_training_history.csv', index=False)
+        wandb.summary.update({
+            "ConceptHead/best_epoch": best_epoch,
+            "ConceptHead/best_val_acc_avg": best_val_acc,
+        })
 
-        return history_df
+        self.layer.load_state_dict(torch.load(concept_weights_path, map_location=self.device))
+        backbone.layer.load_state_dict(torch.load(backbone_weights_path, map_location=backbone.device))
+        
 
     def test(self, test_loader, backbone, predict_ele_SEEK = False):
-        print("--------------TEST---------------")
+        wandb.summary.update({'status': 'Testing ConceptHead', 'testing_target': 'ele_SEEK' if predict_ele_SEEK else 'subject_SEEK'})
         test_loss, test_acc = self.epoch_pass(test_loader, backbone, training=False, predict_ele_SEEK = predict_ele_SEEK)
         
         with open(self.experiment_dir / 'concept_head_test_accuracy.txt', 'w') as f:
@@ -160,6 +219,8 @@ class ConceptHeadTunneled:
                 accuracy_str = f"{name} Accuracy: {value * 100:.2f}%"
                 print(accuracy_str)
                 f.write(accuracy_str + '\n')
+                wandb.summary.update({f"ConceptHead_test_{name}_Accuracy": value * 100})
+        wandb.summary.update({f"ConceptHead_test_{name}_Accuracy": value * 100 for name, value in test_acc.items()})
 
         return test_loss, test_acc
 
@@ -170,33 +231,32 @@ class ConceptHeadTunneled:
 
         with open(self.experiment_dir / 'SEEK_retrieval_results.txt', 'w') as f:
             f.write(f'Testing with intervention functions: {", ".join(intervention_fns.keys())}\n')
+        wandb.summary.update({'status': 'Retrieval Testing ConceptHead'})
 
         results = {}
-
         retrieval = Retrieval(experiment_code=self.exp_code)
     
-        distances = ['cosine_sim', 'seek_homemade', 'seek_homemade_2', 'seek_homemade_3']
-        for distance in distances:
-            print(f"\nTesting with {distance} distance:")
-            for name, fn in intervention_fns.items():
-                print(f'Retrieval with {name} correction-------------------------------------')
-                metrics = retrieval.evaluate_model(
-                    model=self,
-                    train_loader=train_loader,
-                    test_loader=test_loader, model_to_evaluate='concept_head',
-                    ba=None,
-                    ch=None,
-                    backbone_for_concepts=backbone_for_concepts,
-                    intervention_fn=fn,
-                    show_matches=False, show_plot=False, show_tsne=False, print_results=False, aggregate_seeks=False,
-                    distance=distance
-                )
-                
-                results[f"{name}_{distance}"] = metrics
-            
-                print(f"{name} - " + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
 
-        return results
+        for name, fn in intervention_fns.items():
+            print(f'Retrieval with {name} correction-------------------------------------')
+            metrics = retrieval.evaluate_model(
+                model=self,
+                train_loader=train_loader,
+                test_loader=test_loader, model_to_evaluate='concept_head',
+                ba=None,
+                ch=None,
+                backbone_for_concepts=backbone_for_concepts,
+                intervention_fn=fn,
+                show_matches=False, show_plot=False, show_tsne=False, print_results=False,
+                distance='seek_homemade_3'
+            )
+                
+            print(f"{name} - " + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]))
+            wandb.summary.update({f"ConceptHead_retrieval_{name}_Recall@{k}": v * 100 for k, v in metrics.items()})
+            with open(self.experiment_dir / 'SEEK_retrieval_results.txt', 'a') as f:
+                f.write(f"{name} - " + ", ".join([f"Recall@{k}: {v * 100:.2f}%" for k, v in metrics.items()]) + '\n')
+
+        return metrics
 
     def freeze(self):
         """Freezes all layers in the ConceptHead by disabling gradients."""
@@ -213,7 +273,7 @@ class ConceptHeadTunneled:
                 param.requires_grad = True
 
 
-    def collect_embeddings(self, loader, backbone, intervention_fn = None, aggregate_seeks = False, aggregate_rules = None):
+    def collect_embeddings(self, loader, backbone, intervention_fn = None):
         
         collected_embeddings = torch.tensor([]).to('cuda')
         collected_labels = torch.tensor([]).to('cuda')
@@ -222,7 +282,7 @@ class ConceptHeadTunneled:
 
         for batch in tqdm(loader):
             #preprocessed_image, subject_id, ele_id_label, identified, subject_SEEK_1hot, ele_SEEK_1hot, left_ear, right_ear, subject_SEEK, ele_SEEK, idx
-            images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device)
+            images, ele_id_label, subject_SEEK, ele_SEEK, left_ears, right_ears, idx = batch[0].to(self.device), batch[2].to(self.device), batch[4], batch[5], batch[6].to(self.device), batch[7].to(self.device), batch[10]
 
             with torch.no_grad():
                 
@@ -236,14 +296,11 @@ class ConceptHeadTunneled:
                     predicted_SEEK = SEEK.closest_valid_one_hot(outputs)
 
                 if intervention_fn is not None:
-                    predicted_SEEK = intervention_fn(predicted_SEEK, subject_SEEK, ele_SEEK)
+                    predicted_SEEK = intervention_fn(predicted_SEEK, subject_SEEK, ele_SEEK, ele_id=ele_id_label, idx=idx)
                 
                 collected_embeddings = torch.cat((collected_embeddings, predicted_SEEK.to(self.device)))
                 collected_labels = torch.cat((collected_labels, ele_id_label))
         
-        if aggregate_seeks:
-            subject_seek, collected_embeddings, collected_labels = SEEK.aggregate_seek(collected_embeddings, collected_labels, rules = aggregate_rules)
-            
         collected_embeddings = collected_embeddings.cpu()
         collected_labels = collected_labels
 
@@ -306,7 +363,7 @@ class MultiHeadNN(nn.Module):
                 nn.Linear(768, 256)
                 ).to('cuda')
         
-        self.heads = {}        
+        self.heads = nn.ModuleDict()
         for key, value in SEEK.lengths.items():
                 self.heads[key] = nn.Sequential(
                         nn.Linear(256, 128),
@@ -332,9 +389,9 @@ class MultiHeadNN(nn.Module):
                 if key in ['sex', 'age', 'right_tusk', 'left_tusk', 'right_extreme', 'left_extreme', 'ear_special', 'body_special']:
                         outputs[key] = self.heads[key](whole_image_outputs)
                 elif key in ['R_tear_1', 'R_hole_1', 'R_tear_2', 'R_hole_2']:
-                        outputs[key] = self.heads[key](left_ear_outputs)
-                elif key in ['L_tear_1', 'L_hole_1', 'L_tear_2', 'L_hole_2']:
                         outputs[key] = self.heads[key](right_ear_outputs)
+                elif key in ['L_tear_1', 'L_hole_1', 'L_tear_2', 'L_hole_2']:
+                        outputs[key] = self.heads[key](left_ear_outputs)
                 else:
                        raise ValueError(f"Unknown key: {key}")
                 output_tensor[:, idx:idx + value] = outputs[key]
@@ -349,8 +406,8 @@ class MultiHeadNN(nn.Module):
 
     def load_model(self, path):
         """Load model state dict."""
-        self.load_state_dict(torch.load(path, map_location=self.device))
-        self.to(self.device)
+        self.load_state_dict(torch.load(path, map_location='cuda'))
+        self.to('cuda')
         print(f"Model loaded from {path}")
 
 
@@ -407,9 +464,9 @@ class CrossedHeadNN(nn.Module):
             if key in ['sex', 'age', 'right_tusk', 'left_tusk', 'right_extreme', 'left_extreme', 'ear_special', 'body_special']:
                 outputs[key] = self.heads[key](whole_image_outputs)
             elif key in ['R_tear_1', 'R_hole_1', 'R_tear_2', 'R_hole_2']:
-                outputs[key] = self.heads[key](whole_and_left)
-            elif key in ['L_tear_1', 'L_hole_1', 'L_tear_2', 'L_hole_2']:
                 outputs[key] = self.heads[key](whole_and_right)
+            elif key in ['L_tear_1', 'L_hole_1', 'L_tear_2', 'L_hole_2']:
+                outputs[key] = self.heads[key](whole_and_left)
             else:
                 raise ValueError(f"Unknown key: {key}")
             

@@ -1,0 +1,17 @@
+\begin{table}
+\caption{\textbf{Design ablations for SEEK-CBM} trained with 50\% correction. Recall@1 (\%) is reported at four inference-time correction levels. We compare sequential training vs.\ joint training, and fixed $\alpha$ vs.\ learned $\alpha$. Each entry reports the Recall@1 (\%) for the latest completed rerun of that setting.}
+\centering
+\begin{threeparttable}
+\begin{tabular}{llcccc}
+\headrow
+\thead{Training} & \thead{Fusion} & \thead{0\%} & \thead{50\%} & \thead{100\%} & \thead{Sighting}\\
+Sequential & $\alpha=0.5$ & \textbf{18.51} & 39.14 & 59.81 & 86.46 \\
+Sequential & $\alpha^*$ & 14.15 & \textbf{39.23} & \textbf{64.14} & \textbf{87.16} \\
+\hline
+Joint & $\alpha=0.5$ & 3.68 & 25.60 & 47.94 & 84.13 \\
+Joint & $\alpha^*$ & 4.57 & 27.30 & 50.22 & 84.51 \\
+\hline
+\end{tabular}
+\end{threeparttable}
+\label{tab:design_ablations}
+\end{table}

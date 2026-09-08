@@ -1,0 +1,35 @@
+\begin{table}[H]
+\centering
+\caption{Recall@1 (\%) for retrieval solely on SEEK codes using \textbf{cosine similarity}. Rows correspond to sighting-level gallery corrections; columns correspond to query treatments.}
+\begin{threeparttable}
+\begin{tabular}{lcccccc}
+\headrow
+\thead{Gallery correction} & \thead{0\% image} & \thead{25\% image} & \thead{50\% image} & \thead{75\% image} & \thead{100\% image} & \thead{100\% sighting}\\
+0\% sighting & 3.40 & 14.29 & 25.36 & 36.53 & 47.50 & 77.15 \\
+25\% sighting & 3.45 & 13.95 & 24.98 & 36.16 & 47.07 & 79.04 \\
+50\% sighting & 3.84 & 13.84 & 24.18 & 34.58 & 44.83 & 80.80 \\
+75\% sighting & 3.23 & 11.83 & 20.59 & 29.29 & 38.12 & 81.35 \\
+100\% sighting & 3.37 & 14.63 & 26.02 & 37.37 & 48.64 & 81.97 \\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:SEEK_cosine}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Recall@1 (\%) for retrieval solely on SEEK codes using \textbf{our SEEK-matching} distance. Rows correspond to sighting-level gallery corrections; columns correspond to query treatments.}
+\begin{threeparttable}
+\begin{tabular}{lcccccc}
+\headrow
+\thead{Gallery correction} & \thead{0\% image} & \thead{25\% image} & \thead{50\% image} & \thead{75\% image} & \thead{100\% image} & \thead{100\% sighting}\\
+0\% sighting & 2.82 & 13.77 & 24.89 & 36.17 & 47.23 & 76.61 \\
+25\% sighting & 3.02 & 13.63 & 24.74 & 35.99 & 47.05 & 77.40 \\
+50\% sighting & 3.31 & 13.52 & 24.08 & 34.65 & 45.12 & 79.19 \\
+75\% sighting & 2.71 & 12.62 & 22.76 & 33.04 & 43.29 & 80.70 \\
+100\% sighting & 3.32 & 14.65 & 26.13 & 37.58 & 48.93 & 82.53 \\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:SEEK_homemade}
+\end{table}

@@ -83,9 +83,11 @@ class Retrieval:
         if print: print(f"One-out Recall@1: {recalls[1]*100:.2f}% - Recall@5: {recalls[5]*100:.2f}% - Recall@20: {recalls[20]*100:.2f}% - Recall@100: {recalls[100]*100:.2f}%")
         return recalls
 
-    def evaluate_model(self, model, train_loader, test_loader, model_to_evaluate = None, ba = None, ch = None, backbone_for_concepts = None, show_tsne = False, show_plot = False, show_matches = False, intervention_fn = None, aggregate_gallery_seeks=True, print_results = True, distance = 'cosine_sim'):
+    def evaluate_model(self, model, train_loader, test_loader, model_to_evaluate = None, ba = None, ch = None, backbone_for_concepts = None, show_tsne = False, show_plot = False, show_matches = False, intervention_fn = None, gallery_intervention_fn = None, query_intervention_fn = None, print_results = True, distance = 'cosine_sim'):
 
         ks = [1, 5, 10, 20, 100]
+        gallery_intervention_fn = gallery_intervention_fn or intervention_fn
+        query_intervention_fn = query_intervention_fn or intervention_fn
 
         #model.freeze()
 
@@ -99,16 +101,16 @@ class Retrieval:
 
 
             elif model_to_evaluate=='concept_head': # evaluating concept head
-                if print_results:  print('evaluating concept head ', 'with intervention' if intervention_fn is not None else '')
+                if print_results:  print('evaluating concept head ', 'with intervention' if gallery_intervention_fn is not None or query_intervention_fn is not None else '')
 
-                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, backbone=backbone_for_concepts, intervention_fn=intervention_fn, aggregate_seeks=aggregate_gallery_seeks)
-                query_embeddings, query_labels = model.collect_embeddings(test_loader, backbone=backbone_for_concepts, intervention_fn=intervention_fn, aggregate_seeks=False)
+                gallery_embeddings, gallery_labels = model.collect_embeddings(train_loader, backbone=backbone_for_concepts, intervention_fn=gallery_intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(test_loader, backbone=backbone_for_concepts, intervention_fn=query_intervention_fn)
 
             elif model_to_evaluate=='projector': # evaluating projector
-                if print_results: print('evaluating projector ', 'with intervention' if intervention_fn is not None else '')
+                if print_results: print('evaluating projector ', 'with intervention' if gallery_intervention_fn is not None or query_intervention_fn is not None else '')
                 
-                gallery_embeddings, gallery_labels = model.collect_embeddings(loader=train_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn, aggregate_seeks = aggregate_gallery_seeks)
-                query_embeddings, query_labels = model.collect_embeddings(loader=test_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = intervention_fn, aggregate_seeks = False)
+                gallery_embeddings, gallery_labels = model.collect_embeddings(loader=train_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = gallery_intervention_fn)
+                query_embeddings, query_labels = model.collect_embeddings(loader=test_loader, backbone=ba, backbone_for_concepts=backbone_for_concepts, concept_head= ch, intervention_fn = query_intervention_fn)
 
             else:
                 raise ValueError("Couldnt fin the model to evaluate. Choose from 'backbone', 'concept_head' or 'projector'")
@@ -325,5 +327,3 @@ class Retrieval:
         plt.title('t-SNE of Gallery Embeddings')
         plt.show()
         plt.savefig(self.experiment_dir / 'tsne.png')
-
-

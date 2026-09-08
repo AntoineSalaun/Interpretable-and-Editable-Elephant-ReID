@@ -1,0 +1,7 @@
+marimo
+numpy
+pandas
+pillow
+torch
+torchvision
+wandb

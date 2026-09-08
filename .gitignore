@@ -1,15 +1,44 @@
-## MY IGNORES
-/weights/*.pt
-/weights/MegaD_elephant_w.pt
-/weights/MegaD_elephant_w.pt
-/weights/savanna_elephants_md_v2_epoch_60.pt
-preprocessed/
-data_processing/mara_preprocessed/
-data_processing/mara/mara_preprocessed
-data_processing/mara/mara_preprocessed/
-data_processing/mara/mara_preprocessed/images/
-experiments/
+## Project artifacts and local data
+# Model checkpoints, embeddings, and binary caches
+weights/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.joblib
 
+# Datasets and generated preprocessing outputs
+data/**
+!data/**/
+!data/**/*.py
+!data/**/README.md
+data_processing/data/
+data_processing/**/*.csv
+data_processing/**/*.tsv
+
+# Runtime logs and application state
+wandb/
+**/wandb/
+*.wandb
+bash/slurm_logs/
+experiments/**/results*/
+user_interface/state/
+marimo_interface/state/
+
+# Generated tabular and visual artifacts
+*.csv
+*.tsv
+*.pdf
+*.jpg
+*.jpeg
+*.JPG
+*.png
+*.ipynb
 
 ## GITHUB TEMPLATE
 # Byte-compiled / optimized / DLL files

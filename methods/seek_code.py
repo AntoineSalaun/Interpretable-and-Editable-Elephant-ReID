@@ -1,3 +1,5 @@
+import random
+
 import torch
 
 class SEEK:
@@ -213,323 +215,134 @@ class SEEK:
         assert str(seek_instance) == str(SEEK(reconstructed_one_hot)), "Reconstructed instance does not match original"
         print("Test passed: Reconstructed instance matches the original")
     
-    def aggregate_seek(SEEK_codes, ele_ids, rules = None):
-
-        if rules is None: rules = {
-            'sex': {'cutoff': 0.9334337305774126, 'fraction': 0.7151849388533961},
-            'age': {'cutoff': 0.9514760451994138, 'fraction': 0.5510405823660589},
-            'tusks': {'cutoff': 0.4369025581005079, 'fraction': 1.8715870244928936},
-            'ear_most_prominent':{'cutoff': 0.8346892883784236, 'fraction': 2.432201122842605},
-            'ear_least_prominent': {'cutoff': 0.3902627093863492, 'fraction': 2.0680981200569604},
-            'extremes': {'cutoff': 0.46972912427893604, 'fraction': 0.8622955318459603}
-            }
-        import pandas as pd
-
-        def make_seek_df(SEEK_codes, ele_ids):
-            data, seeks = [], []
-            for i in range(SEEK_codes.shape[0]):
-                row = SEEK(SEEK_codes[i]).categorical_tensor()[0].tolist()
-                data.append(row)
-                seeks.append(SEEK(SEEK_codes[i]).__str__())
-
-            df = pd.DataFrame(data, columns=SEEK.attribute_names)
-            df['subj_seek_str'] = seeks
-            df['ele_id'] = ele_ids.cpu() if isinstance(ele_ids, torch.Tensor) else ele_ids
-            df['encounter_id'] = 1
-            return df
-
-        df = make_seek_df(SEEK_codes, ele_ids)
-        df_mapped = df.copy()
-        mapping = SEEK.mappings
-        for col in df.columns:
-            if col in mapping:
-                max_idx = len(mapping[col]) - 1
-                df_mapped[col] = df[col].apply(lambda x: mapping[col][x] if 0 <= x <= max_idx else None)
-
-        unknown_tokens = {'age': '__'}
-
-        def _normalized_counts(series, attr):
-            unknown = unknown_tokens.get(attr, '_')
-            cleaned = series.fillna(unknown).replace({None: unknown})
-            counts = cleaned.value_counts(normalize=True, dropna=False)
-            return {str(key): round(float(value), 3) for key, value in counts.items()}
-
-        def generate_seek_code(row):
-            return (
-                f"{row['sex']}{row['age']}T{row['right_tusk']}{row['left_tusk']}"
-                f"E{row['R_tear_1']}{row['R_hole_1']}{row['R_tear_2']}{row['R_hole_2']}-"
-                f"{row['L_tear_1']}{row['L_hole_1']}{row['L_tear_2']}{row['L_hole_2']}X"
-                f"{row['right_extreme']}{row['left_extreme']}S{row['ear_special']}{row['body_special']}"
-            )
-
-        def aggregate_elephant_seek_codes(df):
-            elephant_seek_dict = {}
-            for ele_id, group in df.groupby('ele_id'):
-                elephant_seek_dict[ele_id] = {}
-                for attr in SEEK.attribute_names:
-                    counts = _normalized_counts(group[attr], attr)
-                    elephant_seek_dict[ele_id][attr] = SEEK.aggregation_heuristic(attr, counts, rules)
-
-            elephant_seek_df = pd.DataFrame.from_dict(elephant_seek_dict, orient='index')
-            elephant_seek_df.index.name = 'ele_id'
-
-            merged_df = df.copy()
-            for attr in SEEK.attribute_names:
-                merged_df[attr] = merged_df['ele_id'].map(elephant_seek_df[attr])
-            merged_df["SEEK_code"] = merged_df.apply(generate_seek_code, axis=1)
-
-            ele_seek_list     = [SEEK(seek).one_hot_encode() for seek in merged_df["SEEK_code"]]
-            subject_seek_list = [SEEK(seek).one_hot_encode() for seek in df["subj_seek_str"]]
-
-            _device = ele_ids.device
-            _dtype  = ele_ids.dtype  # usually torch.long
-            subject_seek = torch.stack(subject_seek_list).to(_device)
-            ele_seek     = torch.stack(ele_seek_list).to(_device)
-            ele_id = torch.as_tensor(merged_df["ele_id"].to_numpy(), dtype=_dtype, device=_device)
-            return subject_seek, ele_seek, ele_id
-        return aggregate_elephant_seek_codes(df_mapped)
-
     @staticmethod
-    def aggregation_heuristic(attr, counts, rules):
-        attr_key = attr.lower()
-        default = '__' if attr_key == 'age' else '_'
-        if not counts:
-            return default
-
-        def get_val(u, most, other, cfg):
-            cutoff, fraction = cfg.get('cutoff', 0.8), cfg.get('fraction', 1)
-            if counts.get(u, 0) > cutoff:
-                return u
-            if counts.get(other, 0) and counts.get(most, 0):
-                if counts[other] > counts[most] * fraction:
-                    return other
-                return most
-            if counts.get(other, 0):
-                return other
-            if counts.get(most, 0):
-                return most
-            return u
-
-        def get_tear(cfg):
-            u, z = '_', '0'
-            cutoff, fraction = cfg.get('cutoff', 0.9), cfg.get('fraction', 2)
-            if counts.get(u, 0) > cutoff:
-                return u
-            other_sum = sum(val for key, val in counts.items() if key not in {u, z})
-            if counts.get(z, 0) > other_sum * fraction:
-                return z
-            best = max((key for key in counts if key not in {u, z}), key=lambda k: counts[k], default=None)
-            return best if best is not None else u
-
-        if attr_key == 'sex':
-            return get_val('_', 'B', 'C', rules['sex'])
-        if attr_key == 'age':
-            pick = get_val('__', '00', '20', rules['age'])
-            return pick if pick in {'00', '20'} else '00'
-        if attr_key in {'right_tusk', 'left_tusk', 'r_tusk', 'l_tusk'}:
-            return get_val('_', '1', '0', rules['tusks'])
-        if 'tear_1' in attr_key or 'hole_1' in attr_key:
-            return get_tear(rules['ear_most_prominent'])
-        if 'tear_2' in attr_key or 'hole_2' in attr_key:
-            return get_tear(rules['ear_least_prominent'])
-        if 'extreme' in attr_key:
-            return get_val('1', '0', '_', rules['extremes'])
-        if 'special' in attr_key:
-            return get_val('1', '0', '_', {'cutoff': 0.8, 'fraction': 1.5})
-
-        best = max(counts.items(), key=lambda item: item[1])[0]
-        return best if best is not None else default
-
-    @staticmethod
-    def aggregate_from_vote_to_SEEK(
-        seek_counts_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/SEEK_dict.json',
-        rules=None,
-        sub_ele_pairs_path='/archive/vision/beery/animal_reid/datasets/elephants_zooniverse/ele_id_project/data/out_apr2/sub_ele_pairs.json',
-        orinal_image_dict_path='/data/vision/beery/scratch/antoine/CBM_reid/data_processing/data/out_apr2/image_dictonary_original.csv',
-        export_path=None,
-        drop_missing_ears=True
-    ):
-        import json
-        import os
-        import pandas as pd
-
-        if rules is None:
-                {
-                'sex': {'cutoff': 0.7238117020284947, 'fraction': 3.2846153859098934},
-                'age': {'cutoff': 0.6080374539126856, 'fraction': 3.030614746927617},
-                'tusks': {'cutoff': 0.7864963346562002, 'fraction': 1.3312930166044628},
-                'ear_most_prominent':{'cutoff': 0.2133936013358265, 'fraction': 1.788490949619698},
-                'ear_least_prominent': {'cutoff': 0.1001741505264265, 'fraction': 1.6865733430829595},
-                'extremes': {'cutoff': 0.9641272649686263, 'fraction': 0.9361114173246684}
-                }
-
-        with open(seek_counts_path, 'r', encoding='utf-8') as handle:
-            seek_counts = json.load(handle)
-        with open(sub_ele_pairs_path, 'r', encoding='utf-8') as handle:
-            sub_ele_pairs = json.load(handle)
-
-        aggregated = {}
-        for subject_id, features in seek_counts.items():
-            aggregated[subject_id] = {}
-            for feature, counts in features.items():
-                total = sum(counts.values())
-                if not total:
-                    aggregated[subject_id][feature] = None
-                    continue
-                percentages = {val: round(count / total, 3) for val, count in counts.items()}
-                aggregated[subject_id][feature] = SEEK.aggregation_heuristic(feature, percentages, rules)
-
-        image_seek_df = pd.DataFrame(aggregated).T
-        image_seek_df.index.name = 'subject_id'
-
-        def build_seek(row):
-            return f"{row['Sex']}{row['Age']}T{row['R_tusk']}{row['L_tusk']}E{row['R_tear_1']}{row['R_hole_1']}{row['R_tear_2']}{row['R_hole_2']}-{row['L_tear_1']}{row['L_hole_1']}{row['L_tear_2']}{row['L_hole_2']}X{row['R_extreme']}{row['L_extreme']}S{row['Special_ear']}{row['Special_body']}"
-
-        image_seek_df['SEEK'] = image_seek_df.apply(build_seek, axis=1).drop(image_seek_df.index[:3])
-
-        image_seek_df['ele_id'] = image_seek_df.index.map(lambda idx: sub_ele_pairs.get(str(idx)))
-
-        merged_df = pd.read_csv(orinal_image_dict_path)
-
-        if 'subject-SEEK' in merged_df.columns and 'old-subject-SEEK' not in merged_df.columns:
-            merged_df = merged_df.rename(columns={'subject-SEEK': 'old-subject-SEEK'})
-        else:
-            raise ValueError("Input DataFrame must contain 'subject-SEEK' column but contains 'old-subject-SEEK' column.")
-
-        image_seek_df = image_seek_df.copy()
-        image_seek_df.index = image_seek_df.index.astype(int)
-        merged_df = merged_df.merge(image_seek_df[['SEEK']], left_on='subject_id', right_index=True, how='left')
-        merged_df = merged_df.rename(columns={'SEEK': 'subject-SEEK'})
-
-        if 'old-subject-SEEK' in merged_df.columns and 'subject-SEEK' in merged_df.columns:
-            cols = list(merged_df.columns)
-            old_idx, new_idx = cols.index('old-subject-SEEK'), cols.index('subject-SEEK')
-            if old_idx > new_idx:
-                cols[new_idx], cols[old_idx] = cols[old_idx], cols[new_idx]
-                merged_df = merged_df[cols]
-
-        if drop_missing_ears and {'right_ear_path', 'left_ear_path'}.issubset(merged_df.columns):
-            def remove_ears(df):
-                df = df.copy()
-                right_missing = df['right_ear_path'].isna() | df['right_ear_path'].astype(str).str.lower().eq('nan')
-                left_missing = df['left_ear_path'].isna() | df['left_ear_path'].astype(str).str.lower().eq('nan')
-                valid_right = right_missing & df['subject-SEEK'].notna()
-                valid_left = left_missing & df['subject-SEEK'].notna()
-                df.loc[valid_right, 'subject-SEEK'] = (
-                    df.loc[valid_right, 'subject-SEEK'].astype(str).str.slice_replace(7, 11, '____')
-                )
-                df.loc[valid_left, 'subject-SEEK'] = (
-                    df.loc[valid_left, 'subject-SEEK'].astype(str).str.slice_replace(12, 16, '____')
-                )
-                return df
-
-            merged_df = remove_ears(merged_df)
-
-        if export_path:
-            export_dir = os.path.dirname(export_path)
-            if export_dir:
-                os.makedirs(export_dir, exist_ok=True)
-            target_df = merged_df if merged_df is not None else image_seek_df
-            target_df.to_csv(export_path, index=False if merged_df is not None else True)
-
-        return merged_df, image_seek_df
-    
-    def perfect_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
-        return subject_SEEK
-
-    def oracle_correction(hard_predicted_concepts, subject_SEEK, elephant_SEEK):
-        return elephant_SEEK
-
-    def correct_or_soft(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
-            # Randomly choose between oracle correction and perfect correction
-            if torch.rand(1) < p:
-                return subject_SEEK
-            else:
-                return concept_logits
-
-    def correct_or_hard_at_prob(concept_logits, subject_SEEK, elephant_SEEK, p=0.5):
-            # Randomly choose between oracle correction and perfect correction
-            if torch.rand(1) < p:
-                return subject_SEEK
-            else:
-                return SEEK.closest_valid_one_hot(concept_logits)
-            
-
-    def correct_or_hard(concept_logits, subject_SEEK, elephant_SEEK):
-            # Randomly choose between oracle correction and perfect correction
-            if torch.rand(1) < 0.5:
-                return subject_SEEK
-            else:
-                return SEEK.closest_valid_one_hot(concept_logits)
-
-    def hard(concept_logits, subject_SEEK, elephant_SEEK):
+    def hard(concept_logits, subject_SEEK, sighting_SEEK, ele_id=None, idx=None):
         return SEEK.closest_valid_one_hot(concept_logits)
 
-    def perfect(concept_logits, subject_SEEK, elephant_SEEK):
-        return elephant_SEEK
-    
-    def distance(query_elephant,galery_elephant):
-        #print('query_elephant', query_elephant)
-        #print('galery_elephant', galery_elephant)
+    @staticmethod
+    def perfect_correction(concept_logits, subject_SEEK, sighting_SEEK, ele_id=None, idx=None):
+        return subject_SEEK
 
-        distance = 0
-        for i in range(len(SEEK.attribute_names)):
-            attr_name = SEEK.attribute_names[i]
-            q_attr = getattr(query_elephant, attr_name)
-            g_attr = getattr(galery_elephant, attr_name)
-            
-            if q_attr == g_attr:
-                #print(f"Attribute {attr_name} is correct: query {q_attr}, galery {g_attr} -> +0 distance")
-                distance += 0
-            else: # There is an error !
-                if q_attr == '_' or g_attr == '_': # One of the SEEK attribute is unknown, small error
-                    #print(f"Attribute {attr_name} is a unknown in one of the elephants: query {q_attr}, galery {g_attr} -> +0.5 distance")
-                    distance += 0.5
-                else: # Both attributes are known but different, real error !
-                    if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
-                        #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")
-                        distance += abs(float(q_attr) - float(g_attr)) / 2
-                    elif (attr_name in ['age', 'sex', 'right_tusk','left_tusk']): # We should be confident on these attributes, big error counted twice
-                        #print(f"Attribute {attr_name} is an error on an easy attribute : query {q_attr}, galery {g_attr} -> +2 distance")
-                        distance += 2
-                    else: # Other errors count for 1
-                        #print(f"Attribute {attr_name} is an error: query {q_attr}, galery {g_attr} -> +1 distance")
-                        distance += 1
-        #print('===========Total distance', distance)
-        return distance
-    
-    def distance_2(query_elephant,galery_elephant):
-        #print('query_elephant', query_elephant)
-        #print('galery_elephant', galery_elephant)
+    @staticmethod
+    def oracle_correction(concept_logits, subject_SEEK, sighting_SEEK, ele_id=None, idx=None):
+        return sighting_SEEK
 
-        distance = 0
-        for i in range(len(SEEK.attribute_names)):
-            attr_name = SEEK.attribute_names[i]
-            q_attr = getattr(query_elephant, attr_name)
-            g_attr = getattr(galery_elephant, attr_name)
-            
-            if q_attr == g_attr:
-                #print(f"Attribute {attr_name} is correct: query {q_attr}, galery {g_attr} -> +0 distance")
-                distance += 0
-            else: # There is an error !
-                if q_attr == '_' or g_attr == '_': # One of the SEEK attribute is unknown, small error
-                    #print(f"Attribute {attr_name} is a unknown in one of the elephants: query {q_attr}, galery {g_attr} -> +0.5 distance")
-                    distance += 0
-                else: # Both attributes are known but different, real error !
-                    if (attr_name in ['R_tear_1', 'R_hole_1', 'L_tear_1', 'L_hole_1', 'R_tear_2', 'R_hole_2', 'L_tear_2', 'L_hole_2']): # There might be confusion on these attributes, the distance is proportional to the penalty
-                        #print(f"Attribute {attr_name} is a in-ear distance error: query {q_attr}, galery {g_attr} -> + (a - b)/2 distance")
-                        if q_attr == '0' or g_attr == '0':
-                            distance += 1
-                        else:
-                            distance += abs(float(q_attr) - float(g_attr)) / 2
-                    elif (attr_name in ['age', 'sex', 'right_tusk','left_tusk']): # We should be confident on these attributes, big error counted twice
-                        #print(f"Attribute {attr_name} is an error on an easy attribute : query {q_attr}, galery {g_attr} -> +2 distance")
-                        distance += 1
-                    else: # Other errors count for 1
-                        #print(f"Attribute {attr_name} is an error: query {q_attr}, galery {g_attr} -> +1 distance")
-                        distance += 1
-        #print('===========Total distance', distance)
-        return distance
+    perfect = perfect_correction
+
+    @staticmethod
+    def correct_or_hard(concept_logits, subject_SEEK, sighting_SEEK, ele_id=None, idx=None):
+        mask = torch.rand(subject_SEEK.size(0), device=subject_SEEK.device) < 0.5
+        return SEEK._apply_subject_correction(concept_logits, subject_SEEK, mask)
+
+    @staticmethod
+    def _probability(value):
+        probability = float(value)
+        if not 0.0 <= probability <= 1.0:
+            raise ValueError(f"Correction probability must be in [0, 1], got {probability}")
+        return probability
+
+    @staticmethod
+    def _sample(values, probability, seed=42):
+        values = sorted(set(values))
+        return set(random.Random(seed).sample(values, int(len(values) * probability)))
+
+    @staticmethod
+    def _tensor_mask(values, selected, device):
+        return torch.tensor([value in selected for value in values], dtype=torch.bool, device=device)
+
+    @staticmethod
+    def _apply_subject_correction(concept_logits, subject_SEEK, mask):
+        device = concept_logits.device if torch.is_tensor(concept_logits) else subject_SEEK.device
+        hard = SEEK.closest_valid_one_hot(concept_logits).to(device)
+        return torch.where(mask.view(-1, 1).to(device), subject_SEEK.to(device), hard)
+
+    @staticmethod
+    def _apply_sighting_correction(concept_logits, sighting_SEEK, mask):
+        device = concept_logits.device if torch.is_tensor(concept_logits) else sighting_SEEK.device
+        hard = SEEK.closest_valid_one_hot(concept_logits).to(device)
+        return torch.where(mask.view(-1, 1).to(device), sighting_SEEK.to(device), hard)
+
+    @staticmethod
+    def _idx_list(idx):
+        if idx is None:
+            return None
+        if torch.is_tensor(idx):
+            return idx.detach().cpu().tolist()
+        return [int(value) for value in idx]
+
+    @staticmethod
+    def _policy(scope, probability, dataset=None):
+        selected = None
+        if dataset is not None and scope == "image":
+            selected = SEEK._sample(dataset.dictonary.index.tolist(), probability)
+        elif dataset is not None and scope == "sighting":
+            selected = SEEK._sample(dataset.dictonary["encounter_id"].tolist(), probability)
+
+        def correction(concept_logits, subject_SEEK, sighting_SEEK, ele_id=None, idx=None):
+            device = concept_logits.device if torch.is_tensor(concept_logits) else subject_SEEK.device
+            if scope == "image":
+                idx_values = SEEK._idx_list(idx)
+                mask = SEEK._tensor_mask(idx_values, selected, device) if selected is not None and idx_values is not None else torch.rand(subject_SEEK.size(0), device=device) < probability
+                return SEEK._apply_subject_correction(concept_logits, subject_SEEK, mask)
+            elif scope == "sighting":
+                if dataset is None or idx is None:
+                    raise ValueError("sighting correction requires dataset metadata and batch indices")
+                idx_values = SEEK._idx_list(idx)
+                sightings = dataset.dictonary.iloc[idx_values]["encounter_id"].tolist()
+                mask = SEEK._tensor_mask(sightings, selected, device)
+                return SEEK._apply_sighting_correction(concept_logits, sighting_SEEK, mask)
+            else:
+                raise ValueError(f"Unknown correction scope: {scope}")
+
+        correction.__name__ = f"{scope}_{probability:g}"
+        correction.correction_scope = scope
+        correction.correction_probability = probability
+        correction.corrected_units = selected
+        return correction
+
+    @staticmethod
+    def get_correction_policy(policy_name, dataset=None, default_scope="image"):
+        """
+        Build a SEEK correction policy.
+
+        Active policies are:
+        - image_p: correct selected images with subject-SEEK.
+        - sighting_p: correct selected encounter_id groups with ele-SEEK.
+        - oracle/oracle_correction: replace with ele-SEEK for every image.
+
+        Bare numbers keep old commands working and use default_scope.
+        """
+        if policy_name is None or str(policy_name).lower() == "none":
+            return SEEK.hard
+
+        name = str(policy_name).lower()
+        if name in {"hard", "0%"}:
+            return SEEK.hard
+        if name in {"perfect", "perfect_correction", "subject", "subject_correction", "100%"}:
+            return SEEK.perfect_correction
+        if name in {"oracle", "oracle_correction"}:
+            return SEEK.oracle_correction
+        if name == "correct_or_hard":
+            return SEEK._policy("image", 0.5, dataset)
+
+        if "_" in name:
+            scope, value = name.rsplit("_", 1)
+            if scope == "elephant":
+                raise ValueError(
+                    "Unsupported correction policy: elephant_p. "
+                    "Mara has image-level subject-SEEK and sighting-level ele-SEEK, "
+                    "but no raw elephant-level SEEK code. Use image_p or sighting_p."
+                )
+            if scope in {"image", "sighting"}:
+                return SEEK._policy(scope, SEEK._probability(value), dataset)
+
+        try:
+            return SEEK._policy(default_scope, SEEK._probability(policy_name), dataset)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"Unsupported correction policy: {policy_name}. "
+                "Use hard, oracle, image_p, sighting_p, or a number in [0, 1]."
+            )
 
     def distance_3(query_elephant,galery_elephant):
         #print('query_elephant', query_elephant)
@@ -587,13 +400,11 @@ def test_seek():
     print("\nTest passed: Parsed code matches the original code.")
 
 
-
-
 def test_distance():
     elephant_a = SEEK("B00T__E6700-0000X0_S00")
     elephant_b = SEEK("B20T__E8000-0000X1_S01")
     
-    distance = SEEK.distance(elephant_a, elephant_b)
+    distance = SEEK.distance_3(elephant_a, elephant_b)
     print("Distance between elephant_a and elephant_b:", distance)
 
     return 0

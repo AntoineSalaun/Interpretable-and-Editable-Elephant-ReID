@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Concept-head architectural ablation. Avg. comprises per-attribute accuracies averaged across SEEK attributes; SEEK accuracy requires predicting the full SEEK code correctly. Ear, age, and sex metrics average their related respective attribute accuracies.}
+\label{tab:concept-head-architecture-ablation}
+\begin{threeparttable}
+\begin{tabular}{lrrrrrr}
+\headrow
+\thead{Heads} & \thead{Avg. (\%)} & \thead{SEEK (\%)} & \thead{Tusks (\%)} & \thead{Ears (\%)} & \thead{Age (\%)} & \thead{Sex (\%)} \\
+\hline
+Crossed & 83.8 & 12.6 & 97.6 & 77.5 & 99.0 & 79.3 \\
+Fully Connected & 83.7 & 12.2 & \textbf{97.7} & 77.2 & 98.9 & 79.8 \\
+Independent & \textbf{84.3} & \textbf{13.4} & 97.7 & \textbf{78.1} & \textbf{99.0} & \textbf{80.0} \\
+\hline
+\end{tabular}
+\end{threeparttable}
+\end{table}

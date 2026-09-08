@@ -1,0 +1,91 @@
+\subsubsection{Projector}
+
+In all of the following hyperparameter searches, we train with a 100\% correction policy. The reported values are Recall@1 (\%) at inference with \texttt{aggregate\_gallery\_seeks=False}. The optimal hyperparameters are not necessarily consistent across inference correction policies: runs that perform best with high correction can underperform when no correction is available, which is expected because the training distribution is biased toward fully corrected SEEK codes.
+
+% ----------------------------
+\begin{table}[H]
+\caption{PROJECTOR TRAINING: Sequential - \texttt{aggregate\_gallery\_seeks=False} -- alpha=LEARNABLE}
+\begin{threeparttable}
+\begin{tabular}{lcccc}
+\headrow
+\thead{(lr, wd)} & \thead{0\% correction} & \thead{50\% correction} & \thead{100\% correction} & \thead{ORACLE correction}\\
+(1e-3, 1e-4) & 17.87 & 39.71 & 60.03 & 87.83\\
+(1e-3, 1e-5) & 17.42 & 40.14 & 61.43 & 88.03\\
+(1e-3, 1e-6) & 16.90 & 40.63 & 62.78 & \textbf{88.24}\\
+(1e-4, 1e-4) & 16.79 & 40.25 & 62.01 & 87.86\\
+(1e-4, 1e-5) & 16.92 & 40.42 & 62.39 & 88.06\\
+(1e-4, 1e-6) & 16.76 & \textbf{40.75} & \textbf{63.16} & 88.17\\
+(1e-5, 1e-4) & 21.11 & 26.77 & 32.40 & 47.78\\
+(1e-5, 1e-5) & 21.22 & 27.95 & 34.51 & 52.48\\
+(1e-5, 1e-6) & \textbf{21.23} & 28.17 & 34.92 & 53.59\\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:projector_seq_learned_alpha_r1_noagg_inference_correction}
+\end{table}
+
+% ----------------------------
+\begin{table}[H]
+\caption{PROJECTOR TRAINING: Sequential - \texttt{aggregate\_gallery\_seeks=False} -- alpha=0.5}
+\begin{threeparttable}
+\begin{tabular}{lcccc}
+\headrow
+\thead{(lr, wd)} & \thead{0\% correction} & \thead{50\% correction} & \thead{100\% correction} & \thead{ORACLE correction}\\
+(1e-3, 1e-4) & 20.13 & 31.91 & 42.78 & 73.02\\
+(1e-3, 1e-5) & 18.93 & 38.29 & 56.57 & 84.67\\
+(1e-3, 1e-6) & 18.52 & \textbf{39.66} & \textbf{59.48} & \textbf{86.56}\\
+(1e-4, 1e-4) & 20.48 & 24.15 & 27.56 & 37.79\\
+(1e-4, 1e-5) & 20.96 & 26.48 & 31.70 & 48.30\\
+(1e-4, 1e-6) & \textbf{21.17} & 27.95 & 34.46 & 55.65\\
+(1e-5, 1e-4) & 19.89 & 20.56 & 21.16 & 22.48\\
+(1e-5, 1e-5) & 19.91 & 20.74 & 21.49 & 23.43\\
+(1e-5, 1e-6) & 19.91 & 20.77 & 21.54 & 23.60\\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:projector_seq_fixed_alpha_r1_noagg_inference_correction}
+\end{table}
+
+% ----------------------------
+\begin{table}[H]
+\caption{PROJECTOR TRAINING: Joint - \texttt{aggregate\_gallery\_seeks=False} -- alpha=LEARNABLE}
+\begin{threeparttable}
+\begin{tabular}{lcccc}
+\headrow
+\thead{(lr, wd)} & \thead{0\% correction} & \thead{50\% correction} & \thead{100\% correction} & \thead{ORACLE correction}\\
+(1e-3, 1e-4) & 4.55 & 28.36 & 50.29 & 84.63\\
+(1e-3, 1e-5) & 4.60 & 28.47 & 50.17 & 85.06\\
+(1e-3, 1e-6) & 4.71 & 28.93 & 51.23 & 85.11\\
+(1e-4, 1e-4) & 5.14 & 29.70 & 52.21 & 85.08\\
+(1e-4, 1e-5) & 5.53 & 30.03 & \textbf{52.39} & \textbf{85.59}\\
+(1e-4, 1e-6) & 6.14 & \textbf{30.13} & 52.31 & 84.76\\
+(1e-5, 1e-4) & 18.72 & 19.05 & 19.43 & 19.98\\
+(1e-5, 1e-5) & 18.80 & 19.43 & 20.05 & 21.06\\
+(1e-5, 1e-6) & \textbf{19.59} & 20.13 & 20.67 & 21.87\\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:projector_joint_learned_alpha_r1_noagg_inference_correction}
+\end{table}
+
+% ----------------------------
+\begin{table}[H]
+\caption{PROJECTOR TRAINING: Joint - \texttt{aggregate\_gallery\_seeks=False} -- alpha=0.5}
+\begin{threeparttable}
+\begin{tabular}{lcccc}
+\headrow
+\thead{(lr, wd)} & \thead{0\% correction} & \thead{50\% correction} & \thead{100\% correction} & \thead{ORACLE correction}\\
+(1e-3, 1e-4) & 4.57 & 27.30 & 48.15 & \textbf{84.61}\\
+(1e-3, 1e-5) & 4.85 & \textbf{28.67} & \textbf{50.56} & 84.33\\
+(1e-3, 1e-6) & 4.86 & 27.69 & 48.61 & 83.27\\
+(1e-4, 1e-4) & 4.79 & 27.48 & 48.30 & 84.08\\
+(1e-4, 1e-5) & 5.48 & 27.18 & 47.29 & 83.26\\
+(1e-4, 1e-6) & 7.43 & 26.86 & 45.02 & 78.78\\
+(1e-5, 1e-4) & 18.98 & 19.33 & 19.71 & 20.24\\
+(1e-5, 1e-5) & 19.34 & 19.79 & 20.24 & 20.90\\
+(1e-5, 1e-6) & \textbf{19.53} & 19.98 & 20.36 & 21.25\\
+\hline  % Please only put a hline at the end of the table
+\end{tabular}
+\end{threeparttable}
+\label{tab:projector_joint_fixed_alpha_r1_noagg_inference_correction}
+\end{table}

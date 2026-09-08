@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Effect of training mode and SEEK target on concept extraction. Probing freezes MegaDescriptor embeddings, whereas fine-tuning updates the full architecture.}
+\label{tab:concept-head-training-target}
+\begin{tabular}{ll|rrrrrr}
+\headrow
+\thead{Training mode} & \thead{SEEK target} & \thead{Average (\%)} & \thead{SEEK (\%)} & \thead{Tusks (\%)} & \thead{Ears (\%)} & \thead{Age (\%)} & \thead{Sex (\%)} \\
+\hline
+Finetuning & image-level & \textbf{83.9} & \textbf{12.5} & 97.6 & \textbf{77.5} & 99.0 & \textbf{79.3} \\
+Finetuning & sighting-level & 70.7 & 0.4 & 97.7 & 56.4 & \textbf{99.1} & 77.3 \\
+Probing & image-level & 83.6 & 10.7 & \textbf{98.1} & 77.4 & \textbf{99.1} & 74.8 \\
+Probing & sighting-level & 70.5 & 0.4 & 97.6 & 56.5 & \textbf{99.1} & 74.4 \\
+\hline
+\end{tabular}
+\end{table}

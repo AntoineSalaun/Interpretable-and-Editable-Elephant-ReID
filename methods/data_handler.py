@@ -19,25 +19,52 @@ from sklearn.model_selection import train_test_split
 
 
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA_ROOT = Path(os.environ.get("CBM_REID_DATA_ROOT", REPO_ROOT / "data")).expanduser()
+MARA_DATA_ROOT = DATA_ROOT / "mara"
+ELEPHANT4AFRICA_DATA_ROOT = DATA_ROOT / "Elephant4Africa"
+
+
+def _normalise_dataset_type(dataset_type):
+    dataset_type = str(dataset_type).lower()
+    if dataset_type in {"mara", "maasai_mara"}:
+        return "mara"
+    if dataset_type in {"elephant4africa", "elephant_4_africa", "e4a", "zooniverse"}:
+        return "Elephant4Africa"
+    raise ValueError(
+        f"Unsupported dataset_type: {dataset_type}. "
+        "Expected 'mara' or 'Elephant4Africa'."
+    )
+
+
 class EleHandler(data.Dataset):
     def __init__(self, 
                  dictonary_path=None, 
-                 dataset_type= 'zooniverse',
+                 dataset_type= 'mara',
                  subset=None):
         
-        if dataset_type =='mara':
-            dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_new/')
-            if dictonary_path is None: dictonary_path = Path("/data/vision/beery/scratch/antoine/CBM_reid/data_processing/mara/image_dictionary_optimized.csv")
-            preprocessed_dir = Path('/data/vision/beery/scratch/antoine/CBM_reid/data_processing/mara')
-        elif dataset_type == 'zooniverse':
-            dataset_dir = Path('/archive/vision/beery/animal_reid/datasets/elephants_zooniverse')
-            if dictonary_path is None: dictonary_path = Path("/data/vision/beery/scratch/antoine/CBM_reid/data_processing/zooniverse/image_dictionary_optimized.csv")
-            preprocessed_dir = Path('/data/vision/beery/scratch/antoine/CBM_reid/')
+        dataset_type = _normalise_dataset_type(dataset_type)
+        if dataset_type == 'mara':
+            dataset_dir = Path(os.environ.get(
+                "CBM_REID_MARA_ORIGINAL_ROOT",
+                "/archive/vision/beery/animal_reid/datasets/elephants_new",
+            ))
+            if dictonary_path is None:
+                dictonary_path = MARA_DATA_ROOT / "image_dictionary_optimized.csv"
+            preprocessed_dir = MARA_DATA_ROOT
+        elif dataset_type == 'Elephant4Africa':
+            dataset_dir = Path(os.environ.get(
+                "CBM_REID_ELEPHANT4AFRICA_ORIGINAL_ROOT",
+                "/archive/vision/beery/animal_reid/datasets/elephants_zooniverse",
+            ))
+            if dictonary_path is None:
+                dictonary_path = ELEPHANT4AFRICA_DATA_ROOT / "out_apr2" / "image_dictonary_optimized.csv"
+            preprocessed_dir = ELEPHANT4AFRICA_DATA_ROOT
         
         self.dataset_dir = dataset_dir
         self.image_dir = Path(dataset_dir) / 'images'
-        self.dataset_dir = dataset_dir
         self.preprocessed_dir = preprocessed_dir
+        self.dataset_type = dataset_type
 
         
         # Load the dictionary and create ele_id mapping
@@ -46,7 +73,7 @@ class EleHandler(data.Dataset):
         self.ele_id_to_label = {ele_id: i for i, ele_id in enumerate(sorted(self.dictonary['ele_id'].unique()))}
         self.label_to_ele_id = {i: ele_id for ele_id, i in self.ele_id_to_label.items()}
 
-        if subset is not None:
+        if subset is not None and subset != 'None':
             if subset == 'IDI_6':
                 # Filter the dictionary to include only EFA_IDI season and elephants that appear at least 6 times
                 self.dictonary = self.dictonary[self.dictonary['#season'] == 'EFA_IDI']
@@ -84,7 +111,7 @@ class EleHandler(data.Dataset):
         return len(self.dictonary)
     
     def __getitem__(self, idx):
-        preprocessed_image_path = self.preprocessed_dir / self.dictonary.iloc[idx]['preprocessed_image_path']
+        preprocessed_image_path = self._resolve_preprocessed_path(self.dictonary.iloc[idx]['preprocessed_image_path'])
         preprocessed_image = Image.open(preprocessed_image_path).convert('RGB')
         preprocessed_image = transforms.ToTensor()(preprocessed_image)
 
@@ -111,10 +138,20 @@ class EleHandler(data.Dataset):
     def _load_ear(self, ear_path):
         """Helper function to load ear images, returning zeros if path is NaN."""
         if pd.notna(ear_path):
-            ear_image_path = self.preprocessed_dir / ear_path
+            ear_image_path = self._resolve_preprocessed_path(ear_path)
             ear_image = Image.open(ear_image_path).convert('RGB')
             return transforms.ToTensor()(ear_image)
         return torch.zeros(3, 224, 224)
+
+    def _resolve_preprocessed_path(self, image_path):
+        image_path = Path(str(image_path))
+        if image_path.is_absolute():
+            try:
+                legacy_relative_path = image_path.relative_to(REPO_ROOT / "preprocessed")
+                return ELEPHANT4AFRICA_DATA_ROOT / "preprocessed" / legacy_relative_path
+            except ValueError:
+                return image_path
+        return self.preprocessed_dir / image_path
 
     def get_original_image(self, idx=None, subject_id=None):
         if idx is not None:
@@ -143,13 +180,13 @@ class EleHandler(data.Dataset):
         ax1.axis('off')
         ax1.set_title('Main Image')
         
-        ax2.imshow(Image.open( self.preprocessed_dir / self.dictonary.iloc[idx]['preprocessed_image_path']).convert('RGB'))
+        ax2.imshow(Image.open(self._resolve_preprocessed_path(self.dictonary.iloc[idx]['preprocessed_image_path'])).convert('RGB'))
         ax2.axis('off')
         ax2.set_title('Preprocessed Image')
 
         # Left ear
         if pd.notna(self.dictonary.iloc[idx]['left_ear_path']):
-            left_ear_path = self.preprocessed_dir / self.dictonary.iloc[idx]['left_ear_path']
+            left_ear_path = self._resolve_preprocessed_path(self.dictonary.iloc[idx]['left_ear_path'])
             left_ear = Image.open(left_ear_path).convert('RGB')
             ax3.imshow(left_ear)
         ax3.axis('off')
@@ -157,7 +194,7 @@ class EleHandler(data.Dataset):
         
         # Right ear
         if pd.notna(self.dictonary.iloc[idx]['right_ear_path']):
-            right_ear_path = self.preprocessed_dir / self.dictonary.iloc[idx]['right_ear_path']
+            right_ear_path = self._resolve_preprocessed_path(self.dictonary.iloc[idx]['right_ear_path'])
             right_ear = Image.open(right_ear_path).convert('RGB')
             ax3.imshow(right_ear)
         ax4.axis('off')
