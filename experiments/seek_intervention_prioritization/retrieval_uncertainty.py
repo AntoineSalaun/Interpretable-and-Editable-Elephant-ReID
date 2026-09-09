@@ -208,6 +208,12 @@ def fit_temperature_grid(
         dtype=torch.long,
     )
     scores = scores[keep]
+    target_scores = scores[torch.arange(scores.shape[0], device=similarity.device), target]
+    finite_target = torch.isfinite(target_scores)
+    if not bool(finite_target.any().item()):
+        return 1.0, float("nan")
+    scores = scores[finite_target]
+    target = target[finite_target]
 
     grid = torch.logspace(
         torch.log10(torch.tensor(float(min_tau))),

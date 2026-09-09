@@ -115,3 +115,19 @@ def test_fit_temperature_grid_returns_positive_temperature() -> None:
 
     assert tau > 0
     assert nll >= 0
+
+
+def test_fit_temperature_grid_skips_non_finite_targets() -> None:
+    similarity = torch.tensor(
+        [
+            [-torch.inf, 0.0, 1.0],
+            [0.0, 2.0, 1.0],
+        ]
+    )
+    query_labels = torch.tensor([0, 1])
+    gallery_labels = torch.tensor([0, 1, 1])
+
+    tau, nll = fit_temperature_grid(similarity, query_labels, gallery_labels, steps=5)
+
+    assert tau > 0
+    assert torch.isfinite(torch.tensor(nll))
