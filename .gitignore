@@ -1,4 +1,6 @@
 ## Project artifacts and local data
+.codex
+
 # Model checkpoints, embeddings, and binary caches
 weights/
 *.pt
@@ -26,9 +28,26 @@ wandb/
 **/wandb/
 *.wandb
 bash/slurm_logs/
-experiments/**/results*/
 user_interface/state/
 marimo_interface/state/
+*.out
+
+# Experiments keep runnable source/config/docs, not run outputs.
+experiments/**
+!experiments/**/
+!experiments/**/*.py
+!experiments/**/*.sh
+!experiments/**/*.sbatch
+!experiments/**/*.md
+!experiments/**/config/
+!experiments/**/config/**/*.json
+!experiments/**/config/**/*.toml
+!experiments/**/config/**/*.yaml
+!experiments/**/config/**/*.yml
+!experiments/**/requirements.txt
+experiments/wandb/
+experiments/**/wandb/
+experiments/**/results*/
 
 # Generated tabular and visual artifacts
 *.csv
