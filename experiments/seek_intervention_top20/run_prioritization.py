@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Subset
@@ -52,9 +53,13 @@ from experiments.seek_intervention_prioritization.retrieval_uncertainty import (
 )
 
 
+from experiments.seek_intervention_top20.topk_entropy import initial_candidates, fixed_candidate_entropy
+
+
 POLICY_DISPLAY = {
     "random": "Random",
-    "entropy": "Expected entropy reduction",
+    "entropy": "Entropy: fixed initial top-20",
+    "entropy_full": "Entropy: all identities",
     "margin": "Margin-ratio",
     "oracle": "Oracle",
 }
@@ -396,6 +401,7 @@ def scorer_for_sighting(
     epsilon: float,
     *,
     include_truth: bool,
+    candidates: torch.Tensor | None = None,
 ):
     visual = cache.visual_embeddings[positions]
     labels = cache.labels[positions] if include_truth else None
@@ -416,6 +422,9 @@ def scorer_for_sighting(
             epsilon,
             pooler=pooler,
         )
+        if candidates is not None:
+            _, identity_scores = pooler.score_matrix(similarity)
+            metrics["entropy"] = float(fixed_candidate_entropy(identity_scores, candidates, temperature).mean().item())
         if include_truth:
             metrics.update(
                 true_identity_ranking_metrics(
@@ -439,6 +448,8 @@ def evaluate_budget(
     gallery_labels: torch.Tensor,
     temperature: float,
     epsilon: float,
+    *,
+    initial_top_k: int = 0,
 ) -> dict[str, float]:
     query_embeddings = project_from_seek(projector, cache.visual_embeddings, current_seek)
     gallery_embeddings_device = gallery_embeddings.to(projector.device)
@@ -461,7 +472,15 @@ def evaluate_budget(
         epsilon,
         pooler=pooler,
     )
+    extra = {}
+    if initial_top_k:
+        identities, scores = pooler.score_matrix(similarity)
+        extra["_initial_candidates"] = initial_candidates(scores, initial_top_k).cpu()
+        extra["_gallery_identities"] = identities.cpu()
+    top_entries = similarity.argmax(dim=1)
     return {
+        **extra,
+        "_hits": (gallery_labels_device[top_entries] == cache.labels.to(projector.device)).cpu().numpy(),
         "recall_at_1": metrics["recall_at_1"] * 100.0,
         "recall_at_5": metrics["recall_at_5"] * 100.0,
         "mrr": metrics["mrr"],
@@ -528,7 +547,7 @@ def make_policy(
 ):
     if policy_key == "random":
         return RandomPolicy(seed=seed)
-    if policy_key == "entropy":
+    if policy_key in {"entropy", "entropy_full"}:
         return ExpectedEntropyReductionPolicy()
     if policy_key == "margin":
         if margin_lambda is None:
@@ -711,7 +730,7 @@ def choose_attribute(
 ) -> PolicyDecision:
     if policy_key == "random":
         return policy.select(state)
-    if policy_key in {"entropy", "margin"}:
+    if policy_key in {"entropy", "entropy_full", "margin"}:
         current_metrics = scorer(state.current_seek)
         return policy.select(
             state,
@@ -737,6 +756,7 @@ def run_single_policy(
     *,
     margin_lambda: float | None = None,
     log_to_wandb: bool = True,
+    evaluation_trace: dict | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     policy = make_policy(policy_key, seed, config, margin_lambda=margin_lambda)
     epsilon = float(config["epsilon"])
@@ -748,8 +768,10 @@ def run_single_policy(
     positions_by_sighting = group_positions(query_cache.encounter_ids)
     interventions: dict[str, list[dict[str, Any]]] = defaultdict(list)
     rows: list[dict[str, Any]] = []
+    frozen_candidates = None
 
     def record_budget(budget: int) -> None:
+        nonlocal frozen_candidates
         metrics = evaluate_budget(
             projector,
             retrieval,
@@ -759,7 +781,19 @@ def run_single_policy(
             gallery_labels,
             temperature,
             epsilon,
+            initial_top_k=int(config["entropy_initial_top_k"]) if policy_key == "entropy" and budget == 0 else 0,
         )
+        hits = metrics.pop("_hits")
+        if evaluation_trace is not None:
+            evaluation_trace.setdefault("hits", []).append(hits)
+        if "_initial_candidates" in metrics:
+            frozen_candidates = metrics.pop("_initial_candidates")
+            identities = metrics.pop("_gallery_identities")
+            if evaluation_trace is not None:
+                evaluation_trace["initial_candidate_identities"] = identities[frozen_candidates].numpy()
+                evaluation_trace["initial_top20_true_identity_coverage"] = float(
+                    (identities[frozen_candidates] == query_cache.labels[:, None]).any(dim=1).float().mean().item()
+                )
         row = {
             "policy": POLICY_DISPLAY[policy_key],
             "policy_key": policy_key,
@@ -801,6 +835,7 @@ def run_single_policy(
                 temperature,
                 epsilon,
                 include_truth=policy_key == "oracle",
+                candidates=frozen_candidates[pos_tensor] if frozen_candidates is not None else None,
             )
             logging_scorer = scorer_for_sighting(
                 projector,
@@ -812,6 +847,7 @@ def run_single_policy(
                 temperature,
                 epsilon,
                 include_truth=True,
+                candidates=frozen_candidates[pos_tensor] if frozen_candidates is not None else None,
             )
             decision = choose_attribute(policy_key, policy, state, expert_seek, scorer)
             current_seek[pos_tensor] = copy_attribute_from_expert(
@@ -956,7 +992,7 @@ def write_outputs(
 
 
 def run_plotter(output_dir: Path) -> None:
-    from experiments.seek_intervention_prioritization.plot_results import plot_results
+    from experiments.seek_intervention_top20.plot_results import plot_results
 
     plot_results(
         output_dir / "prioritization_results.csv",
@@ -973,7 +1009,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-sightings", type=int, default=None)
     parser.add_argument("--max-gallery-images", type=int, default=None)
     parser.add_argument("--max-budget", type=int, default=None)
-    parser.add_argument("--policies", nargs="+", default=["random", "entropy", "margin", "oracle"], choices=["random", "entropy", "margin", "oracle"])
+    parser.add_argument("--policies", nargs="+", default=["random", "entropy", "entropy_full", "margin", "oracle"], choices=list(POLICY_DISPLAY))
     parser.add_argument("--random-rollouts", type=int, default=None)
     parser.add_argument("--temperature", type=float, default=None)
     parser.add_argument("--max-calibration-images", type=int, default=None)
@@ -1000,6 +1036,9 @@ def main() -> None:
     max_budget = args.max_budget if args.max_budget is not None else int(config["budgets"])
     random_rollouts = args.random_rollouts if args.random_rollouts is not None else int(config["random_rollouts"])
     output_dir = repo_path(args.output_dir or config["output_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    config["random_rollouts"] = random_rollouts
+    config["output_dir"] = str(output_dir)
 
     checkpoint_dir = resolve_checkpoint_dir(config, download=args.download_checkpoint)
     dataset = EleHandler(subset=config["subset"], dataset_type=config["dataset"])
@@ -1032,7 +1071,7 @@ def main() -> None:
     )
 
     wandb_cfg = config["wandb"]
-    run_name = "seek_intervention_prioritization_smoke" if args.smoke else "seek_intervention_prioritization"
+    run_name = config["experiment_name"] + ("_smoke" if args.smoke else "")
     with wandb.init(
         entity=wandb_cfg["entity"],
         project=wandb_cfg["project"],
@@ -1042,6 +1081,10 @@ def main() -> None:
         config=config,
         mode=args.wandb_mode,
     ):
+        with (output_dir / "run_metadata.json").open("w") as handle:
+            json.dump({"wandb_run_id": wandb.run.id, "wandb_url": wandb.run.url,
+                       "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+                       "arguments": {key: str(value) if isinstance(value, Path) else value for key, value in vars(args).items()}}, handle, indent=2)
         projector, backbone_for_concepts, backbone, concept_head = build_models(config, checkpoint_dir, dataset)
         print("Collecting train cache", flush=True)
         train_cache = collect_cache(train_loader, dataset, backbone_for_concepts, backbone, concept_head, projector.device)
@@ -1090,6 +1133,8 @@ def main() -> None:
         test_cache = collect_cache(test_loader, dataset, backbone_for_concepts, backbone, concept_head, projector.device)
         query_positions = select_query_positions(test_cache, args.max_sightings, config["seed"])
         query_cache = test_cache.subset(query_positions)
+        np.savez_compressed(output_dir / "query_metadata.npz", labels=query_cache.labels.numpy(),
+                            encounter_ids=np.asarray(query_cache.encounter_ids), indices=query_cache.indices.numpy())
         print(
             f"Evaluating {len(group_positions(query_cache.encounter_ids))} query sightings "
             f"({query_cache.labels.numel()} query images)",
@@ -1104,6 +1149,7 @@ def main() -> None:
             if policy_key == "random":
                 seeds = [config["seed"] + i for i in range(random_rollouts)]
             for seed in seeds:
+                trace = {}
                 rows, interventions = run_single_policy(
                     policy_key,
                     seed,
@@ -1115,9 +1161,17 @@ def main() -> None:
                     temperature,
                     config,
                     max_budget,
+                    evaluation_trace=trace,
                 )
+                trace["hits"] = np.stack(trace["hits"], axis=1)
+                assert np.allclose(trace["hits"].mean(axis=0) * 100,
+                                   [row["recall_at_1"] for row in rows], atol=1e-5)
+                np.savez_compressed(output_dir / f"trace_{policy_key}_{seed}.npz", **trace)
+                if "initial_top20_true_identity_coverage" in trace:
+                    wandb.summary["initial_top20_true_identity_coverage"] = trace["initial_top20_true_identity_coverage"]
                 all_rows.extend(rows)
                 all_interventions[f"{policy_key}:{seed}"] = interventions
+                pd.DataFrame(all_rows).to_csv(output_dir / "prioritization_results.csv", index=False)
 
         sanity = endpoint_checks(all_rows, max_budget, args.endpoint_tolerance)
         sanity["heatmap_reference"] = reference_checks(all_rows, config, args.strict_reference)
@@ -1126,6 +1180,8 @@ def main() -> None:
         write_outputs(all_rows, all_interventions, config, output_dir, sanity, temperature_info, margin_lambda_info)
         if not args.no_plot:
             run_plotter(output_dir)
+            wandb.log({"retrieval_with_95ci": wandb.Image(str(output_dir / "intervention_prioritization.png")),
+                       "confidence_intervals": wandb.Table(dataframe=pd.read_csv(output_dir / "confidence_intervals.csv"))})
 
     if args.smoke:
         interventions_path = output_dir / "per_sighting_interventions.json"

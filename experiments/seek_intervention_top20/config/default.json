@@ -1,0 +1,111 @@
+{
+  "experiment_name": "seek_intervention_top20",
+  "entropy_initial_top_k": 20,
+  "bootstrap_draws": 4000,
+  "bootstrap_seed": 2026,
+  "seed": 42,
+  "dataset": "mara",
+  "subset": "2+encounters",
+  "train_indices_path": "weights/train_indices_gold.txt",
+  "test_indices_path": "weights/test_indicies_gold.txt",
+  "batch_size": 64,
+  "num_workers": 4,
+  "gallery_correction_fn": "sighting_0.2",
+  "query_initial_correction_fn": "image_0.0",
+  "budgets": 16,
+  "random_rollouts": 20,
+  "epsilon": 1e-12,
+  "margin_lambda_grid": [
+    0.0,
+    0.01,
+    0.03,
+    0.1,
+    0.3,
+    1.0,
+    3.0,
+    10.0,
+    30.0,
+    100.0
+  ],
+  "margin_validation": {
+    "fraction": 0.2,
+    "early_budget_k": 4,
+    "split_source": "train_indices_only"
+  },
+  "temperature_grid": {
+    "min": 0.01,
+    "max": 100.0,
+    "steps": 81
+  },
+  "wandb": {
+    "entity": "antoinesalaun-massachusetts-institute-of-technology",
+    "project": "CBM-ReID",
+    "project_path": "antoinesalaun-massachusetts-institute-of-technology/CBM-ReID",
+    "group": "seek_intervention_top20",
+    "tags": [
+      "seek_intervention_top20",
+      "fixed_initial_top20",
+      "identity_bootstrap_95ci",
+      "G_S(20)",
+      "Heatmap_three_20cor"
+    ]
+  },
+  "heatmap_reference": {
+    "source_csv": "figures/correction_policies/CHAIR_vs_cor.csv",
+    "source_exporter": "figures/correction_policies/export_projector_correction_runs.py",
+    "source_plot": "figures/correction_policies/heatmap.py",
+    "cluster_script": "bash/projector.sh",
+    "training_scope": "sighting",
+    "train_correction_pct": 20.0,
+    "third_column_interpretation": "sighting-level projector training correction column; command label 03 in bash/projector.sh",
+    "wandb_run_name": "Heatmap_three_20cor",
+    "wandb_run_id": "u63g7ldu",
+    "wandb_group": "Projector_heatmap_three_alpha_learned_min10",
+    "wandb_url": "https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-ReID/runs/u63g7ldu",
+    "checkpoint_files": [
+      "projector.pt",
+      "backbone_w.pt",
+      "alpha.pt"
+    ],
+    "local_checkpoint_dir": "../experiments/exp_Heatmap_three_20cor",
+    "download_checkpoint_dir": "experiments/seek_intervention_prioritization/cache/checkpoints/Heatmap_three_20cor",
+    "best_epoch": 65,
+    "best_alpha": 0.41754093766212463,
+    "best_val_recall_at_1": 29.97697806858112,
+    "config": {
+      "pipeline_name": "CHAIR",
+      "epochs": 150,
+      "dataset": "mara",
+      "subset": "2+encounters",
+      "backbone_for_concepts_pretraining": "backbone_for_concepts_three_gold",
+      "backbone_pretraining": "backbone_normalized_gold",
+      "concept_head_pretraining": "concept_head_three_gold",
+      "concept_head_architecture": "three",
+      "concept_head_target_is_ele_seek": false,
+      "correction_at_training": "sighting_0.2",
+      "alpha": 0.5,
+      "alpha_learnable": true,
+      "projector_training_policy": "sequential",
+      "projector_architecture": "small",
+      "projector_lr": 0.0001,
+      "projector_wd": 0.000001,
+      "layer_norm": true,
+      "print_every": 5,
+      "batch_size": 64,
+      "save_best": true,
+      "test_concept_head_before_projector": true
+    },
+    "reference_metrics_pct": {
+      "Pr/Test Recall@1 with 0% Image Correction correction": 15.291409184538956,
+      "Pr/Test Recall@1 with 0% Correction correction": 15.303525990548891,
+      "Pr/Test Recall@1 with 20% Correction correction": 24.712225857264023,
+      "Pr/Test Recall@1 with 20% Image Correction correction": 24.88791954440809,
+      "Pr/Test Recall@1 with 100% Sighting Correction correction": 84.18150975402884,
+      "Pr/Test Recall@5 with 0% Image Correction correction": 18.75075730037562,
+      "Pr/Test Recall@5 with 20% Correction correction": 28.892523930691876,
+      "Pr/Test Recall@5 with 100% Sighting Correction correction": 90.11874469889736
+    }
+  },
+  "output_dir": "experiments/seek_intervention_top20/results",
+  "cache_dir": "experiments/seek_intervention_top20/cache"
+}

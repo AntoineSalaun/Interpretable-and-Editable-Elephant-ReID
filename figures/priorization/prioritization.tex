@@ -1,0 +1,18 @@
+\subsection{Prioritizing concept interventions.}
+Correcting complete SEEK codes substantially improves retrieval, but in practice an ecologist may not need to review every attribute. We therefore ask whether the model can identify \emph{which SEEK attribute should be corrected next}, adapting \cite{chauhan_interactive_2023} to retrieval. We keep the gallery fixed at $G_S(20\%)$, and use the uncorrected query $Q_I(0\%)$. For each query sighting, we then correct a prioritized attribute (that might be different across sighting). Progressively, we intervene on additional attributes while the correction budget increases until all attributes are corrected, thus reaching $Q_S(100\%)$.
+
+Our policy balances two questions: \emph{which attributes is the model unsure about, and which corrections could help distinguish candidate identities?} We explored retrieval-entropy reduction, but found that a simpler measure of importance, the separation between the two leading identities, made better use of the correction budget.
+
+We first apply softmax to identity similarity scores to obtain probabilities. These express how confidence is shared between candidates, allowing us to distinguish a clear favourite from a close competition. The temperature $\tau$ controls their concentration; it is calibrated on training-gallery queries with self-matches excluded and frozen before testing.
+
+For each attribute, we average its predicted value probabilities across the sighting. Their entropy measures concept uncertainty, $U_i(s)$, and is higher when several values remain plausible. To estimate correction importance, $I_i(s)$, we temporarily try each possible value and measure the change in the log-probability ratio between the two leading identities, averaged across images. We weight these changes by the predicted probabilities of the attribute values. The resulting score is
+\begin{equation}
+S_i(s)=\underbrace{U_i(s)}_{\text{concept uncertainty}}
++\lambda\underbrace{I_i(s)}_{\text{correction importance}}.
+\end{equation}
+We select the highest-scoring uncorrected attribute, using $\lambda=0.3$ chosen on validation Recall@1 over budgets 1--4. Only then is its expert value revealed and applied to the sighting. Earlier corrections remain fixed, and scores are recomputed before the next decision.
+
+We compare against random selection and an oracle that uses expert values and the true identity to choose the best immediate correction. After four corrections, margin-based selection reaches 40.45\% image-weighted Recall@1, versus 24.30\% for Random (Figure~\ref{fig:seek-prioritization}). The 95\% intervals resample whole test identities 4,000 times, and additionally resample Random's 20 seeds, with the model and gallery fixed.
+
+\paragraph{Importance of ear tears and holes.}
+Ear tears and holes account for 95.79\% of the first five corrections across 1,269 sightings. Applying each possible first correction to the same sightings also places all eight tear and hole attributes ahead of the other attributes in mean Recall@1. For example, correcting \texttt{L\_tear\_1} yields 20.64\% sighting-averaged Recall@1, versus 18.68\% for a random first correction. This supports their retrieval value beyond selection frequency alone, which can also reflect the higher possible entropy of five-category ear attributes.

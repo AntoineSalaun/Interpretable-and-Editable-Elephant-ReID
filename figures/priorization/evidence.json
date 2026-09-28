@@ -1,0 +1,143 @@
+{
+  "source_results": "experiments/seek_intervention_top20/results",
+  "plot_results_source": "experiments/seek_margin_rescaled/results",
+  "rescaling_audit": {
+    "original_lambda": 0.3,
+    "original_temperature": 0.03548133373260498,
+    "margin_beta": 8.455150030741938,
+    "clipped_top2_rows": 0,
+    "min_top2_probability": 7.906813537239543e-10,
+    "counterfactual_image_rows": 8025032,
+    "max_per_image_margin_error": 3.814697265625e-06,
+    "max_policy_score_error": 5.963127336361396e-07,
+    "raw_vs_live_legacy_choice_differences": 0,
+    "changed_hits_by_budget": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "all_image_hits_identical": true,
+    "n_query_images": 16506,
+    "n_sightings": 1269,
+    "n_decisions": 20304,
+    "raw_vs_original_choice_differences": 0,
+    "max_ci_difference_pp": 0.0,
+    "elapsed_seconds": 340.5067536830902,
+    "wandb_url": "https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-ReID/runs/m1ty69xg"
+  },
+  "slurm_job_id": "1817395",
+  "wandb_url": "https://wandb.ai/antoinesalaun-massachusetts-institute-of-technology/CBM-ReID/runs/kxcwf1hn",
+  "margin_lambda": 0.3,
+  "temperature": 0.03548133373260498,
+  "n_sightings": 1269,
+  "first_five_ear_corrections": 6078,
+  "first_five_total_corrections": 6345,
+  "first_five_ear_pct": 95.79196217494089,
+  "mean_first_r1_uniform_random_sighting_weighted_pct": 18.6792894237607,
+  "top_eight_first_concepts_are_all_ear_holes_or_tears": true,
+  "mean_r1_budgets_1_to_4_image_weighted_pct": {
+    "entropy": 23.580818623304367,
+    "entropy_full": 19.33690719306469,
+    "margin": 29.730097576975822,
+    "oracle": 45.5607034265995,
+    "random": 20.582742150872946
+  },
+  "first_concept_effects": [
+    {
+      "attribute": "L_tear_1",
+      "mean_first_r1_pct": 20.642364860433943,
+      "gain_vs_uniform_random_pp": 1.963075436673248
+    },
+    {
+      "attribute": "R_hole_1",
+      "mean_first_r1_pct": 20.432780556477887,
+      "gain_vs_uniform_random_pp": 1.7534911327171936
+    },
+    {
+      "attribute": "L_tear_2",
+      "mean_first_r1_pct": 20.184374345392232,
+      "gain_vs_uniform_random_pp": 1.5050849216315498
+    },
+    {
+      "attribute": "L_hole_1",
+      "mean_first_r1_pct": 20.079844164044886,
+      "gain_vs_uniform_random_pp": 1.4005547402841911
+    },
+    {
+      "attribute": "R_tear_2",
+      "mean_first_r1_pct": 19.80471168391555,
+      "gain_vs_uniform_random_pp": 1.1254222601548665
+    },
+    {
+      "attribute": "R_tear_1",
+      "mean_first_r1_pct": 19.754268615941406,
+      "gain_vs_uniform_random_pp": 1.0749791921807206
+    },
+    {
+      "attribute": "L_hole_2",
+      "mean_first_r1_pct": 19.56516454952456,
+      "gain_vs_uniform_random_pp": 0.8858751257638694
+    },
+    {
+      "attribute": "R_hole_2",
+      "mean_first_r1_pct": 19.3950783934485,
+      "gain_vs_uniform_random_pp": 0.7157889696878058
+    },
+    {
+      "attribute": "right_extreme",
+      "mean_first_r1_pct": 18.046592801115832,
+      "gain_vs_uniform_random_pp": -0.6326966226448716
+    },
+    {
+      "attribute": "sex",
+      "mean_first_r1_pct": 17.964724611394917,
+      "gain_vs_uniform_random_pp": -0.7145648123657693
+    },
+    {
+      "attribute": "body_special",
+      "mean_first_r1_pct": 17.365785450441873,
+      "gain_vs_uniform_random_pp": -1.3135039733188136
+    },
+    {
+      "attribute": "right_tusk",
+      "mean_first_r1_pct": 17.303321980728168,
+      "gain_vs_uniform_random_pp": -1.3759674430325273
+    },
+    {
+      "attribute": "left_extreme",
+      "mean_first_r1_pct": 17.297060215426658,
+      "gain_vs_uniform_random_pp": -1.382229208334033
+    },
+    {
+      "attribute": "ear_special",
+      "mean_first_r1_pct": 17.0899776142466,
+      "gain_vs_uniform_random_pp": -1.5893118095140937
+    },
+    {
+      "attribute": "age",
+      "mean_first_r1_pct": 16.972193697298398,
+      "gain_vs_uniform_random_pp": -1.7070957264622963
+    },
+    {
+      "attribute": "left_tusk",
+      "mean_first_r1_pct": 16.970387240339665,
+      "gain_vs_uniform_random_pp": -1.7089021834210278
+    }
+  ],
+  "n_images": 16506,
+  "n_identities": 531
+}
