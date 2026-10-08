@@ -4,6 +4,7 @@ import os
 import sys
 import re
 import shutil
+import json
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,6 +16,9 @@ import seaborn as sns  # only for sns.heatmap – no theme
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from figures.style import (
     set_style, get_figsize, savefig, get_color, format_metric_name, LABELS,
+)
+from figures.journal_style import (
+    set_journal_style, journal_figsize, format_journal_axes, save_journal,
 )
 set_style()
 
@@ -207,7 +211,12 @@ def plot_heatmap(
     out_name: str,
     square: bool,
     figsize: tuple[float, float] | None = None,
+    journal: bool = False,
+    cell_colors: np.ndarray | None = None,
 ) -> None:
+    if journal:
+        set_journal_style()
+        figsize = journal_figsize(0.70, height=7.0)
     fig, ax = plt.subplots(figsize=figsize or get_figsize("heatmap"))
     blues = plt.get_cmap("Blues")
     truncated_blues = colors.LinearSegmentedColormap.from_list(
@@ -226,6 +235,13 @@ def plot_heatmap(
         annot_kws={"size": LABEL_FONT_SIZE},
         ax=ax,
     )
+    if cell_colors is not None:
+        if show_cbar:
+            raise ValueError("Published cell colors are for the annotated panel without a colorbar.")
+        # Preserve the PDF's original fills independently of rounded annotations.
+        mesh = ax.collections[0]
+        mesh.set_array(None)
+        mesh.set_facecolors(np.asarray(cell_colors).reshape(-1, 3))
 
     ax.set_xlabel(format_metric_name("train_cor"), fontsize=AXIS_LABEL_FONT_SIZE)
     ax.set_ylabel(format_metric_name("eval_cor"), fontsize=AXIS_LABEL_FONT_SIZE)
@@ -244,13 +260,12 @@ def plot_heatmap(
         ax.vlines(s_col, *ax.get_ylim(), colors="white", linewidth=6)
 
     if annot:
-        for row_idx, _ in enumerate(heat.index):
-            for col_idx, _ in enumerate(heat.columns):
-                text_idx = row_idx * len(heat.columns) + col_idx
-                if text_idx < len(ax.texts):
-                    ax.texts[text_idx].set_position((col_idx + 0.5, row_idx + 0.5))
-                    ax.texts[text_idx].set_verticalalignment("center")
-                    ax.texts[text_idx].set_horizontalalignment("center")
+        # Seaborn already positions annotations at their cell centers. Keep
+        # these positions: missing cells do not have text artists, so assigning
+        # positions by a flattened index shifts every subsequent annotation.
+        for text in ax.texts:
+            text.set_verticalalignment("center")
+            text.set_horizontalalignment("center")
 
     if show_cbar:
         cbar = ax.collections[0].colorbar
@@ -258,10 +273,42 @@ def plot_heatmap(
         cbar.set_label(format_metric_name("r1"), fontsize=LABEL_FONT_SIZE)
 
     out_path = CSV_PATH.parent / out_name
-    savefig(fig, out_path)
+    if journal:
+        format_journal_axes(ax, grid=False)
+        # Retain every cell and its annotation, labeling the training axis
+        # every 20% to match the journal line plots.
+        ticks = [(i + 0.5, label) for i, (x, label) in enumerate(zip(heat.columns, xlabels))
+                 if x >= 110 or x % 20 == 0]
+        ax.set_xticks([position for position, _ in ticks])
+        ax.set_xticklabels([label for _, label in ticks])
+        fig.subplots_adjust(left=0.145, right=0.985, bottom=0.13, top=0.985)
+        save_journal(fig, out_path)
+    else:
+        savefig(fig, out_path)
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Export correction heatmaps.")
+    parser.add_argument("--journal", action="store_true")
+    args = parser.parse_args()
+    if args.journal:
+        # This is a layout-only revision of the existing PDF. The current CSV
+        # was exported mid-run and changes its zero-correction column, so use
+        # the archived displayed values and colors rather than changing results.
+        snapshot = json.loads(Path(__file__).with_name("heatmap_sighting_published.json").read_text())
+        heat = pd.DataFrame(
+            snapshot["displayed_recall_at_1"],
+            index=snapshot["inference_correction_pct"],
+            columns=snapshot["training_correction_pct"],
+        )
+        plot_heatmap(
+            heat, annot=True, show_cbar=False,
+            out_name="heatmap_sighting_with_numbers_journal.pdf",
+            square=False, journal=True, cell_colors=np.array(snapshot["cell_rgb"]),
+        )
+        return
     base_width, base_height = get_figsize("heatmap")
     balanced_annot_figsize = (base_width, 0.5 * (base_height + base_width))
 

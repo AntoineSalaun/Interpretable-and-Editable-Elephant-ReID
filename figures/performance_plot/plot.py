@@ -10,6 +10,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from figures.style import (
     set_style, get_figsize, savefig, get_color, format_metric_name, LABELS,
 )
+from figures.journal_style import (
+    set_journal_style, journal_figsize, format_journal_axes, save_journal,
+)
 set_style()
 
 SEEK_PATH  = "figures/performance_plot/SEEK_vs_cor.csv"
@@ -36,10 +39,14 @@ Y_TICKS = np.array([0, 20, 40, 60, 80])
 Y_LIMIT = 80
 MARKERSIZE = 8
 TICK_WIDTH = 16
+# Match the histogram labels after LaTeX scales the respective PDFs to
+# 0.49\linewidth (6-inch histograms) and 0.75\linewidth (journal performance).
+# Keep this canvas width when saving: a tight crop changes the font scale.
+JOURNAL_FIGSIZE = journal_figsize(0.75)
 SCOPE_ORDER = ["sighting", "image"]
 SCOPE_LABELS = {
-    "sighting": "SEEK-CBM, sighting-level training",
-    "image": "SEEK-CBM, image-level training",
+    "sighting": "TUSK (ours), sighting-level training",
+    "image": "TUSK (ours), image-level training",
 }
 SEEK_SCOPE_LABELS = {
     "sighting": "SEEK-only, sighting gallery",
@@ -51,8 +58,8 @@ ELEPHANTBOOK_SCOPE_LABELS = {
 }
 ELEPHANTBOOK_VARIANT_ORDER = ["megadescriptor", "triple_crop_encoder"]
 ELEPHANTBOOK_VARIANT_LABELS = {
-    "megadescriptor": "ElephantBook (MD)",
-    "triple_crop_encoder": "ElephantBook (triple)",
+    "megadescriptor": "ElephantBook (MegaDescriptor)",
+    "triple_crop_encoder": "ElephantBook (Triple-crop encoder)",
 }
 ELEPHANTBOOK_VARIANT_COLORS = {
     "megadescriptor": ELEPHANTBOOK_COLOR,
@@ -352,8 +359,13 @@ chair_curve = (
       .sort_values("correction_pct")
 )
 
-def plot_performance(out_name: str, scope_filter: str | None = None):
-    fig, ax = plt.subplots(figsize=(6, 4))
+def plot_performance(
+    out_name: str, scope_filter: str | None = None, *, journal: bool = False
+):
+    if journal:
+        # Match the DejaVu Serif font embedded in the histogram PDFs.
+        set_journal_style()
+    fig, ax = plt.subplots(figsize=JOURNAL_FIGSIZE if journal else (6, 4))
     baseline_x = np.array([0, 100])
     ax.plot(
         baseline_x,
@@ -376,7 +388,7 @@ def plot_performance(out_name: str, scope_filter: str | None = None):
         [TRIPLE_FINETUNED_R1, TRIPLE_FINETUNED_R1],
         linestyle="--",
         color=VISUAL_BASELINE_COLOR,
-        label="Triple-crop encoder",
+        label="Triple-crop encoder (ours)",
         linewidth=1.5,
     )
 
@@ -425,7 +437,7 @@ def plot_performance(out_name: str, scope_filter: str | None = None):
     chair_scopes += sorted(set(plot_chair["training_correction_scope"]) - set(chair_scopes))
     for i, scope in enumerate(chair_scopes):
         scope_curve = plot_chair[plot_chair["training_correction_scope"] == scope].sort_values("correction_pct")
-        label = "SEEK-CBM" if scope_filter is not None else SCOPE_LABELS.get(scope, f"SEEK-CBM, {scope} training")
+        label = "TUSK (ours)" if scope_filter is not None else SCOPE_LABELS.get(scope, f"TUSK (ours), {scope} training")
         ax.plot(
             scope_curve["correction_pct"],
             scope_curve["chair_r1"],
@@ -447,7 +459,7 @@ def plot_performance(out_name: str, scope_filter: str | None = None):
     ax.set_yticks(Y_TICKS)
     ax.tick_params(axis="both", labelsize=TICK_WIDTH)
     handles, labels = ax.get_legend_handles_labels()
-    triple_idx = [i for i, label in enumerate(labels) if "ElephantBook (triple)" in label]
+    triple_idx = [i for i, label in enumerate(labels) if "ElephantBook (Triple-crop encoder)" in label]
     if triple_idx and len(labels) > 1:
         first_triple = triple_idx[0]
         handle = handles.pop(first_triple)
@@ -456,22 +468,53 @@ def plot_performance(out_name: str, scope_filter: str | None = None):
         handles.insert(insert_at, handle)
         labels.insert(insert_at, label)
 
-    ax.legend(
-        handles,
-        labels,
-        fontsize=LEGEND_FONTSIZE,
-        ncol=1,
-        loc="upper left",
-        bbox_to_anchor=(0.0, 1.11),
-        borderaxespad=0.0,
-        framealpha=0.85,
-    )
-    fig.tight_layout(pad=0.3)
-
     out_path = os.path.join(os.path.dirname(SEEK_PATH), out_name)
-    savefig(fig, out_path)
+    if journal:
+        for line in ax.lines:
+            if line.get_marker() not in (None, "None", "", " "):
+                line.set_linewidth(1.7)
+                line.set_markersize(6.5)
+        format_journal_axes(ax)
+        ax.set_xticks(np.arange(0, 101, 20))
+        fig.subplots_adjust(left=0.11, right=0.98, bottom=0.155, top=0.965)
+        ax.legend(
+            handles,
+            labels,
+            fontsize=LEGEND_FONTSIZE,
+            ncol=1,
+            loc="upper left",
+            borderaxespad=0.5,
+            handlelength=2.0,
+            handletextpad=0.6,
+            columnspacing=1.1,
+            labelspacing=0.5,
+        )
+        save_journal(fig, out_path)
+    else:
+        ax.legend(
+            handles,
+            labels,
+            fontsize=LEGEND_FONTSIZE,
+            ncol=1,
+            loc="upper left",
+            bbox_to_anchor=(0.0, 1.11),
+            borderaxespad=0.0,
+            framealpha=0.85,
+        )
+        fig.tight_layout(pad=0.3)
+        savefig(fig, out_path)
 
 
-plot_performance(OUT_NAME)
-plot_performance("performance_sighting.pdf", "sighting")
-plot_performance("performance_image.pdf", "image")
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Export retrieval performance figures.")
+    parser.add_argument("--journal", action="store_true",
+                        help="Export only the sighting panel for 0.75 linewidth.")
+    args = parser.parse_args()
+    if args.journal:
+        plot_performance("performance_sighting_journal.pdf", "sighting", journal=True)
+    else:
+        plot_performance(OUT_NAME)
+        plot_performance("performance_sighting.pdf", "sighting")
+        plot_performance("performance_image.pdf", "image")

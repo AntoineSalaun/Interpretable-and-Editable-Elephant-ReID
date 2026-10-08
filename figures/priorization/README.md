@@ -1,5 +1,12 @@
 # Final intervention-prioritization figure
 
+For the journal version at `0.75\linewidth`, run
+`python figures/priorization/plot_journal.py`. This renders the existing
+`confidence_intervals.csv` into `intervention_prioritization_journal.pdf` and
+a PNG preview with the shared journal typography. It preserves the saved
+point estimates and uncertainty bounds without rerunning the bootstrap.
+See `figures/journal_figures.md` for the complete set of journal exports.
+
 The final paper comparison contains Random, Margin-ratio, and greedy Oracle.
 Retrieval-entropy policies were exploratory alternatives and are omitted from the
 figure. Their saved results remain available to support the brief comparison in

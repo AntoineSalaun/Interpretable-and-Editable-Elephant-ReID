@@ -21,3 +21,8 @@ The default concept head is the three-head architecture:
 The identity probes use simple linear logistic classifiers on grouped SEEK
 concept blocks. The eight groups are sex, age, tusks, tear 1, tear 2, hole 1,
 hole 2, and extreme/special features.
+
+For the full-linewidth journal version of the additional identity information
+figure, run `python figures/concept-contribution/plot.py --journal`. This uses
+the saved leave-one-out metrics to write `leave-one-out/leave_one_out_journal.pdf`
+and a PNG preview. See `figures/journal_figures.md` for the shared figure sizes.

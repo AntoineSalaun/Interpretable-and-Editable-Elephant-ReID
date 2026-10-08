@@ -1,0 +1,19 @@
+% Requires \usepackage{graphicx}. Paths assume the repository is the TeX root.
+% Include the performance panels at the same minipage width to match font sizes.
+\begin{figure}[t]
+    \centering
+    \begin{minipage}[t]{0.49\linewidth}
+        \raggedright\textbf{(A)}\par
+        \centering
+        \includegraphics[width=\linewidth]{figures/dataset_distribution/images_per_sighting.pdf}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.49\linewidth}
+        \raggedright\textbf{(B)}\par
+        \centering
+        \includegraphics[width=\linewidth]{figures/dataset_distribution/sightings_per_elephant.pdf}
+    \end{minipage}
+    \caption{Dataset distributions. \textbf{(A)} Number of images per individual
+    sighting. \textbf{(B)} Number of sightings per elephant. Both frequency axes
+    use a logarithmic scale.}
+    \label{fig:dataset-distributions}
+\end{figure}

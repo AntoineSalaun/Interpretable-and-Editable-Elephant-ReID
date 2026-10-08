@@ -15,6 +15,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from figures.style import (
     set_style, get_figsize, savefig, get_color, format_metric_name, LABELS,
 )
+from figures.journal_style import (
+    set_journal_style, journal_figsize, format_journal_axes, save_journal, LEGEND_SIZE,
+)
 set_style()
 
 TICK_FONTSIZE = 16
@@ -100,7 +103,9 @@ def pick_preferred_numeric_column(df: pd.DataFrame, candidates: list[str]) -> st
     return None
 
 
-def main():
+def main(journal=False):
+    if journal:
+        set_journal_style()
     # --- locate csv: same folder as script OR hardcode your path here ---
     # If you already pass a path in your script, keep that.
     csv_path = Path("figures/alpha/alpha_vs_cor.csv").resolve()  # <-- adjust if needed
@@ -160,7 +165,7 @@ def main():
     scopes += sorted(set(data["scope"]) - set(scopes))
 
     # Plot
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=journal_figsize(0.75) if journal else (6, 4))
     for i, scope_name in enumerate(scopes):
         scope_data = (
             data[data["scope"] == scope_name]
@@ -192,8 +197,25 @@ def main():
     fig.tight_layout(pad=0.0)
 
     out_path = csv_path.with_name(f"alpha_vs_cor.pdf")
-    savefig(fig, out_path)
+    if journal:
+        format_journal_axes(ax)
+        ticks = list(range(0, 101, 20)) + ([110] if has_special else [])
+        ax.set_xticks(ticks)
+        ax.set_xticklabels([str(t) if t <= 100 else SPECIAL_CORRECTION_LABEL for t in ticks])
+        for line in ax.lines:
+            line.set_linewidth(1.7)
+            line.set_markersize(6.5)
+        if len(scopes) > 1:
+            ax.legend(fontsize=LEGEND_SIZE, loc="upper left", handlelength=2)
+        fig.subplots_adjust(left=0.11, right=0.98, bottom=0.155, top=0.965)
+        save_journal(fig, csv_path.with_name("alpha_vs_cor_journal.pdf"))
+    else:
+        savefig(fig, out_path)
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Export learned fusion alpha.")
+    parser.add_argument("--journal", action="store_true")
+    main(journal=parser.parse_args().journal)
