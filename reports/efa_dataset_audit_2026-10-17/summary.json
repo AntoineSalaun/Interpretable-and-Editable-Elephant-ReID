@@ -1,0 +1,94 @@
+{
+  "EFA_IDI": {
+    "images": 5504,
+    "ids_or_groups": 1008,
+    "dated_images": 5445,
+    "undated_images": 59,
+    "first_capture": "2012-05-04 08:44:19",
+    "last_capture": "2015-06-16 11:53:49",
+    "calendar_days": 290,
+    "identity_days": 1781,
+    "inferred_encounters_60min": 1844,
+    "ids_with_2plus_encounters": 349,
+    "images_in_ids_with_2plus_encounters": 3420,
+    "ids_with_no_date": 8,
+    "single_image_ids": 71,
+    "images_per_id": {
+      "count": 1008.0,
+      "mean": 5.4603174603174605,
+      "std": 4.938390305227538,
+      "min": 1.0,
+      "25%": 3.0,
+      "50%": 4.0,
+      "75%": 7.0,
+      "max": 40.0
+    },
+    "images_per_encounter": {
+      "count": 1844.0,
+      "mean": 2.952819956616052,
+      "std": 1.5610032210119067,
+      "min": 1.0,
+      "25%": 2.0,
+      "50%": 3.0,
+      "75%": 4.0,
+      "max": 26.0
+    },
+    "gps_images": 10,
+    "total_bytes": 9951385837,
+    "excluded_from_experiments": 156,
+    "excluded_undated": 59,
+    "non_jpg_extensions": 220
+  },
+  "EFA_IDU": {
+    "images": 3188,
+    "ids_or_groups": 675,
+    "dated_images": 3188,
+    "undated_images": 0,
+    "first_capture": "2014-09-26 12:34:05",
+    "last_capture": "2015-08-15 17:04:47",
+    "calendar_days": 85,
+    "identity_days": 678,
+    "inferred_encounters_60min": 687,
+    "ids_with_2plus_encounters": 12,
+    "images_in_ids_with_2plus_encounters": 85,
+    "ids_with_no_date": 0,
+    "single_image_ids": 19,
+    "images_per_id": {
+      "count": 675.0,
+      "mean": 4.722962962962963,
+      "std": 3.3280558287859936,
+      "min": 1.0,
+      "25%": 3.0,
+      "50%": 4.0,
+      "75%": 6.0,
+      "max": 24.0
+    },
+    "images_per_encounter": {
+      "count": 687.0,
+      "mean": 4.640465793304221,
+      "std": 3.2897479789837414,
+      "min": 1.0,
+      "25%": 3.0,
+      "50%": 4.0,
+      "75%": 5.0,
+      "max": 24.0
+    },
+    "gps_images": 0,
+    "total_bytes": 12783917745,
+    "excluded_from_experiments": 92,
+    "excluded_undated": 0,
+    "non_jpg_extensions": 0
+  },
+  "duplicate_check": {
+    "candidate_files_hashed": 6,
+    "duplicate_files": 0,
+    "duplicate_groups": 0,
+    "redundant_files": 0
+  },
+  "overall": {
+    "distinct_capture_days": 363,
+    "total_bytes": 22735303582,
+    "undated": 59,
+    "original_modified_mismatches": 583
+  }
+}
